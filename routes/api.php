@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\OrganizationController;
+use App\Http\Controllers\Api\SchoolsController;
+
 
 
 /*
@@ -36,7 +39,16 @@ Route::post('/set_new_password', [AuthController::class, 'set_new_password']);
 Route::group(['middleware' => 'auth:api'], function () {
     //------------LOGOUT USER---------------
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/test',function(){
-        return "This is Test and you are logged in";
-    });
+    //------------Organizations-------------
+    Route::post('/createOrganization',[OrganizationController::class,'create']);
+    Route::get('/getAllOrganizations',[OrganizationController::class,'index']);
+    Route::get('/editOrganization/{id}',[OrganizationController::class,'edit']);
+    Route::put('/updateOrganization/{id}',[OrganizationController::class,'update']);
+    Route::delete('/deleteOrganization/{id}',[OrganizationController::class,'delete']);
+    //-------------Schools-----------------
+    Route::post('/createSchool',[SchoolsController::class,'create']);
+    Route::get('/getAllSchools',[SchoolsController::class,'index']);
+    Route::get('/editSchool/{id}',[SchoolsController::class,'edit']);
+    Route::put('/updateSchool/{id}',[SchoolsController::class,'update']);
+    Route::delete('/deleteSchool/{id}',[SchoolsController::class,'delete']);
 });

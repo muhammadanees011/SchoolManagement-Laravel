@@ -13,21 +13,14 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            // $table->bigInteger('school_id')->unsigned()->nullable();
-            // $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
-            $table->integer('student_id')->unique()->nullable();
-            $table->bigInteger('parent_id')->unsigned()->nullable();
-            $table->foreign('parent_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string('gender')->nullable();
-            $table->string('stage')->nullable();
             $table->string('email')->unique();
             $table->string('phone')->nullable()->unique();
             $table->integer('otp')->nullable();
             $table->string('image')->nullable();
-            $table->string('about_me')->nullable();
-            $table->enum('role', ['super_admin', 'organization_user','student','parent'])->nullable();
+            $table->enum('role', ['super_admin', 'organization_user','school_user','student','parent'])->nullable();
             $table->string('address')->nullable();
             $table->string('country')->nullable();
             $table->string('city')->nullable();

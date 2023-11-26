@@ -17,6 +17,11 @@ return new class extends Migration
             $table->foreign('organization_user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('name')->nullable();
             $table->string('description')->nullable();
+            $table->string('address')->nullable();
+            $table->string('country')->nullable();
+            $table->string('state')->nullable();
+            $table->string('city')->nullable();
+            $table->string('zip')->nullable();
             $table->string('website')->nullable();
             $table->dateTime('founded_date')->nullable();
             $table->timestamps();
