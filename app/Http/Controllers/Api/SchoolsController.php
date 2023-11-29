@@ -17,7 +17,7 @@ class SchoolsController extends Controller
 {
     //-------------GET ALL SCHOOLS------------
     public function index(){
-        $schools=School::with('user')->get();
+        $schools=School::with('user','organization')->get();
         return response()->json($schools, 200);
     }
     //-------------CREATE SCHOOL--------------
@@ -61,6 +61,7 @@ class SchoolsController extends Controller
             $school->tagline = $request->tagline;
             $school->address = $request->address;
             $school->country = $request->country;
+            $school->website = $request->website;
             $school->city = $request->city;
             $school->zip = $request->zip;
             $school->state = $request->state;

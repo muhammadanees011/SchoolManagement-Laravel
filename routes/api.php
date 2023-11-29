@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\SchoolsController;
+use App\Http\Controllers\Api\StudentsController;
 
 
 
@@ -51,4 +52,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/editSchool/{id}',[SchoolsController::class,'edit']);
     Route::put('/updateSchool/{id}',[SchoolsController::class,'update']);
     Route::delete('/deleteSchool/{id}',[SchoolsController::class,'delete']);
+    //-------------Students-----------------
+    Route::post('/createStudent',[StudentsController::class,'create']);
+    Route::get('/getAllStudents',[StudentsController::class,'index']);
+    Route::get('/editStudent/{id}',[StudentsController::class,'edit']);
+    Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
+    Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
 });
