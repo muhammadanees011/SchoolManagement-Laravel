@@ -29,6 +29,9 @@ class PaymentsController extends Controller
 
     public function setupPaymentInformation(Request $request){
         $user=Auth::user();
+        if($user->stripe_id!=null){
+            return response()->json('Stripe Already Setup', 201);
+        }
         try {
             $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
             $row =  [
