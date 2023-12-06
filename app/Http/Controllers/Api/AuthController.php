@@ -51,7 +51,7 @@ class AuthController extends Controller
             return response()->json($data);
         } 
         else{ 
-            return response()->json('Unauthorised.',401);
+            return response()->json('Unauthorized.',401);
         } 
     }
     //------------LOGOUT USER--------------

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\SchoolsController;
 use App\Http\Controllers\Api\StudentsController;
+use App\Http\Controllers\Api\PaymentsController;
 
 
 
@@ -58,4 +59,18 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/editStudent/{id}',[StudentsController::class,'edit']);
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
+    //-------------Payments-------------------
+    Route::post('/addPaymentCard',[PaymentsController::class,'addPaymentCard']);
+    Route::get('/getUserCards/{id}',[PaymentsController::class,'getUserCards']);
+    Route::delete('/removeCardById/{id}',[PaymentsController::class,'removeCardById']);
+    Route::post('/setupPaymentAccount',[PaymentsController::class,'setupPaymentAccount']);
+
+    //----------stripe----------
+    Route::post('/setupPaymentInformation', [PaymentsController::class, 'setupPaymentInformation']);
+    Route::post('/addExternalAccount', [PaymentsController::class, 'addExternalAccount']);
+    Route::get('/getExternalAccounts', [PaymentsController::class, 'getExternalAccounts']);
+
+    Route::post('payment/initiate', [PaymentsController::class, 'initiatePayment']);
+    Route::post('payment/complete', [PaymentsController::class, 'completePayment']);
+    Route::post('payment/failure', [PaymentsController::class, 'failPayment']);
 });

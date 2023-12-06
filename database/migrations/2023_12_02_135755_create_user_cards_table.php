@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('wallets', function (Blueprint $table) {
+        Schema::create('user_cards', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('account_id')->unique()->nullable();
-            $table->double('ballance')->default(0);
-            $table->string('currency')->nullable();
-            $table->enum('status',['active','inactive','blocked','deleted'])->default('active');
+            $table->string('card_number');
+            $table->string('cardholder_name');
+            $table->unsignedInteger('card_expiry_month');
+            $table->unsignedInteger('card_expiry_year');
+            $table->string('card_ccv');
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('wallets');
+        Schema::dropIfExists('user_cards');
     }
 };
