@@ -16,4 +16,8 @@ class School extends Model
     {
         return $this->hasOne(Organization::class,'id','organization_id');
     }
+    public function Shop()
+    {
+        return $this->hasOne(SchoolShop::class,'id','shop_id');
+    }
 }

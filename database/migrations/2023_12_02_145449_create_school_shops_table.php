@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('school_id')->unsigned()->nullable();
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
-            $table->string('shop_name');
+            $table->string('shop_name')->nullable();
             $table->string('shop_description')->nullable();
             $table->string('address')->nullable();
             $table->string('latitude')->nullable();

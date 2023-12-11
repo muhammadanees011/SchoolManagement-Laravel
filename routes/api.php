@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\SchoolsController;
 use App\Http\Controllers\Api\StudentsController;
 use App\Http\Controllers\Api\PaymentsController;
-
+use App\Http\Controllers\Api\SchoolShopsController;
+use App\Http\Controllers\Api\MenusController;
+use App\Http\Controllers\Api\MenuItemsController;
 
 
 /*
@@ -64,8 +66,32 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getUserCards/{id}',[PaymentsController::class,'getUserCards']);
     Route::delete('/removeCardById/{id}',[PaymentsController::class,'removeCardById']);
     Route::post('/setupPaymentAccount',[PaymentsController::class,'setupPaymentAccount']);
+    //------------School Shop-----------------
+    Route::get('/getSchoolShop',[SchoolShopsController::class,'getSchoolShop']);
+    Route::post('/addItem',[SchoolShopsController::class,'addItem']);
+    Route::get('/getShopItems',[SchoolShopsController::class,'getShopItems']);
+    Route::get('/editShopItem/{id}',[SchoolShopsController::class,'editShopItem']);
+    Route::put('/updateShopItem/{id}',[SchoolShopsController::class,'updateShopItem']);
+    Route::delete('/deleteShopItem/{id}',[SchoolShopsController::class,'deleteShopItem']);
+    //------------Menus-------------------
+    Route::post('/addMenu',[MenusController::class,'addMenu']);
+    Route::get('/editMenu/{id}',[MenusController::class,'editMenu']);
+    Route::put('/updateMenu/{id}',[MenusController::class,'updateMenu']);
+    Route::delete('/deleteMenu/{id}',[MenusController::class,'deleteMenu']);
+    Route::get('/getMenusBySchoolId/{id}',[MenusController::class,'getMenusBySchoolId']);
+    //------------Menu Items--------------
+    Route::post('/addMenuItem',[MenuItemsController::class,'addMenuItem']);
+    Route::get('/editMenuItem/{id}',[MenuItemsController::class,'editMenuItem']);
+    Route::put('/updateMenuItem/{id}',[MenuItemsController::class,'updateMenuItem']);
+    Route::delete('/deleteMenuItem/{id}',[MenuItemsController::class,'deleteMenuItem']);
+    Route::get('/getItemsByMenuId/{id}',[MenuItemsController::class,'getItemsByMenuId']);
 
     //----------stripe----------
+    Route::post('/createCard', [PaymentsController::class, 'createCard']);
+    Route::post('/createCustomer', [PaymentsController::class, 'createCustomer']);
+    Route::post('/getPaymentMethods', [PaymentsController::class, 'getCustomerPaymentMethods']);
+    Route::get('/removePaymentMethod', [PaymentsController::class, 'removePaymentMethod']);
+
     Route::post('/setupPaymentInformation', [PaymentsController::class, 'setupPaymentInformation']);
     Route::post('/addExternalAccount', [PaymentsController::class, 'addExternalAccount']);
     Route::get('/getExternalAccounts', [PaymentsController::class, 'getExternalAccounts']);

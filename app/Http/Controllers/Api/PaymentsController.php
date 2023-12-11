@@ -8,11 +8,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UserCard;
+use App\Models\User;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
 use Stripe\StripeClient;
 use Illuminate\Support\Str;
 use Stripe\Stripe as StripeGateway;
+use Stripe\Customer;
+use Stripe\PaymentMethod;
+use Stripe\Exception\CardException;
+
 
 class PaymentsController extends Controller
 {
@@ -20,6 +25,121 @@ class PaymentsController extends Controller
 
     public function __construct(){
         $this->stripe = Stripe::setApiKey(env('STRIPE_SECRET'));
+    }
+
+    public function createCustomer(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
+            'name' => 'required|string',
+            'email' => 'required|string',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        try{
+            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $customer=$stripe->customers->create([
+            'name' => $request->name,
+            'email' => $request->email,
+            ]);
+            $user=User::where('id',$request->user_id)->first();
+            $user->stripe_id=$customer->id;
+            $user->save();
+            return response()->json($customer, 200);
+             } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function createCard(Request $request)
+    {    
+        $validator = Validator::make($request->all(), [
+            'customer_id' => 'required|string',
+            'card_token' => 'required|string',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        try{
+            $customer_id=$request->customer_id;
+            $card_token=$request->card_token;
+            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $card=$stripe->customers->createSource(
+            $customer_id,
+            ['source' => $card_token]
+            );
+            $user=User::where('stripe_id',$customer_id)->first();
+            $userCard=new UserCard();
+            $userCard->user_id=$user->id;
+            $userCard->card_id=$card->id;
+            $userCard->customer_id=$card->customer;
+            $userCard->brand=$card->brand;
+            $userCard->last_4=$card->last4;
+            $userCard->card_expiry_month=$card->exp_month;
+            $userCard->card_expiry_year=$card->exp_year;
+            $userCard->save();
+            return response()->json($card, 200);
+             } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getCustomerPaymentMethods(Request $request){
+        $validator = Validator::make($request->all(), [
+            'customer_id' => 'required|string',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        try{
+            Stripe::setApiKey(env('STRIPE_SECRET'));
+            // Replace 'cus_12345678901234567890' with the actual customer ID
+            $customerId = $request->customer_id;
+            // Get the customer
+            $customer = Customer::retrieve($customerId);
+            // List all payment methods for the customer
+            $paymentMethods = PaymentMethod::all([
+                'customer' => $customerId,
+                'type' => 'card',
+            ]);
+            return response()->json($paymentMethods, 200);
+             } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function removePaymentMethod(){
+        try{
+            Stripe::setApiKey(env('STRIPE_SECRET'));
+            // Replace 'cus_12345678901234567890' with the actual customer ID
+            $customerId = 'cus_P9T6H8scSKZStW';
+            // Replace 'card_12345678901234567890' with the actual card ID
+            $cardId = 'card_1OLAtbA54mv9Tt3cpGiDiCdj';
+            // Get the customer
+            $customer = Customer::retrieve($customerId);
+            // Delete the card
+            $card = $customer->sources->retrieve($cardId);
+            $card->delete();
+            return response()->json($paymentMethods, 200);
+             } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        } 
     }
 
     public function getExternalAccounts(){
@@ -152,22 +272,32 @@ class PaymentsController extends Controller
 
     public function initiatePayment(Request $request)
     {
-        StripeGateway::setApiKey('sk_test_51OJgsAImkTfQfjIkXRigEFa5X5TBjVHBBPipT8r0gJlGpRFEjpBcwqSy0verJRGpuoIMGkaeikJuexvp5xsrgJF2002CxaXt3s');
+        StripeGateway::setApiKey(env('STRIPE_SECRET'));
         try {
             $paymentIntent = PaymentIntent::create([
                 'amount' => $request->amount * 100,
-                'currency' => $request->currency,
-                'automatic_payment_methods' => [
-                    'enabled' => true,
+                'currency' => 'gbp',
+                'customer' => $request->customer,  //ID of the customer in Stripe
+                'payment_method' =>$request->payment_method, //ID of the specific card
+                'confirm' => true, // Confirm the payment immediately
+                'transfer_data' => [
+                    // 'destination' => $request->recipientStripeAccountId,
+                    'destination' => "acct_1NlWiGGYrt7SylQr",
                 ],
+                'return_url' => 'https://your-website.com/thank-you',
+
             ]);
-            // Save the $paymentIntent->id to identify this payment later
+        } catch (CardException $e) {
+            // Handle card errors, such as insufficient funds
+            return response()->json(['error' => $e->getMessage()], 400);
         } catch (Exception $e) {
-            // throw error
+            // Handle other errors
+            return response()->json(['error' => $e->getMessage()], 500);
         }
+        // Payment was successful
         return [
             'token' => (string) Str::uuid(),
-            'client_secret' => $paymentIntent->client_secret
+            'client_secret' => $paymentIntent->client_secret,
         ];
     }
 

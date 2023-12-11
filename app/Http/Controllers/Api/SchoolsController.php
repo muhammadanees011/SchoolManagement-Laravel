@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\School;
 use App\Models\User;
+use App\Models\SchoolShop;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -70,9 +71,12 @@ class SchoolsController extends Controller
             $school->teachers_count = $request->teachers_count;
             $school->students_count = $request->students_count;
             $school->save();
+            $shop=new SchoolShop();
+            $shop->school_id=$school->id;
+            $shop->save();
             DB::commit();
             $response = ['Successfully created the School'];
-            return response()->json($response, 200);
+            return response()->json($user, 200);
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {
@@ -130,7 +134,6 @@ class SchoolsController extends Controller
                 'phone' => $request->phone,
                 'email' => $request->email,
             ]);
-            $school->save();
             DB::commit();
             $response = ['Successfully Updated the School'];
             return response()->json($response, 200);

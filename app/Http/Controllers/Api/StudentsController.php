@@ -76,7 +76,8 @@ class StudentsController extends Controller
             $student->enrollment_date = $request->enrollment_date;
             $student->save();
             DB::commit();
-            $response = ['Successfully created the Student'];
+            $response['message'] = ['Successfully created the Student'];
+            $response['user']=$user;
             return response()->json($response, 200);
         } catch (\Exception $exception) {
             DB::rollback();

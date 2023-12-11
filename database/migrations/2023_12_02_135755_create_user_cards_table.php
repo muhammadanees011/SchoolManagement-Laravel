@@ -15,11 +15,13 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('card_number');
-            $table->string('cardholder_name');
-            $table->unsignedInteger('card_expiry_month');
-            $table->unsignedInteger('card_expiry_year');
-            $table->string('card_ccv');
+            $table->string('card_id')->unique();
+            $table->string('customer_id');
+            $table->string('cardholder_name')->nullable();
+            $table->string('brand')->nullable();
+            $table->integer('last_4')->nullable();
+            $table->unsignedInteger('card_expiry_month')->nullable();
+            $table->unsignedInteger('card_expiry_year')->nullable();
             $table->timestamps();
         });
     }
