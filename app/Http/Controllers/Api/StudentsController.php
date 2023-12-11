@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Student;
+use App\Models\Wallet;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -75,6 +76,11 @@ class StudentsController extends Controller
             $student->medical_conditions = $request->medical_conditions;
             $student->enrollment_date = $request->enrollment_date;
             $student->save();
+
+            $userWallet=new Wallet();
+            $userWallet->user_id=$user->id;
+            $userWallet->ballance=0;
+            $userWallet->save();
             DB::commit();
             $response['message'] = ['Successfully created the Student'];
             $response['user']=$user;

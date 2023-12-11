@@ -91,6 +91,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/createCustomer', [PaymentsController::class, 'createCustomer']);
     Route::post('/getPaymentMethods', [PaymentsController::class, 'getCustomerPaymentMethods']);
     Route::get('/removePaymentMethod', [PaymentsController::class, 'removePaymentMethod']);
+    Route::get('/getWallet/{id}', [PaymentsController::class, 'getWallet']);
+
 
     Route::post('/setupPaymentInformation', [PaymentsController::class, 'setupPaymentInformation']);
     Route::post('/addExternalAccount', [PaymentsController::class, 'addExternalAccount']);

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UserCard;
 use App\Models\User;
+use App\Models\Wallet;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
 use Stripe\StripeClient;
@@ -140,6 +141,11 @@ class PaymentsController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         } 
+    }
+
+    public function getWallet($id){
+        $wallet=Wallet::where('user_id',$id)->first();
+        return response()->json($wallet, 200);
     }
 
     public function getExternalAccounts(){
@@ -287,6 +293,9 @@ class PaymentsController extends Controller
                 'return_url' => 'https://your-website.com/thank-you',
 
             ]);
+            $wallet=Wallet::where('user_id',$request->user_id)->first();
+            $wallet->ballance=$wallet->ballance + $request->amount;
+            $wallet->save();
         } catch (CardException $e) {
             // Handle card errors, such as insufficient funds
             return response()->json(['error' => $e->getMessage()], 400);
