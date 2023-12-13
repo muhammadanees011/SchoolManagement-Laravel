@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PaymentsController;
 use App\Http\Controllers\Api\SchoolShopsController;
 use App\Http\Controllers\Api\MenusController;
 use App\Http\Controllers\Api\MenuItemsController;
+use App\Http\Controllers\Api\TransactionHistoryController;
 
 
 /*
@@ -86,7 +87,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/deleteMenuItem/{id}',[MenuItemsController::class,'deleteMenuItem']);
     Route::get('/getItemsByMenuId/{id}',[MenuItemsController::class,'getItemsByMenuId']);
 
-    //----------stripe----------
+    //----------Transaction History----------
+    Route::get('/getTransactionHistory/{id?}', [TransactionHistoryController::class, 'getTransactionHistory']);
+    Route::delete('/deleteTransactionHistory/{id}', [TransactionHistoryController::class, 'deleteTransactionHistory']);
+
+    //------------stripe-----------
     Route::post('/createCard', [PaymentsController::class, 'createCard']);
     Route::post('/createCustomer', [PaymentsController::class, 'createCustomer']);
     Route::post('/getPaymentMethods', [PaymentsController::class, 'getCustomerPaymentMethods']);

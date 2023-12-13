@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UserCard;
 use App\Models\User;
+use App\Models\TransactionHistory;
 use App\Models\Wallet;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
@@ -96,16 +97,17 @@ class PaymentsController extends Controller
 
     public function getCustomerPaymentMethods(Request $request){
         $validator = Validator::make($request->all(), [
-            'customer_id' => 'required|string',
+            'user_id' => 'required',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         try{
+            $user=User::find($request->user_id);
             Stripe::setApiKey(env('STRIPE_SECRET'));
             // Replace 'cus_12345678901234567890' with the actual customer ID
-            $customerId = $request->customer_id;
+            $customerId = $user->stripe_id;
             // Get the customer
             $customer = Customer::retrieve($customerId);
             // List all payment methods for the customer
@@ -280,10 +282,11 @@ class PaymentsController extends Controller
     {
         StripeGateway::setApiKey(env('STRIPE_SECRET'));
         try {
+            $user=User::find($request->user_id);
             $paymentIntent = PaymentIntent::create([
                 'amount' => $request->amount * 100,
                 'currency' => 'gbp',
-                'customer' => $request->customer,  //ID of the customer in Stripe
+                'customer' => $user->stripe_id,  //ID of the customer in Stripe
                 'payment_method' =>$request->payment_method, //ID of the specific card
                 'confirm' => true, // Confirm the payment immediately
                 'transfer_data' => [
@@ -296,6 +299,14 @@ class PaymentsController extends Controller
             $wallet=Wallet::where('user_id',$request->user_id)->first();
             $wallet->ballance=$wallet->ballance + $request->amount;
             $wallet->save();
+
+            $history=new TransactionHistory();
+            $history->user_id=$request->user_id;
+            $history->amount=$request->amount;
+            $history->acct_id='acct_1NlWiGGYrt7SylQr';
+            $history->type=$request->type;
+            $history->save();
+
         } catch (CardException $e) {
             // Handle card errors, such as insufficient funds
             return response()->json(['error' => $e->getMessage()], 400);

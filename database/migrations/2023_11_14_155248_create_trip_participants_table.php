@@ -18,7 +18,7 @@ return new class extends Migration
             $table->bigInteger('trip_id')->unsigned()->nullable();
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
             $table->bigInteger('transaction_id')->unsigned()->nullable();
-            $table->foreign('transaction_id')->references('id')->on('transcation_history')->onDelete('cascade');
+            $table->foreign('transaction_id')->references('id')->on('transaction_history')->onDelete('cascade');
             $table->enum('participation_status',['pending','aproved','blocked','deleted'])->default('pending');
             $table->enum('payment_status',['paid','unpaid'])->default('unpaid');
             $table->timestamps();
