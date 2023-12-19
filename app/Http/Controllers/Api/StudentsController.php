@@ -14,6 +14,25 @@ use Illuminate\Validation\Rule;
 
 class StudentsController extends Controller
 {
+    public function getStudentsDataFromRemoteDB(){
+        // $tables = DB::connection('remote_mysql')
+        // ->select('SHOW TABLES');
+        
+        $tables = DB::connection('remote_mysql')
+        ->table('ebStudent')
+        ->get();
+
+        // try {
+        //     $records = DB::connection('remote_mysql');
+        //         // ->select(DB::raw('CALL your_stored_procedure_name()'));
+        //     // If the connection and procedure call were successful, you can proceed with handling $records.
+        // } catch (\Exception $e) {
+        //     // An exception occurred, indicating a connection or procedure call failure.
+        //     // You can log the error, print a message, or handle it based on your requirements.
+        //     echo "Error: " . $e->getMessage();
+        // }
+        return response()->json($tables);
+    }
     //-------------GET ALL STUDENTS-------------
     public function index(){
         $students=Student::with('user')->get();

@@ -61,6 +61,11 @@ class SchoolShopsController extends Controller
             }
         }
     }
+    //----------FIND SHOP ITEM---------
+    public function findShopItem($id){
+        $shopItem=ShopItem::find($id);
+        return response()->json($shopItem, 200);
+    }
     //----------Edit SHOP ITEM---------
     public function editShopItem($id){
         $shopItem=ShopItem::find($id);

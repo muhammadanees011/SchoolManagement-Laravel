@@ -11,7 +11,7 @@ use App\Http\Controllers\Api\SchoolShopsController;
 use App\Http\Controllers\Api\MenusController;
 use App\Http\Controllers\Api\MenuItemsController;
 use App\Http\Controllers\Api\TransactionHistoryController;
-
+use App\Http\Controllers\Api\UserCartController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +62,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/editStudent/{id}',[StudentsController::class,'edit']);
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
+    Route::get('/getStudentsDataFromRemoteDB',[StudentsController::class,'getStudentsDataFromRemoteDB']);
     //-------------Payments-------------------
     Route::post('/addPaymentCard',[PaymentsController::class,'addPaymentCard']);
     Route::get('/getUserCards/{id}',[PaymentsController::class,'getUserCards']);
@@ -74,6 +75,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/editShopItem/{id}',[SchoolShopsController::class,'editShopItem']);
     Route::put('/updateShopItem/{id}',[SchoolShopsController::class,'updateShopItem']);
     Route::delete('/deleteShopItem/{id}',[SchoolShopsController::class,'deleteShopItem']);
+    Route::get('/findShopItem/{id}',[SchoolShopsController::class,'findShopItem']);
     //------------Menus-------------------
     Route::post('/addMenu',[MenusController::class,'addMenu']);
     Route::get('/editMenu/{id}',[MenusController::class,'editMenu']);
@@ -87,9 +89,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/deleteMenuItem/{id}',[MenuItemsController::class,'deleteMenuItem']);
     Route::get('/getItemsByMenuId/{id}',[MenuItemsController::class,'getItemsByMenuId']);
 
+    //----------Item Cart--------------------
+    Route::post('/addItemToCart', [UserCartController::class, 'addItemToCart']);
+    Route::post('/removeItemFromCart', [UserCartController::class, 'removeItemFromCart']);
+    Route::get('/getUserCartItems', [UserCartController::class, 'getUserCartItems']);
     //----------Transaction History----------
     Route::get('/getTransactionHistory/{id?}', [TransactionHistoryController::class, 'getTransactionHistory']);
     Route::delete('/deleteTransactionHistory/{id}', [TransactionHistoryController::class, 'deleteTransactionHistory']);
+    Route::post('/filterTransactionHistory', [TransactionHistoryController::class, 'filterTransactionHistory']);
 
     //------------stripe-----------
     Route::post('/createCard', [PaymentsController::class, 'createCard']);
@@ -97,13 +104,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/getPaymentMethods', [PaymentsController::class, 'getCustomerPaymentMethods']);
     Route::get('/removePaymentMethod', [PaymentsController::class, 'removePaymentMethod']);
     Route::get('/getWallet/{id}', [PaymentsController::class, 'getWallet']);
-
-
-    Route::post('/setupPaymentInformation', [PaymentsController::class, 'setupPaymentInformation']);
-    Route::post('/addExternalAccount', [PaymentsController::class, 'addExternalAccount']);
-    Route::get('/getExternalAccounts', [PaymentsController::class, 'getExternalAccounts']);
-
     Route::post('payment/initiate', [PaymentsController::class, 'initiatePayment']);
-    Route::post('payment/complete', [PaymentsController::class, 'completePayment']);
-    Route::post('payment/failure', [PaymentsController::class, 'failPayment']);
+    Route::post('/checkBalance', [PaymentsController::class, 'checkBalance']);
+    Route::post('/redeemBalance', [PaymentsController::class, 'redeemBalance']);
+
 });
