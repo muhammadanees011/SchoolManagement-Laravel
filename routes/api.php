@@ -63,6 +63,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
     Route::get('/getStudentsDataFromRemoteDB',[StudentsController::class,'getStudentsDataFromRemoteDB']);
+    Route::post('/storeStudentInRemoteDB',[StudentsController::class,'storeStudentInRemoteDB']);
+    Route::post('/deleteStudentFromRemoteDB',[StudentsController::class,'deleteStudentFromRemoteDB']);
     //-------------Payments-------------------
     Route::post('/addPaymentCard',[PaymentsController::class,'addPaymentCard']);
     Route::get('/getUserCards/{id}',[PaymentsController::class,'getUserCards']);

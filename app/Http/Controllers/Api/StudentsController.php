@@ -10,17 +10,78 @@ use App\Models\Wallet;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use App\Mail\WelcomeEmail;
+use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 
 class StudentsController extends Controller
 {
+    public function deleteStudentFromRemoteDB(Request $request){
+        DB::connection('remote_mysql')->table('ebStudent')
+        ->where('ID', $request->student_id)->delete();
+    }
+
+    public function storeStudentInRemoteDB(Request $request){
+        DB::connection('remote_mysql')->table('ebStudent')->insert([
+            'firstName' => $request->firstName,
+            'surname' => $request->surname,
+            'UPN' =>  $request->UPN,
+            'eMail' =>  $request->eMail,
+            'site' =>  $request->site,
+            'miFareID' =>  $request->miFareID,
+            'purseType' =>  $request->purseType,
+            'fsmAmount' =>  $request->fsmAmount,
+            'created' => now(),
+            'modified' => now(),
+        ]);
+    }
     public function getStudentsDataFromRemoteDB(){
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
         
-        $tables = DB::connection('remote_mysql')
-        ->table('ebStudent')
-        ->get();
+        // $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created', today())->get();
+        // $users = DB::table('users')->whereDate('created_at', today())->get();
+
+        $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created',today())->get();
+        $users = DB::table('users')->get();
+        
+        $tableEmails = $tables->pluck('eMail')->toArray();
+        $userEmails = $users->pluck('email')->toArray();
+        // Identify emails that are in $tables but not in $users
+        $newEmails = array_diff($tableEmails, $userEmails);
+        // Fetch the records corresponding to the new emails
+        $newRecords = $tables->whereIn('eMail', $newEmails);
+
+        foreach ($newRecords as $record) {
+            $randomPassword = Str::random(10);
+            try{
+                DB::table('users')->insert([
+                    'first_name' => $record->firstName,
+                    'last_name' => $record->surname,
+                    'email' => $record->eMail,
+                    'password' => bcrypt($randomPassword),
+                    'role' => 'student',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }catch (\Exception $exception) {
+                DB::rollback();
+                if (('APP_ENV') == 'local') {
+                    dd($exception);
+                } else {
+                return response()->json($exception, 500);
+                }
+            }
+            $mailData = [
+                'title' => 'Congratulations you have successfully created your StudentPay account!',
+                'body' => $randomPassword
+            ];
+            Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
+            $res="Email is sent successfully.";
+            return response()->json($res);
+        }
 
         // try {
         //     $records = DB::connection('remote_mysql');
