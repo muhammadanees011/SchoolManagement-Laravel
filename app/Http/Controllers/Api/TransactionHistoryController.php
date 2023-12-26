@@ -16,7 +16,7 @@ class TransactionHistoryController extends Controller
         if($id){
             $history=TransactionHistory::where('user_id',$id)->get();
         }else{
-            $history=TransactionHistory::get();
+            $history=TransactionHistory::with('user')->get();
         }
         return response()->json($history, 200);
     }

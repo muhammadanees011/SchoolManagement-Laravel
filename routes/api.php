@@ -42,8 +42,11 @@ Route::post('/forgot_password_verify_otp', [AuthController::class, 'forgot_passw
 Route::post('/set_new_password', [AuthController::class, 'set_new_password']);
 
 Route::group(['middleware' => 'auth:api'], function () {
-    //------------LOGOUT USER---------------
+    //------------LOGOUT USER--------------
     Route::post('/logout', [AuthController::class, 'logout']);
+    //-----------CHANGE PASSWORD-----------
+    Route::post('/changePassword', [AuthController::class, 'changePassword']);
+
     //------------Organizations-------------
     Route::post('/createOrganization',[OrganizationController::class,'create']);
     Route::get('/getAllOrganizations',[OrganizationController::class,'index']);
@@ -62,13 +65,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/editStudent/{id}',[StudentsController::class,'edit']);
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
+    Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
+
     Route::get('/getStudentsDataFromRemoteDB',[StudentsController::class,'getStudentsDataFromRemoteDB']);
     Route::post('/storeStudentInRemoteDB',[StudentsController::class,'storeStudentInRemoteDB']);
     Route::post('/deleteStudentFromRemoteDB',[StudentsController::class,'deleteStudentFromRemoteDB']);
     //-------------Payments-------------------
     Route::post('/addPaymentCard',[PaymentsController::class,'addPaymentCard']);
     Route::get('/getUserCards/{id}',[PaymentsController::class,'getUserCards']);
-    Route::delete('/removeCardById/{id}',[PaymentsController::class,'removeCardById']);
+    Route::post('/removePaymentMethod',[PaymentsController::class,'removePaymentMethod']);
     Route::post('/setupPaymentAccount',[PaymentsController::class,'setupPaymentAccount']);
     //------------School Shop-----------------
     Route::get('/getSchoolShop',[SchoolShopsController::class,'getSchoolShop']);

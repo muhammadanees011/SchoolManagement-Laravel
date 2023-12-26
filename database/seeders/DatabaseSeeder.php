@@ -35,6 +35,25 @@ class DatabaseSeeder extends Seeder
             'role'=>'school_user'
         ]);
         
+        
+        \App\Models\User::factory()->create([
+            'first_name' => 'Redcar',
+            'last_name' => 'User',
+            'email' => 'redcar@example.com',
+            'phone' => '3476861292',
+            'password' =>  Hash::make('password'),
+            'role'=>'school_user'
+        ]);
+
+        \App\Models\User::factory()->create([
+            'first_name' => 'NETA',
+            'last_name' => 'User',
+            'email' => 'neta@example.com',
+            'phone' => '3473863292',
+            'password' =>  Hash::make('password'),
+            'role'=>'school_user'
+        ]);
+        
         \App\Models\User::factory()->create([
             'first_name' => 'student',
             'last_name' => 'User',

@@ -124,19 +124,25 @@ class PaymentsController extends Controller
         }
     }
     //-------------REMOVEPAYMENT METHOD---------
-    public function removePaymentMethod(){
+    public function removePaymentMethod(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
+            'payment_method' => 'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
         try{
+            $user=User::where('id',$request->user_id)->first();
             Stripe::setApiKey(env('STRIPE_SECRET'));
-            // Replace 'cus_12345678901234567890' with the actual customer ID
-            $customerId = 'cus_P9T6H8scSKZStW';
-            // Replace 'card_12345678901234567890' with the actual card ID
-            $cardId = 'card_1OLAtbA54mv9Tt3cpGiDiCdj';
-            // Get the customer
-            $customer = Customer::retrieve($customerId);
-            // Delete the card
-            $card = $customer->sources->retrieve($cardId);
-            $card->delete();
-            return response()->json($paymentMethods, 200);
+            $customerId = $user->stripe_id;
+            $cardId = $request->payment_method;
+            $paymentMethod = PaymentMethod::retrieve($cardId);
+            $paymentMethod->detach();      
+            $response=["Payment method removed successfully"];
+            return response()->json($response, 200);
              } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

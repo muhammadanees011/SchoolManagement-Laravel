@@ -20,6 +20,11 @@ return new class extends Migration
             $table->bigInteger('school_id')->unsigned()->nullable();
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->integer('student_id')->unique()->nullable();
+            $table->string('upn')->nullable();
+            $table->string('mifare_id')->unique()->nullable();
+            $table->string('fsm_amount')->nullable(); 
+            $table->string('purse_type')->nullable();
+            $table->string('site')->nullable();
             $table->date('dob')->nullable();
             $table->date('enrollment_date')->nullable();
             $table->string('stage')->nullable();

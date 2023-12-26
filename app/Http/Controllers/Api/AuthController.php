@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
+use Laravel\Passport\Passport;
 
 class AuthController extends Controller
 {
@@ -102,6 +103,27 @@ class AuthController extends Controller
         } else {
             return response()->json('Code verified successfully.', 201);
         }
+    }
+    //--------------CHANGE PASSWORD---------------
+    public function changePassword(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'old_password' => 'required',
+            'new_password' => 'required|min:6|confirmed',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->messages()->first(), 403);
+        }
+        $user = User::where('id', $request->user_id)->first();
+        if($request->new_password==$request->old_password){ 
+            return response()->json('New password can not be same as old password.',422);
+        }else if(Hash::check($request->old_password, $user->password)){ 
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+            return response()->json('Password changed successfully.', 200);     
+        }else{ 
+            return response()->json('Inccorect Old Password.',422);
+        } 
     }
     //--------------SET PASSWORD---------------
     public function set_new_password(Request $request){

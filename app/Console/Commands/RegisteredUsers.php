@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\WelcomeEmail;
 use Carbon\Carbon;
+use App\Models\Wallet;
+use App\Models\User;
 
 class RegisteredUsers extends Command
 {
@@ -44,9 +46,11 @@ class RegisteredUsers extends Command
         $newRecords = $tables->whereIn('eMail', $newEmails);
 
         foreach ($newRecords as $record) {
+            //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
+            $studentName = $record->firstName . ' ' . $record->surname;
             try{
-                DB::table('users')->insert([
+                $userId=DB::table('users')->insertGetId([
                     'first_name' => $record->firstName,
                     'last_name' => $record->surname,
                     'email' => $record->eMail,
@@ -55,19 +59,32 @@ class RegisteredUsers extends Command
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-            }catch (\Exception $exception) {
-                DB::rollback();
-                if (('APP_ENV') == 'local') {
-                    dd($exception);
-                } else {
-                }
+                //----------SEND WELCOME MAIL--------------
+                $mailData = [
+                    'title' => 'Congratulations you have successfully created your StudentPay account!',
+                    'body' => $randomPassword,
+                    'user_name'=> $studentName,
+                ];
+                Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
+                //----------CREATE STRIPE CUSTOMER------------
+                $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+                $customer=$stripe->customers->create([
+                'name' => $studentName,
+                'email' => $record->eMail,
+                ]);
+                $user=User::where('id',$userId)->first();
+                $user->stripe_id=$customer->id;
+                $user->created_at=now();
+                $user->updated_at=now();
+                $user->save();
+                //----------CREATE STUDENT WALLET-------------
+                $userWallet=new Wallet();
+                $userWallet->user_id=$userId;
+                $userWallet->ballance=0;
+                $userWallet->save();
+                } catch (\Exception $e) {
             }
-            $mailData = [
-                'title' => 'Congratulations you have successfully created your StudentPay account!',
-                'body' => $randomPassword
-            ];
-            Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
-            $res="Email is sent successfully.";
+    
         }
     }
 }
