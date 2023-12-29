@@ -25,10 +25,9 @@ class OrganizationController extends Controller
     //-------------CREATE ORGANIZATIONS------------
     public function create(Request $request){
         $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
             'name'=>'required|string|max:255',
+            'email'=>'required|email|max:255',
+            'phone'=>'required|string|max:255',
             'address' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'city' => 'required|string|max:255',
@@ -43,16 +42,10 @@ class OrganizationController extends Controller
         }
         try {
             DB::beginTransaction();
-
-            $user = new User();
-            $user->email=$request->email;
-            $user->phone=$request->phone;
-            $user->password=Hash::make($request['password']);
-            $user->role='organization_user';
-            $user->save();
             $organization=new Organization();
-            $organization->organization_user_id=$user->id;
             $organization->name=$request->name;
+            $organization->email=$request->email;
+            $organization->phone=$request->phone;
             $organization->address=$request->address;
             $organization->country=$request->country;
             $organization->city=$request->city;
@@ -61,7 +54,6 @@ class OrganizationController extends Controller
             $organization->description=$request->description;
             $organization->website=$request->website;
             $organization->save();
-
             DB::commit();
             $response = ['Successfully created organization'];
             return response()->json($response, 200);
@@ -70,7 +62,7 @@ class OrganizationController extends Controller
             if (('APP_ENV') == 'local') {
                 dd($exception);
             } else {
-                return $this->sendError($exception->getMessage(), null);
+                return response()->json(['errors'=>$exception->getMessage()], 422);
             }
         }
     }
@@ -99,9 +91,10 @@ class OrganizationController extends Controller
         }
         try {
             DB::beginTransaction();
-
-            $organization =Organization::with('user')->find($id);
+            $organization =Organization::find($id);
             $organization->name=$request->name;
+            $organization->email=$request->email;
+            $organization->phone=$request->phone;
             $organization->description=$request->description;
             $organization->website=$request->website;
             $organization->country=$request->country;
@@ -109,12 +102,7 @@ class OrganizationController extends Controller
             $organization->state=$request->state;
             $organization->address=$request->address;
             $organization->founded_date=$request->founded_date;
-            $organization->user->update([
-                'phone' => $request->phone,
-                'email' => $request->email,
-            ]);
             $organization->save();
-
             DB::commit();
             $response = ['Successfully updated organization',$organization];
             return response()->json($response, 200);

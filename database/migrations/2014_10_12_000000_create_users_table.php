@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('phone')->nullable()->unique();
             $table->integer('otp')->nullable();
             $table->string('image')->nullable();
-            $table->enum('role', ['super_admin', 'organization_user','school_user','student','parent'])->nullable();
+            $table->enum('role', ['super_admin', 'organization_admin','staff','student','parent'])->nullable();
             $table->string('address')->nullable();
             $table->string('country')->nullable();
             $table->string('city')->nullable();

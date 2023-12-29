@@ -1,84 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to StudentPay</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-        }
-
-        h4 {
-            text-align: center;
-        }
-
-        p {
-            margin-bottom: 15px;
-            text-align: justify;
-        }
-
-        strong {
-            font-weight: bold;
-        }
-
-        footer {
-            margin-top: 20px;
-            font-size: 0.8em;
-            color: #777;
-            text-align: center;
-        }
-
-        footer p {
-            margin-bottom: 5px;
-        }
-    </style>
-</head>
-
-<body>
-    <img src="https://via.placeholder.com/100" alt="Icon" style="display: block; margin: 20px auto;">
-
-    <h4>Welcome to StudentPay, {{ $mailData['user_name'] }}!</h4>
-
-    <p>
-        Congratulations! You have successfully created your StudentPay account.
-        Here are your account details:
-        <br><strong>Password:</strong> {{ $mailData['body'] }}
-        <br>
-        For your security, we recommend changing your password as soon as you log in for the first time.
-        <br>Simply visit your account settings to update your password.
-        <br>If you have any questions or need assistance, feel free to contact our support team at
-        <a href="mailto:support@studentpay.com">support@studentpay.com</a>.
-    </p>
-
-    <p>
-        <strong>Our Address:</strong><br>
-        The Exchange, 26 Haslucks Green Road, Shirley, Solihull, B90 2EL
-    </p>
-
-    <footer>
-        <p>
-            <strong>Contact Us:</strong><br>
-            Sales: 0345 0345 930<br>
-            Technical Support: 0121 387 0007
-        </p>
-        <p>
-            This is an automatic email. Do not respond to this message!
-        </p>
-        <p>
-            Best Regards,<br>
-            StudentPay Team
-        </p>
-    </footer>
-</body>
-
-</html> -->
-
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -88,6 +7,7 @@
     <title>Welcome to StudentPay</title>
     <style>
         body {
+            color:#777;
             font-family: 'Arial', sans-serif;
             line-height: 1.6;
             margin: 0;
@@ -115,15 +35,10 @@
         }
         footer {
             margin-top: 20px;
-            font-size: 0.8em;
+            font-size: 0.9em; /* Adjust the font size as needed */
             color: #777;
             text-align: center;
-        }
-        .icon-img {
-            display: block;
-            margin: 0 auto 20px;
-            width: 100%;
-            height:10rem;
+            font-style: italic; /* Add italic style */
         }
         footer p {
             margin-bottom: 5px;
@@ -134,19 +49,21 @@
 <body>
     <div class="container">
         <img src="https://via.placeholder.com/100" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px;">
-        <h4>Welcome to StudentPay, {{ $mailData['user_name'] }}!</h4>
+        <h4 style="color:#235667;">Welcome to StudentPay, {{ $mailData['user_name'] }}!</h4>
         <p>
             Congratulations! You have successfully created your StudentPay account.
             Here is your
-            <br><strong>Password:</strong> {{ $mailData['body'] }}
+            <br><strong style="color:#235667 !important;">Password:</strong> {{ $mailData['body'] }}
             <br>
             For your security, we recommend changing your password as soon as you log in for the first time.
-            Simply visit your profile settings to update your password <a href="https://student-pay.co.uk/profile">click here</a>.
+            Simply visit your profile settings to update your password <a style="color:#22C55D; font-size:1rem !important;" href="https://student-pay.co.uk/profile">click here</a>.
+            Embrace the convenience of secure, cashless transactions with StudentPay. From school meals to exciting events, 
+            our platform provides a hassle-free way to handle all school-related expenses.
             If you have any questions or need assistance, feel free to contact our support team at
-            <a href="mailto:support@studentpay.com">support@studentpay.com</a>.
+            <a style="color:#22C55D !important; font-size:1rem !important;" href="mailto:support@studentpay.com">support@studentpay.com</a>.
         </p>
         <p>
-            <strong>Our Address:</strong><br>
+            <strong style="color:#235667 !important;">Our Address:</strong><br>
             The Exchange, 26 Haslucks Green Road, Shirley, Solihull, B90 2EL
         </p>
         <footer>

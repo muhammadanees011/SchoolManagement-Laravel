@@ -152,7 +152,7 @@ class PaymentsController extends Controller
     }
     //--------------GET WALLET------------------
     public function getWallet($id){
-        $wallet=Wallet::where('user_id',$id)->first();
+        $wallet=Wallet::with('user')->where('user_id',$id)->first();
         return response()->json($wallet, 200);
     }
     //--------------MAKET A PAYMENT-------------

@@ -12,4 +12,8 @@ class Student extends Model
     {
         return $this->hasOne(User::class,'id','user_id');
     }
+    public function School()
+    {
+        return $this->hasOne(School::class,'id','school_id');
+    }
 }

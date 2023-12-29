@@ -49,4 +49,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(SchoolShop::class);
     }
+
+    public function OrganizationAdmin()
+    {
+        return $this->hasOne(OrganizationAdmin::class);
+    }
 }

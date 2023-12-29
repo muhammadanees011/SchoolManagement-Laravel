@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\OrganizationAdmin;
+use App\Models\Student;
+use App\Models\School;
 use App\Models\TransactionHistory;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -12,11 +15,26 @@ use Illuminate\Support\Facades\Validator;
 class TransactionHistoryController extends Controller
 {
     //----------GET TRANSACTION LIST-------------
-    public function getTransactionHistory($id=null){
-        if($id){
-            $history=TransactionHistory::where('user_id',$id)->get();
+    public function getTransactionHistory(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'nullable',
+            'admin_id' => 'nullable',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        if($request->user_id){
+            $history=TransactionHistory::where('user_id',$request->user_id)->get();
         }else{
-            $history=TransactionHistory::with('user')->get();
+            if($request->admin_id==null){
+                $history=TransactionHistory::with('user')->get();
+            }else{
+                $admin=OrganizationAdmin::where('user_id',$request->admin_id)->first();
+                $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+                $studentIds = Student::whereIn('school_id', $schoolIds)->pluck('user_id')->toArray();
+                $history=TransactionHistory::where('user_id',$studentIds)->with('user')->get();  
+            }
         }
         return response()->json($history, 200);
     }

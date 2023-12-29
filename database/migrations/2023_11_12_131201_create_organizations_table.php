@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('organization_user_id')->unsigned()->nullable();
-            $table->foreign('organization_user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('name')->nullable();
             $table->string('description')->nullable();
+            $table->string('email')->nullable()->unique();
+            $table->string('phone')->nullable()->unique();
             $table->string('address')->nullable();
             $table->string('country')->nullable();
             $table->string('state')->nullable();
@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('zip')->nullable();
             $table->string('website')->nullable();
             $table->dateTime('founded_date')->nullable();
+            $table->enum('status',['active','inactive','pending','blocked','deleted'])->default('active');
             $table->timestamps();
         });
     }

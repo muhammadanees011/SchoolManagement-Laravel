@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Wallet extends Model
+class OrganizationAdmin extends Model
 {
     use HasFactory;
-
-    public function user(){
+    public function Admin(){
         return $this->hasOne(User::class,'id','user_id');
+    }
+    public function organization(){
+        return $this->hasOne(Organization::class,'id','organization_id');
     }
 }

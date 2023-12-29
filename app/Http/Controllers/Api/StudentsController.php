@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\Wallet;
 use App\Models\User;
 use App\Models\School;
+use App\Models\OrganizationAdmin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -130,8 +131,14 @@ class StudentsController extends Controller
         return response()->json($ballance, 200);
     }
     //-------------GET ALL STUDENTS-------------
-    public function index(){
-        $students=Student::with('user')->get();
+    public function index($admin_id=null){
+        if($admin_id==null){
+            $students=Student::with('user','school')->get();
+        }else{
+            $admin=OrganizationAdmin::where('user_id',$admin_id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+            $students = Student::whereIn('school_id', $schoolIds)->with('user', 'school')->get();
+        }
         return response()->json($students, 200);
     }
     //-------------CREATE STUDENT--------------
@@ -197,6 +204,14 @@ class StudentsController extends Controller
             $userWallet->ballance=0;
             $userWallet->save();
             DB::commit();
+            //------------SEND WELCOME MAIL------------
+            $studentName = $request->first_name . ' ' . $request->last_name;
+            $mailData = [
+            'title' => 'Congratulations you have successfully created your StudentPay account!',
+            'body' => $request['password'],
+            'user_name'=> $studentName,
+            ];
+            Mail::to($request->email)->send(new WelcomeEmail($mailData));
             $response['message'] = ['Successfully created the Student'];
             $response['user']=$user;
             return response()->json($response, 200);
@@ -218,6 +233,7 @@ class StudentsController extends Controller
     public function update(Request $request,$id){
         $student=Student::with('user')->find($id);
         $validator = Validator::make($request->all(), [
+            'school_id' => ['required',Rule::exists('schools', 'id')],
             'student_id' =>'required|numeric',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -243,6 +259,7 @@ class StudentsController extends Controller
         }
         try {
             DB::beginTransaction();
+            $student->school_id = $request->school_id;;
             $student->student_id = $request->student_id;;
             $student->stage = $request->stage;
             $student->dob = $request->date_of_birth;

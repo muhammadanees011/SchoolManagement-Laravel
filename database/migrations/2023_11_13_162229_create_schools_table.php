@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('user_id')->unsigned()->nullable();
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->bigInteger('organization_id')->unsigned()->nullable();
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
-            $table->string('title');            
+            $table->string('title');     
+            $table->string('email')->nullable()->unique();
+            $table->string('phone')->nullable()->unique();       
             $table->string('website')->nullable();
             $table->string('address')->nullable();
             $table->string('country')->nullable();

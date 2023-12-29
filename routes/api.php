@@ -10,8 +10,9 @@ use App\Http\Controllers\Api\PaymentsController;
 use App\Http\Controllers\Api\SchoolShopsController;
 use App\Http\Controllers\Api\MenusController;
 use App\Http\Controllers\Api\MenuItemsController;
-use App\Http\Controllers\Api\TransactionHistoryController;
 use App\Http\Controllers\Api\UserCartController;
+use App\Http\Controllers\Api\OrganizationAdminsController;
+use App\Http\Controllers\Api\TransactionHistoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,15 +54,22 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/editOrganization/{id}',[OrganizationController::class,'edit']);
     Route::put('/updateOrganization/{id}',[OrganizationController::class,'update']);
     Route::delete('/deleteOrganization/{id}',[OrganizationController::class,'delete']);
+    //------------Organizations Admin-------------
+    Route::post('/createOrganizationAdmin',[OrganizationAdminsController::class,'createOrganizationAdmin']);
+    Route::get('/getAllOrganizationAdmins',[OrganizationAdminsController::class,'getAllOrganizationAdmins']);
+    Route::get('/getAdminsByOrganizationId/{id}',[OrganizationAdminsController::class,'getAdminsByOrganizationId']);    
+    Route::get('/editOrganizationAdmin/{id}',[OrganizationAdminsController::class,'editOrganizationAdmin']);
+    Route::put('/updateOrganizationAdmin/{id}',[OrganizationAdminsController::class,'updateOrganizationAdmin']);
+    Route::delete('/deleteOrganizationAdmin/{id}',[OrganizationAdminsController::class,'deleteOrganizationAdmin']);
     //-------------Schools-----------------
-    Route::post('/createSchool',[SchoolsController::class,'create']);
-    Route::get('/getAllSchools',[SchoolsController::class,'index']);
+    Route::post('/createSchool/{admin_id?}',[SchoolsController::class,'create']);
+    Route::get('/getAllSchools/{admin_id?}',[SchoolsController::class,'index']);
     Route::get('/editSchool/{id}',[SchoolsController::class,'edit']);
-    Route::put('/updateSchool/{id}',[SchoolsController::class,'update']);
+    Route::put('/updateSchool/{id}/{admin_id?}',[SchoolsController::class,'update']);
     Route::delete('/deleteSchool/{id}',[SchoolsController::class,'delete']);
     //-------------Students-----------------
     Route::post('/createStudent',[StudentsController::class,'create']);
-    Route::get('/getAllStudents',[StudentsController::class,'index']);
+    Route::get('/getAllStudents/{admin_id?}',[StudentsController::class,'index']);
     Route::get('/editStudent/{id}',[StudentsController::class,'edit']);
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
@@ -95,16 +103,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::put('/updateMenuItem/{id}',[MenuItemsController::class,'updateMenuItem']);
     Route::delete('/deleteMenuItem/{id}',[MenuItemsController::class,'deleteMenuItem']);
     Route::get('/getItemsByMenuId/{id}',[MenuItemsController::class,'getItemsByMenuId']);
-
     //----------Item Cart--------------------
     Route::post('/addItemToCart', [UserCartController::class, 'addItemToCart']);
     Route::post('/removeItemFromCart', [UserCartController::class, 'removeItemFromCart']);
     Route::get('/getUserCartItems', [UserCartController::class, 'getUserCartItems']);
     //----------Transaction History----------
-    Route::get('/getTransactionHistory/{id?}', [TransactionHistoryController::class, 'getTransactionHistory']);
+    Route::post('/getTransactionHistory', [TransactionHistoryController::class, 'getTransactionHistory']);
     Route::delete('/deleteTransactionHistory/{id}', [TransactionHistoryController::class, 'deleteTransactionHistory']);
     Route::post('/filterTransactionHistory', [TransactionHistoryController::class, 'filterTransactionHistory']);
-
     //------------stripe-----------
     Route::post('/createCard', [PaymentsController::class, 'createCard']);
     Route::post('/createCustomer', [PaymentsController::class, 'createCustomer']);
