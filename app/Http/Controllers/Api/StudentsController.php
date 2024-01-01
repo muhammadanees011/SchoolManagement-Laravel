@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Student;
+use App\Models\Staff;
 use App\Models\Wallet;
 use App\Models\User;
 use App\Models\School;
@@ -17,6 +18,8 @@ use Illuminate\Support\Str;
 use App\Mail\WelcomeEmail;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
+use App\Http\Resources\StudentResource;
+use App\Http\Resources\StaffResource;
 
 class StudentsController extends Controller
 {
@@ -39,6 +42,27 @@ class StudentsController extends Controller
             'modified' => now(),
         ]);
     }
+    //--------------GET STUDENTS/STAFF DATA-----------
+    public function getStudentStaff(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_type' => 'nullable|in:student,staff',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        if($request->user_type=='student'){
+            $response['students']=StudentResource::collection(Student::with('user','school')->get());
+        }else if($request->user_type=='staff'){
+            $response['staff']=StaffResource::collection(Staff::with('user','school')->get());
+        }else if($request->user_type==null){
+            $response['students']=StudentResource::collection(Student::with('user','school')->get());
+            $response['staff']=StaffResource::collection(Staff::with('user','school')->get());
+        }
+        return $response;
+
+    }   
+    //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
@@ -112,19 +136,81 @@ class StudentsController extends Controller
             }
     
         }
-
-
-        // try {
-        //     $records = DB::connection('remote_mysql');
-        //         // ->select(DB::raw('CALL your_stored_procedure_name()'));
-        //     // If the connection and procedure call were successful, you can proceed with handling $records.
-        // } catch (\Exception $e) {
-        //     // An exception occurred, indicating a connection or procedure call failure.
-        //     // You can log the error, print a message, or handle it based on your requirements.
-        //     echo "Error: " . $e->getMessage();
-        // }
         return response()->json($tables);
     }
+    //--------------GET STAFF DATA------------
+    public function getStaffDataFromRemoteDB(){
+        // $tables = DB::connection('remote_mysql')
+        // ->select('SHOW TABLES');
+
+        $tables = DB::connection('remote_mysql')->table('ebStaff')->whereDate('created',today())->get();
+        $users = DB::table('users')->get();
+        
+        $tableEmails = $tables->pluck('eMail')->toArray();
+        $userEmails = $users->pluck('email')->toArray();
+        // Identify emails that are in $tables but not in $users
+        $newEmails = array_diff($tableEmails, $userEmails);
+        // Fetch the records corresponding to the new emails
+        $newRecords = $tables->whereIn('eMail', $newEmails);
+        foreach ($newRecords as $record) {
+            //----------STORE NEW STAFF------------
+            $randomPassword = Str::random(10);
+            $studentName = $record->firstName . ' ' . $record->surname;
+            try{
+                $userId=DB::table('users')->insertGetId([
+                    'first_name' => $record->firstName,
+                    'last_name' => $record->surname,
+                    'email' => $record->eMail,
+                    'password' => bcrypt($randomPassword),
+                    'role' => 'staff',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                //-----------SAVE STAFF----------------
+                $school=School::where('title',$record->site)->first();
+                $staff=new Staff();
+                $staff->user_id = $userId;
+                $staff->school_id = $school->id;
+                $staff->upn = $record->UPN;
+                $staff->mifare_id = $record->miFareID;
+                $staff->site = $record->site;
+                $staff->save();
+                //------------SEND WELCOME MAIL------------
+                $mailData = [
+                    'title' => 'Congratulations you have successfully created your StudentPay account!',
+                    'body' => $randomPassword,
+                    'user_name'=> $studentName,
+                ];
+                Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
+                //----------CREATE STRIPE CUSTOMER------------
+                $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+                $customer=$stripe->customers->create([
+                'name' => $studentName,
+                'email' => $record->eMail,
+                ]);
+                $user=User::where('id',$userId)->first();
+                $user->stripe_id=$customer->id;
+                $user->created_at=now();
+                $user->updated_at=now();
+                $user->save();
+                //----------CREATE STAFF WALLET-------------
+                $userWallet=new Wallet();
+                $userWallet->user_id=$userId;
+                $userWallet->ballance=0;
+                $userWallet->save();
+                $res="Email is sent successfully.";
+                return response()->json($res);
+                // return response()->json($customer, 200);
+                } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+    
+        }
+    }
+
     public function getStudentBalance($id){
         $wallet=Wallet::where('user_id',$id)->first();
         $ballance=$wallet->ballance;

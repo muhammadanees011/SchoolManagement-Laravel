@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\MenuItemsController;
 use App\Http\Controllers\Api\UserCartController;
 use App\Http\Controllers\Api\OrganizationAdminsController;
 use App\Http\Controllers\Api\TransactionHistoryController;
+use App\Http\Controllers\Api\StaffController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,9 +76,19 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
 
+    Route::post('/getStudentStaff',[StudentsController::class,'getStudentStaff']);
+
     Route::get('/getStudentsDataFromRemoteDB',[StudentsController::class,'getStudentsDataFromRemoteDB']);
     Route::post('/storeStudentInRemoteDB',[StudentsController::class,'storeStudentInRemoteDB']);
     Route::post('/deleteStudentFromRemoteDB',[StudentsController::class,'deleteStudentFromRemoteDB']);
+
+    Route::get('/getStaffDataFromRemoteDB',[StaffController::class,'getStaffDataFromRemoteDB']);
+    //-------------Staff---------------------
+    Route::post('/createStaff',[StaffController::class,'createStaff']);
+    Route::put('/updateStaff/{id}',[StaffController::class,'updateStaff']);
+    Route::get('/getAllStaff',[StaffController::class,'getAllStaff']);
+    Route::get('/editStaff/{id}',[StaffController::class,'editStaff']);
+    Route::delete('/deleteStaff/{id}',[StaffController::class,'deleteStaff']);
     //-------------Payments-------------------
     Route::post('/addPaymentCard',[PaymentsController::class,'addPaymentCard']);
     Route::get('/getUserCards/{id}',[PaymentsController::class,'getUserCards']);
