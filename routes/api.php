@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\UserCartController;
 use App\Http\Controllers\Api\OrganizationAdminsController;
 use App\Http\Controllers\Api\TransactionHistoryController;
 use App\Http\Controllers\Api\StaffController;
+use App\Http\Controllers\Api\ParentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,11 @@ Route::post('/verify_email', [AuthController::class, 'verify_email']);
 Route::post('/forgot_password', [AuthController::class, 'send_forgot_password_otp']);
 Route::post('/forgot_password_verify_otp', [AuthController::class, 'forgot_password_verify_otp']);
 Route::post('/set_new_password', [AuthController::class, 'set_new_password']);
+
+Route::post('/checkBalance', [PaymentsController::class, 'checkBalance']);
+Route::post('/redeemBalance', [PaymentsController::class, 'redeemBalance']);
+Route::post('/getStudentStaff',[StudentsController::class,'getStudentStaff']);
+
 
 Route::group(['middleware' => 'auth:api'], function () {
     //------------LOGOUT USER--------------
@@ -76,8 +82,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
 
-    Route::post('/getStudentStaff',[StudentsController::class,'getStudentStaff']);
-
     Route::get('/getStudentsDataFromRemoteDB',[StudentsController::class,'getStudentsDataFromRemoteDB']);
     Route::post('/storeStudentInRemoteDB',[StudentsController::class,'storeStudentInRemoteDB']);
     Route::post('/deleteStudentFromRemoteDB',[StudentsController::class,'deleteStudentFromRemoteDB']);
@@ -86,9 +90,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     //-------------Staff---------------------
     Route::post('/createStaff',[StaffController::class,'createStaff']);
     Route::put('/updateStaff/{id}',[StaffController::class,'updateStaff']);
-    Route::get('/getAllStaff',[StaffController::class,'getAllStaff']);
+    Route::get('/getAllStaff/{admin_id?}',[StaffController::class,'getAllStaff']);
     Route::get('/editStaff/{id}',[StaffController::class,'editStaff']);
     Route::delete('/deleteStaff/{id}',[StaffController::class,'deleteStaff']);
+    //------------Parents---------------------
+    Route::post('/createParent',[ParentController::class,'createParent']);
+    Route::put('/updateParent/{id}',[ParentController::class,'updateParent']);
+    Route::get('/getAllParents/{admin_id?}',[ParentController::class,'getAllParents']);
+    Route::get('/editParent/{id}',[ParentController::class,'editParent']);
+    Route::delete('/deleteParent/{id}',[ParentController::class,'deleteParent']);
     //-------------Payments-------------------
     Route::post('/addPaymentCard',[PaymentsController::class,'addPaymentCard']);
     Route::get('/getUserCards/{id}',[PaymentsController::class,'getUserCards']);
@@ -129,7 +139,4 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/removePaymentMethod', [PaymentsController::class, 'removePaymentMethod']);
     Route::get('/getWallet/{id}', [PaymentsController::class, 'getWallet']);
     Route::post('payment/initiate', [PaymentsController::class, 'initiatePayment']);
-    Route::post('/checkBalance', [PaymentsController::class, 'checkBalance']);
-    Route::post('/redeemBalance', [PaymentsController::class, 'redeemBalance']);
-
 });

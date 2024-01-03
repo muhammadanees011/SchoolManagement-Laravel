@@ -4,36 +4,42 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use App\Models\Staff;
-use App\Models\User;
-use App\Models\Wallet;
-use App\Models\OrganizationAdmin;
-use App\Models\School;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use App\Mail\WelcomeEmail;
+use Carbon\Carbon;
+use Illuminate\Validation\Rule;
+use App\Models\User;
+use App\Models\Parents;
+use App\Models\Wallet;
+use App\Models\School;
+use App\Models\Student;
+use App\Models\OrganizationAdmin;
+use Illuminate\Support\Facades\Validator;
 
-class StaffController extends Controller
+
+class ParentController extends Controller
 {
-    //-------------GET ALL STAFF-------------
-    public function getAllStaff($admin_id=null){
+
+    //-------------GET ALL Parents-------------
+    public function getAllParents($admin_id=null){
+        // $parents=Parents::with('user')->get();
         if($admin_id==null){
-            $staff=Staff::with('user','school')->get();
+            $parents=Parents::with('user')->get();
         }else{
             $admin=OrganizationAdmin::where('user_id',$admin_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $staff = Staff::whereIn('school_id', $schoolIds)->with('user', 'school')->get();
+            $studentIds=Student::where('school_id',$schoolIds)->pluck('id')->toArray();
+            $parents=Parents::whereIn('student_id', $studentIds)->with('user')->get();
         }
-        return response()->json($staff, 200);
+        return response()->json($parents, 200);
     }
-    //-------------CREATE STAFF--------------
-    public function createStaff(Request $request){
+ 
+    public function createParent(Request $request){
         $validator = Validator::make($request->all(), [
-            'school_id' => ['required',Rule::exists('schools', 'id')],
-            'staff_id' =>'required|numeric',
+            'student_id' => ['required',Rule::exists('users', 'id')],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
@@ -58,7 +64,7 @@ class StaffController extends Controller
             $user->email=$request->email;
             $user->phone=$request->phone;
             $user->password=Hash::make($request['password']);
-            $user->role='staff';
+            $user->role='parent';
             $user->address=$request->address;
             $user->country=$request->country;
             $user->city=$request->city;
@@ -67,11 +73,10 @@ class StaffController extends Controller
             $user->status = $request->status;
             $user->save();
 
-            $staff=new Staff();
-            $staff->user_id = $user->id;
-            $staff->staff_id = $request->staff_id;
-            $staff->school_id = $request->school_id;
-            $staff->save();
+            $parents=new Parents();
+            $parents->parent_id = $user->id;
+            $parents->student_id = $request->student_id;
+            $parents->save();
 
             $userWallet=new Wallet();
             $userWallet->user_id=$user->id;
@@ -86,7 +91,7 @@ class StaffController extends Controller
             'user_name'=> $studentName,
             ];
             Mail::to($request->email)->send(new WelcomeEmail($mailData));
-            $response['message'] = ['Successfully created the Staff'];
+            $response['message'] = ['Successfully created the Parent Account'];
             $response['user']=$user;
             return response()->json($response, 200);
         } catch (\Exception $exception) {
@@ -99,18 +104,15 @@ class StaffController extends Controller
         }
     }
 
-    //-------------EDIT STAFF------------------
-    public function editStaff($id){
-        $school=Staff::with('user')->find($id);
-        return response()->json($school, 200);
+    public function editParent($id){
+        $parent=Parents::with('user')->find($id);
+        return response()->json($parent, 200);
     }
 
-    //-------------UPDATE STAFF--------------
-    public function updateStaff(Request $request,$id){
-        $staff=Staff::with('user')->find($id);
+    public function updateParent(Request $request,$id){
+        $staff=Parents::with('user')->find($id);
         $validator = Validator::make($request->all(), [
-            'school_id' => ['required',Rule::exists('schools', 'id')],
-            'staff_id' =>'required|numeric',
+            'student_id' => ['required',Rule::exists('students', 'id')],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$staff->user->id,
@@ -128,8 +130,7 @@ class StaffController extends Controller
         }
         try {
             DB::beginTransaction();
-            $staff->school_id = $request->school_id;;
-            $staff->staff_id = $request->staff_id;;
+            $staff->student_id = $request->student_id;;
             $staff->user->update([
                 'phone' => $request->phone,
                 'email' => $request->email,
@@ -144,7 +145,7 @@ class StaffController extends Controller
             ]);
             $staff->save();
             DB::commit();
-            $response = ['Successfully Updated the Staff'];
+            $response = ['Successfully Updated the Parent'];
             return response()->json($response, 200);
         } catch (\Exception $exception) {
             DB::rollback();
@@ -156,21 +157,20 @@ class StaffController extends Controller
         }
     }
 
-    //-------------DELETE STAFF----------------
-    public function deleteStaff($id){
+    public function deleteParent($id){
         try {
             DB::beginTransaction();
             $staff =User::findOrFail($id);
             $staff->delete();
             DB::commit();
-            $response = ['Successfully deleted Staff'];
+            $response = ['Successfully deleted Parent'];
             return response()->json($response, 200);
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {
                 dd($exception);
             } else {
-                $response['message'] = ['staff not found'];
+                $response['message'] = ['parent not found'];
                 return response()->json($response, 404);
 
             }

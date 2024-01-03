@@ -209,6 +209,10 @@ class PaymentsController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         $wallet=Wallet::where('user_id',$request->student_id)->first();
+        if(!$wallet){
+            $response['message']=["user not found"];
+            return response()->json($response, 422);
+        }
         if($wallet->ballance >= $request->amount){
             return response()->json($wallet, 200);
         }else{
@@ -227,6 +231,10 @@ class PaymentsController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         $wallet=Wallet::where('user_id',$request->student_id)->first();
+        if(!$wallet){
+            $response['message']=["user not found"];
+            return response()->json($response, 422);
+        }
         if($wallet->ballance >= $request->amount){
             $wallet->ballance = $wallet->ballance - $request->amount;
             $wallet->save();

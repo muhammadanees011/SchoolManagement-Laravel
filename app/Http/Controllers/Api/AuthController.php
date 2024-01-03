@@ -11,6 +11,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Laravel\Passport\Passport;
+use App\Mail\ForgotPasswordEmail;
+use Illuminate\Support\Facades\Mail;
+
 
 class AuthController extends Controller
 {
@@ -80,11 +83,16 @@ class AuthController extends Controller
         $user->otp = $otp;
         $user->save();
         //Send OTP to Email
-        // try {
-        //     Mail::to($request->email)->send(new ForgotPassword($user->name, $otp));
-        // } catch (\Exception $e) {
-        //     return $this->sendError($e->getMessage(), null);
-        // }
+        try {
+            $mailData = [
+            'title' => 'Reset Your Password',
+            'body' => $otp,
+            'user_name'=> $user->name,
+            ];
+            Mail::to($request->email)->send(new ForgotPasswordEmail($user->name, $otp));
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), null);
+        }
         return response()->json('Forgot Password OTP sent successfully', 200);
     }
     //--------------VERIFY OTP---------------
