@@ -8,6 +8,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Organization;
+use App\Models\Student;
+use App\Models\School;
+use App\Models\Staff;
+use App\Models\OrganizationAdmin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -16,6 +20,33 @@ use App\Http\Resources\Organization\OrganizationListResource;
 
 class OrganizationController extends Controller
 {
+    public function getOrganizationName(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id'=>'required|numeric',
+            'role'=>'required|string|max:255',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        if($request->role=='student'){
+            $student=Student::where('user_id',$request->user_id)->first();
+            $school=School::where('id',$student->school_id)->first();
+            $organization=Organization::where('id',$school->organization_id)->first();
+        }elseif($request->role=='staff'){
+            $staff=Staff::where('user_id',$request->user_id)->first();
+            $school=School::where('id',$staff->school_id)->first();
+            $organization=Organization::where('id',$school->organization_id)->first();
+        }elseif($request->role=='organization_admin'){
+            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
+            $organization=Organization::where('id',$admin->organization_id)->first();
+        }else{
+            $response["message"]="invalid user role";
+            return response()->json($response, 200);
+        }
+        $response["organization_name"]=$organization->name;
+        return response()->json($response, 200);
+    }
     //-------------GET ALL ORGANIZATIONS------------
     public function index(){
         // return OrganizationListResource::collection(Organization::all());
@@ -27,13 +58,11 @@ class OrganizationController extends Controller
         $validator = Validator::make($request->all(), [
             'name'=>'required|string|max:255',
             'email'=>'required|email|max:255',
-            'phone'=>'required|string|max:255',
+            'phone'=>'nullable|string|max:255',
             'address' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'city' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
             'zip' => 'required|string|max:255',
-            'description'=>'required|string|max:255',
             'website'=>'required|string|max:255'
         ]);
         if ($validator->fails())
@@ -49,9 +78,7 @@ class OrganizationController extends Controller
             $organization->address=$request->address;
             $organization->country=$request->country;
             $organization->city=$request->city;
-            $organization->state=$request->state;
             $organization->zip=$request->zip;
-            $organization->description=$request->description;
             $organization->website=$request->website;
             $organization->save();
             DB::commit();
@@ -75,15 +102,13 @@ class OrganizationController extends Controller
     public function update(Request $request,$id){
         $validator = Validator::make($request->all(), [
             'name'=>'required|string|max:255',
-            'description'=>'required|string|max:255',
             'website'=>'required|string|max:255',
             'country'=>'required|string|max:255',
-            'state'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
             'address'=>'required|string|max:255',
             'email'=>'required|email|max:255',
-            'phone'=>'required|string|max:255',
+            'phone'=>'nullable|string|max:255',
         ]);
         if ($validator->fails())
         {
@@ -95,11 +120,9 @@ class OrganizationController extends Controller
             $organization->name=$request->name;
             $organization->email=$request->email;
             $organization->phone=$request->phone;
-            $organization->description=$request->description;
             $organization->website=$request->website;
             $organization->country=$request->country;
             $organization->city=$request->city;
-            $organization->state=$request->state;
             $organization->address=$request->address;
             $organization->founded_date=$request->founded_date;
             $organization->save();

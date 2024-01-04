@@ -235,7 +235,7 @@ class StudentsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'phone' => 'required|string|unique:users',
+            'phone' => 'nullable|string|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'date_of_birth' => 'required|date|before_or_equal:today',
             'enrollment_date' => 'required|date|before_or_equal:today',
@@ -248,7 +248,6 @@ class StudentsController extends Controller
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'state'=>'required|string|max:255',
             'status'=>'required|string|max:255'
         ]);
         if ($validator->fails())
@@ -268,7 +267,6 @@ class StudentsController extends Controller
             $user->country=$request->country;
             $user->city=$request->city;
             $user->zip=$request->zip;
-            $user->state=$request->state;
             $user->status = $request->status;
             $user->save();
 
@@ -328,7 +326,7 @@ class StudentsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$student->user->id,
-            'phone' => 'required|string|unique:users,phone,'.$student->user->id,
+            'phone' => 'nullable|string|unique:users,phone,'.$student->user->id,
             'date_of_birth' => 'required|date|before_or_equal:today',
             'enrollment_date' => 'required|date|before_or_equal:today',
             'stage' => 'required|string|max:255',
@@ -340,7 +338,6 @@ class StudentsController extends Controller
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'state'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
@@ -368,7 +365,6 @@ class StudentsController extends Controller
                 'country' => $request->country,
                 'city' => $request->city,
                 'zip' => $request->zip,
-                'state' => $request->state,
                 'status' => $request->status,
             ];
             if ($request->password) {

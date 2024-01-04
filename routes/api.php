@@ -61,6 +61,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/editOrganization/{id}',[OrganizationController::class,'edit']);
     Route::put('/updateOrganization/{id}',[OrganizationController::class,'update']);
     Route::delete('/deleteOrganization/{id}',[OrganizationController::class,'delete']);
+    Route::post('/getOrganizationName',[OrganizationController::class,'getOrganizationName']);
     //------------Organizations Admin-------------
     Route::post('/createOrganizationAdmin',[OrganizationAdminsController::class,'createOrganizationAdmin']);
     Route::get('/getAllOrganizationAdmins',[OrganizationAdminsController::class,'getAllOrganizationAdmins']);

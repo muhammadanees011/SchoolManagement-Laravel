@@ -33,15 +33,13 @@ class SchoolsController extends Controller
             'organization_id' => 'nullable',
             'title' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'phone' => 'required|string|unique:users',
+            'phone' => 'nullable|string|unique:users',
             'website'=>'required|string|max:255',
             'address'=>'required|string|max:255',
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'state'=>'required|string|max:255',
             'tagline'=>'required|string|max:255',
-            'description'=>'required|string|max:255',
             'teachers_count'=>'required|numeric',
             'students_count'=>'required|numeric',
             'stages'=>'required|string|max:255',
@@ -62,7 +60,6 @@ class SchoolsController extends Controller
             $school=new School();
             $school->organization_id = $organizationID;
             $school->title = $request->title;
-            $school->description =$request->description;
             $school->email = $request->email;
             $school->phone = $request->phone;
             $school->tagline = $request->tagline;
@@ -71,7 +68,6 @@ class SchoolsController extends Controller
             $school->website = $request->website;
             $school->city = $request->city;
             $school->zip = $request->zip;
-            $school->state = $request->state;
             $school->stages = $request->stages;
             $school->status = $request->status;
             $school->teachers_count = $request->teachers_count;
@@ -104,15 +100,13 @@ class SchoolsController extends Controller
             'organization_id'=>'nullable',
             'title' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
-            'phone' => 'required|string',
+            'phone' => 'nullable|string',
             'website'=>'required|string|max:255',
             'address'=>'required|string|max:255',
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'state'=>'required|string|max:255',
             'tagline'=>'required|string|max:255',
-            'description'=>'required|string|max:255',
             'country'=>'required|string|max:255',
             'teachers_count'=>'required|numeric',
             'students_count'=>'required|numeric',
@@ -131,7 +125,6 @@ class SchoolsController extends Controller
             }
             $school->organization_id = $request->organization_id;
             $school->title = $request->title;
-            $school->description =$request->description;
             $school->email = $request->email;
             $school->phone = $request->phone;
             $school->tagline = $request->tagline;
@@ -139,7 +132,6 @@ class SchoolsController extends Controller
             $school->country = $request->country;
             $school->city = $request->city;
             $school->zip = $request->zip;
-            $school->state = $request->state;
             $school->stages = $request->stages;
             $school->status = $request->status;
             $school->teachers_count = $request->teachers_count;

@@ -19,6 +19,7 @@ use Stripe\Stripe as StripeGateway;
 use Stripe\Customer;
 use Stripe\PaymentMethod;
 use Stripe\Exception\CardException;
+use Illuminate\Support\Carbon;
 
 
 class PaymentsController extends Controller
@@ -48,6 +49,9 @@ class PaymentsController extends Controller
             ]);
             $user=User::where('id',$request->user_id)->first();
             $user->stripe_id=$customer->id;
+            $now = Carbon::now();
+            $user->created_at = $now;
+            $user->updated_at = $now;
             $user->save();
             return response()->json($customer, 200);
              } catch (\Exception $e) {

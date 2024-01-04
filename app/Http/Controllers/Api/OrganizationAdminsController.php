@@ -39,13 +39,12 @@ class OrganizationAdminsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'phone' => 'required|string|unique:users',
+            'phone' => 'nullable|string|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'address'=>'required|string|max:255',
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'state'=>'required|string|max:255',
             'status'=>'required|string|max:255'
         ]);
         if ($validator->fails())
@@ -65,7 +64,6 @@ class OrganizationAdminsController extends Controller
             $user->country=$request->country;
             $user->city=$request->city;
             $user->zip=$request->zip;
-            $user->state=$request->state;
             $user->status = $request->status;
             $user->save();
 
@@ -78,6 +76,7 @@ class OrganizationAdminsController extends Controller
             $userWallet->user_id=$user->id;
             $userWallet->ballance=0;
             $userWallet->save();
+            DB::commit();
             //------------SEND WELCOME MAIL------------
             $studentName = $request->first_name . ' ' . $request->last_name;
             $mailData = [
@@ -86,7 +85,6 @@ class OrganizationAdminsController extends Controller
             'user_name'=> $studentName,
             ];
             Mail::to($request->email)->send(new WelcomeEmail($mailData));
-            DB::commit();
             $response['message'] = ['Successfully created the Organization Admin'];
             $response['user']=$user;
             return response()->json($response, 200);
@@ -113,12 +111,11 @@ class OrganizationAdminsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string',
+            'phone' => 'nullable|string',
             'address'=>'required|string|max:255',
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'state'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
@@ -137,7 +134,6 @@ class OrganizationAdminsController extends Controller
             $user->country=$request->country;
             $user->city=$request->city;
             $user->zip=$request->zip;
-            $user->state=$request->state;
             $user->status = $request->status;
             if($request->password){
                 $user->password=Hash::make($request->password);
