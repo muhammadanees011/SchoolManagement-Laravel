@@ -12,18 +12,18 @@ use Illuminate\Queue\SerializesModels;
 class ForgotPasswordEmail extends Mailable
 {
     use Queueable, SerializesModels;
-
+    public $user;
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct(array $user)
     {
-        //
+        $this->user = $user;
     }
 
     public function build()
     {
-        return $this->view('emails.ForgorPasswordEmail')
+        return $this->view('emails.ForgotPasswordEmail')
             ->subject('Reset Password OTP')
             ->with('mailData', $this->user);
     }

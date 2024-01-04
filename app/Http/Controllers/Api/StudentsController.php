@@ -285,6 +285,10 @@ class StudentsController extends Controller
             $student->enrollment_date = $request->enrollment_date;
             $student->save();
 
+            $school=School::where('id',$request->school_id)->first();
+            $school->students_count=$school->students_count + 1;
+            $school->save();
+
             $userWallet=new Wallet();
             $userWallet->user_id=$user->id;
             $userWallet->ballance=0;
@@ -337,7 +341,8 @@ class StudentsController extends Controller
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
             'state'=>'required|string|max:255',
-            'status'=>'required|string|max:255'
+            'status'=>'required|string|max:255',
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
         if ($validator->fails())
         {
@@ -345,8 +350,8 @@ class StudentsController extends Controller
         }
         try {
             DB::beginTransaction();
-            $student->school_id = $request->school_id;;
-            $student->student_id = $request->student_id;;
+            $student->school_id = $request->school_id;
+            $student->student_id = $request->student_id;
             $student->stage = $request->stage;
             $student->dob = $request->date_of_birth;
             $student->emergency_contact_name = $request->emergency_contact_name;
@@ -354,18 +359,22 @@ class StudentsController extends Controller
             $student->allergies = $request->allergies;
             $student->medical_conditions = $request->medical_conditions;
             $student->enrollment_date = $request->enrollment_date;
-            $student->user->update([
+            $updateData = [
                 'phone' => $request->phone,
                 'email' => $request->email,
-                'first_name'=>$request->first_name,
-                'last_name'=>$request->last_name,
-                'address'=>$request->address,
-                'country'=>$request->country,
-                'city'=>$request->city,
-                'zip'=>$request->zip,
-                'state'=>$request->state,
-                'status'=>$request->status,
-            ]);
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'address' => $request->address,
+                'country' => $request->country,
+                'city' => $request->city,
+                'zip' => $request->zip,
+                'state' => $request->state,
+                'status' => $request->status,
+            ];
+            if ($request->password) {
+                $updateData['password'] = Hash::make($request->password);
+            }
+            $student->user->update($updateData);
             $student->save();
             DB::commit();
             $response = ['Successfully Updated the Student'];

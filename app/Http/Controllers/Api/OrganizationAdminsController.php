@@ -119,7 +119,8 @@ class OrganizationAdminsController extends Controller
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
             'state'=>'required|string|max:255',
-            'status'=>'required|string|max:255'
+            'status'=>'required|string|max:255',
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
         if ($validator->fails())
         {
@@ -138,6 +139,9 @@ class OrganizationAdminsController extends Controller
             $user->zip=$request->zip;
             $user->state=$request->state;
             $user->status = $request->status;
+            if($request->password){
+                $user->password=Hash::make($request->password);
+            }
             $user->save();
             $admin=OrganizationAdmin::where('user_id',$id)->first();
             $admin->organization_id=$request->organization_id;

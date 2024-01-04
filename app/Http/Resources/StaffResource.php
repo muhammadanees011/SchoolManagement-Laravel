@@ -16,6 +16,7 @@ class StaffResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'staff_id' => $this->staff_id,
             'upn' => $this->upn,
             'mifare_id' => $this->mifare_id,
             'site' => $this->site,
@@ -28,6 +29,7 @@ class StaffResource extends JsonResource
                 'email' => $this->user->email,
                 'phone' => $this->user->phone,
                 'role' => $this->user->role,
+                'status' => $this->user->status,
             ],
             'school' => [
                 'id' => $this->school->id,
@@ -36,6 +38,6 @@ class StaffResource extends JsonResource
                 'email' => $this->school->email,
                 'phone' => $this->school->phone,
             ],
-          ];
+        ];
     }
 }

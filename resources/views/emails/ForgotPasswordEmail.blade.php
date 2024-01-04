@@ -52,27 +52,9 @@
         <h4 style="color:#235667;">Dear, {{ $mailData['user_name'] }}!</h4>
         <p>
             We noticed that you recently requested to reset your password for your account with StudentPay. Please use the following OTP to reset your password:
-            <br><strong style="color:#235667 !important;">Password:</strong> {{ $mailData['body'] }}
+            <br><strong style="color:#235667 !important;">OTP:</strong> {{ $mailData['body'] }}
             <br>
         </p>
-        <p>
-            <strong style="color:#235667 !important;">Our Address:</strong><br>
-            The Exchange, 26 Haslucks Green Road, Shirley, Solihull, B90 2EL
-        </p>
-        <footer>
-            <p>
-                <strong>Contact Us:</strong><br>
-                Sales: 0345 0345 930<br>
-                Technical Support: 0121 387 0007
-            </p>
-            <p>
-                This is an automatic email. Do not respond to this message!
-            </p>
-            <p>
-                Best Regards,<br>
-                StudentPay Team
-            </p>
-        </footer>
     </div>
 </body>
 

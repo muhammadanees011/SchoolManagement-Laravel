@@ -122,7 +122,8 @@ class ParentController extends Controller
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
             'state'=>'required|string|max:255',
-            'status'=>'required|string|max:255'
+            'status'=>'required|string|max:255',
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
         if ($validator->fails())
         {
@@ -130,19 +131,23 @@ class ParentController extends Controller
         }
         try {
             DB::beginTransaction();
-            $staff->student_id = $request->student_id;;
-            $staff->user->update([
+            $staff->student_id = $request->student_id;
+            $updateData = [
                 'phone' => $request->phone,
                 'email' => $request->email,
-                'first_name'=>$request->first_name,
-                'last_name'=>$request->last_name,
-                'address'=>$request->address,
-                'country'=>$request->country,
-                'city'=>$request->city,
-                'zip'=>$request->zip,
-                'state'=>$request->state,
-                'status'=>$request->status,
-            ]);
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'address' => $request->address,
+                'country' => $request->country,
+                'city' => $request->city,
+                'zip' => $request->zip,
+                'state' => $request->state,
+                'status' => $request->status,
+            ];
+            if ($request->password) {
+                $updateData['password'] = Hash::make($request->password);
+            }
+            $staff->user->update($updateData);
             $staff->save();
             DB::commit();
             $response = ['Successfully Updated the Parent'];

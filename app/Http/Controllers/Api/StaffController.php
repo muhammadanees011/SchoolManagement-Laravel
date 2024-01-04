@@ -15,17 +15,19 @@ use App\Models\Wallet;
 use App\Models\OrganizationAdmin;
 use App\Models\School;
 use App\Mail\WelcomeEmail;
+use App\Http\Resources\StaffResource;
+
 
 class StaffController extends Controller
 {
     //-------------GET ALL STAFF-------------
     public function getAllStaff($admin_id=null){
         if($admin_id==null){
-            $staff=Staff::with('user','school')->get();
+        $staff=StaffResource::collection(Staff::with('user','school')->get());
         }else{
             $admin=OrganizationAdmin::where('user_id',$admin_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $staff = Staff::whereIn('school_id', $schoolIds)->with('user', 'school')->get();
+            $staff= StaffResource::collection(Staff::with('user', 'school')->whereIn('school_id', $schoolIds)->get());
         }
         return response()->json($staff, 200);
     }
@@ -72,6 +74,10 @@ class StaffController extends Controller
             $staff->staff_id = $request->staff_id;
             $staff->school_id = $request->school_id;
             $staff->save();
+
+            $school=School::where('id',$request->school_id)->first();
+            $school->teachers_count=$school->teachers_count + 1;
+            $school->save();
 
             $userWallet=new Wallet();
             $userWallet->user_id=$user->id;
@@ -120,7 +126,8 @@ class StaffController extends Controller
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
             'state'=>'required|string|max:255',
-            'status'=>'required|string|max:255'
+            'status'=>'required|string|max:255',
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
         if ($validator->fails())
         {
@@ -128,21 +135,26 @@ class StaffController extends Controller
         }
         try {
             DB::beginTransaction();
-            $staff->school_id = $request->school_id;;
-            $staff->staff_id = $request->staff_id;;
-            $staff->user->update([
-                'phone' => $request->phone,
-                'email' => $request->email,
-                'first_name'=>$request->first_name,
-                'last_name'=>$request->last_name,
-                'address'=>$request->address,
-                'country'=>$request->country,
-                'city'=>$request->city,
-                'zip'=>$request->zip,
-                'state'=>$request->state,
-                'status'=>$request->status,
-            ]);
-            $staff->save();
+                $staff->school_id = $request->school_id;
+                $staff->staff_id = $request->staff_id;
+                $updateData = [
+                    'phone' => $request->phone,
+                    'email' => $request->email,
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'address' => $request->address,
+                    'country' => $request->country,
+                    'city' => $request->city,
+                    'zip' => $request->zip,
+                    'state' => $request->state,
+                    'status' => $request->status,
+                ];
+                if ($request->password) {
+                    $updateData['password'] = Hash::make($request->password);
+                }
+                $staff->user->update($updateData);
+                $staff->save();
+
             DB::commit();
             $response = ['Successfully Updated the Staff'];
             return response()->json($response, 200);

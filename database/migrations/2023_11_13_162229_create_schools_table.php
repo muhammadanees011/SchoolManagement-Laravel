@@ -26,8 +26,8 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->string('latitude')->nullable();
             $table->string('longitude')->nullable();
-            $table->integer('teachers_count')->nullable();
-            $table->integer('students_count')->nullable();
+            $table->integer('teachers_count')->nullable()->default(0);
+            $table->integer('students_count')->nullable()->default(0);
             $table->string('stages')->nullable();
             $table->string('tagline')->nullable();
             $table->string('description')->nullable();

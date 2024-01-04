@@ -87,11 +87,11 @@ class AuthController extends Controller
             $mailData = [
             'title' => 'Reset Your Password',
             'body' => $otp,
-            'user_name'=> $user->name,
+            'user_name'=> $user->first_name,
             ];
-            Mail::to($request->email)->send(new ForgotPasswordEmail($user->name, $otp));
+            Mail::to($request->email)->send(new ForgotPasswordEmail($mailData));
         } catch (\Exception $e) {
-            return $this->sendError($e->getMessage(), null);
+            return response()->json($e->getMessage());
         }
         return response()->json('Forgot Password OTP sent successfully', 200);
     }
@@ -137,6 +137,7 @@ class AuthController extends Controller
     public function set_new_password(Request $request){
         $validator = Validator::make($request->all(), [
             'email' => 'required|exists:users,email',
+            'otp' => 'required|exists:users,otp',            
             'new_password' => 'required|min:6|confirmed',
         ]);
         if ($validator->fails()) {
@@ -144,6 +145,7 @@ class AuthController extends Controller
         }
         $user = User::where('email', $request->email)->first();
         $user->password = Hash::make($request->new_password);
+        $user->otp=null;
         $user->save();
         return response()->json('Password changed successfully.', 200);
     }

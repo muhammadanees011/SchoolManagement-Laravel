@@ -202,7 +202,7 @@ class PaymentsController extends Controller
     public function checkBalance(Request $request){
         $validator = Validator::make($request->all(), [
             'student_id' => 'required',
-            'amount' => 'required|numeric',
+            // 'amount' => 'required|numeric',
         ]);
         if ($validator->fails())
         {
@@ -213,8 +213,9 @@ class PaymentsController extends Controller
             $response['message']=["user not found"];
             return response()->json($response, 422);
         }
-        if($wallet->ballance >= $request->amount){
-            return response()->json($wallet, 200);
+        if($wallet){
+            $response['ballance']=$wallet->ballance;
+            return response()->json($response, 200);
         }else{
             $response['message']=["not enoung amount"];
             return response()->json($response, 422);
