@@ -22,6 +22,7 @@ return new class extends Migration
             $table->integer('student_id')->unique()->nullable();
             $table->string('upn')->nullable();
             $table->string('mifare_id')->unique()->nullable();
+            $table->boolean('fsm_activated')->default(false);
             $table->string('fsm_amount')->nullable(); 
             $table->string('purse_type')->nullable();
             $table->string('site')->nullable();

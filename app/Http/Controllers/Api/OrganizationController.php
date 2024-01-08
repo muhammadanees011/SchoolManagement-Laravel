@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Organization;
 use App\Models\Student;
 use App\Models\School;
+use App\Models\Parents;
 use App\Models\Staff;
 use App\Models\OrganizationAdmin;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +41,11 @@ class OrganizationController extends Controller
         }elseif($request->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $organization=Organization::where('id',$admin->organization_id)->first();
+        }elseif($request->role=='parent'){
+            $parent=Parents::where('parent_id',$request->user_id)->first();
+            $student=Student::where('id',$parent->student_id)->first();
+            $school=School::where('id',$student->school_id)->first();
+            $organization=Organization::where('id',$school->organization_id)->first();
         }else{
             $response["message"]="invalid user role";
             return response()->json($response, 200);

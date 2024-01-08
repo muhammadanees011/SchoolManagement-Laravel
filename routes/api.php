@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\OrganizationAdminsController;
 use App\Http\Controllers\Api\TransactionHistoryController;
 use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\ParentController;
+use App\Http\Controllers\Api\AttributesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,7 +55,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     //-----------CHANGE PASSWORD-----------
     Route::post('/changePassword', [AuthController::class, 'changePassword']);
-
+    //-----------PROFILE SETTINGS----------
+    Route::post('/profileSettings', [AuthController::class, 'profileSettings']);
+    
     //------------Organizations-------------
     Route::post('/createOrganization',[OrganizationController::class,'create']);
     Route::get('/getAllOrganizations',[OrganizationController::class,'index']);
@@ -77,10 +80,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/deleteSchool/{id}',[SchoolsController::class,'delete']);
     //-------------Students-----------------
     Route::post('/createStudent',[StudentsController::class,'create']);
-    Route::get('/getAllStudents/{admin_id?}',[StudentsController::class,'index']);
+    Route::post('/getAllStudents',[StudentsController::class,'index']);
     Route::get('/editStudent/{id}',[StudentsController::class,'edit']);
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
+    Route::get('/getAmountFSM/{student_id}',[StudentsController::class,'getAmountFSM']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
 
     Route::get('/getStudentsDataFromRemoteDB',[StudentsController::class,'getStudentsDataFromRemoteDB']);
@@ -88,6 +92,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/deleteStudentFromRemoteDB',[StudentsController::class,'deleteStudentFromRemoteDB']);
 
     Route::get('/getStaffDataFromRemoteDB',[StaffController::class,'getStaffDataFromRemoteDB']);
+    //--------------Attributes---------------
+    Route::post('/createAttribute',[AttributesController::class,'createAttribute']);
     //-------------Staff---------------------
     Route::post('/createStaff',[StaffController::class,'createStaff']);
     Route::put('/updateStaff/{id}',[StaffController::class,'updateStaff']);

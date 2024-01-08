@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Laravel\Passport\Passport;
 use App\Mail\ForgotPasswordEmail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 
@@ -195,5 +196,41 @@ class AuthController extends Controller
         // }
         return response()->json('Email Verification OTP sent Successfully.',200);
     }
-
+    //-------------PROFILE SETTINGS-----------
+    public function profileSettings(Request $request){
+        $user_id=Auth::user();
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required',
+            'last_name' => 'required',
+            // 'email' => 'required|email|unique:users',
+            // 'phone' => 'required|unique:users',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user_id->id,
+            'phone' => 'nullable|string|unique:users,phone,'.$user_id->id,            
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->messages()->first(), 403);
+        }
+        try {
+        DB::beginTransaction();
+        $user=User::where('id',$user_id->id)->first();
+        $created_at=$user->created_at;
+        $updated_at=$user->updated_at;
+        $user->first_name=$request->first_name;
+        $user->last_name=$request->last_name;
+        $user->email=$request->email;
+        $user->phone=$request->phone;
+        $user->created_at=$created_at;
+        $user->updated_at=$updated_at;
+        $user->save();
+        DB::commit();
+        return response()->json('Successfully updated user settings',200);
+        } catch (\Exception $exception) {
+            DB::rollback();
+            if (('APP_ENV') == 'local') {
+                dd($exception);
+            } else {
+            return response()->json($exception, 500);
+            }
+        }
+    }
 }

@@ -16,6 +16,6 @@ class Parents extends Model
     }
     public function Student()
     {
-        return $this->hasOne(User::class,'id','student_id');
+        return $this->hasMany(User::class,'id','student_id');
     }
 }

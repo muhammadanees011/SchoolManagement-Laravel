@@ -250,5 +250,4 @@ class PaymentsController extends Controller
             return response()->json($response, 422);
         }
     }
-
 }

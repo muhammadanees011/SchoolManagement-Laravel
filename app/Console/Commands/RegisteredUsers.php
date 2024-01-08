@@ -21,7 +21,7 @@ class RegisteredUsers extends Command
      *
      * @var string
      */
-    protected $signature = 'registered:users';
+    protected $signature = 'add:fsmamount';
 
     /**
      * The console command description.

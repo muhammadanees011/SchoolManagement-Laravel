@@ -11,6 +11,8 @@ use App\Models\Wallet;
 use App\Models\User;
 use App\Models\School;
 use App\Models\OrganizationAdmin;
+use App\Models\TransactionHistory;
+use App\Models\Parents;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -23,11 +25,16 @@ use App\Http\Resources\StaffResource;
 
 class StudentsController extends Controller
 {
+    //-------------GET FREE SCHOOL MEAL AMOUNT--------------
+    public function getAmountFSM($student_id){
+        $student = Student::where('user_id', $student_id)->first();
+        return response()->json($student, 200);
+    }
+    //-----------TEMP METHODS FRO REMOTE DB--------------
     public function deleteStudentFromRemoteDB(Request $request){
         DB::connection('remote_mysql')->table('ebStudent')
         ->where('ID', $request->student_id)->delete();
     }
-
     public function storeStudentInRemoteDB(Request $request){
         DB::connection('remote_mysql')->table('ebStudent')->insert([
             'firstName' => $request->firstName,
@@ -41,7 +48,8 @@ class StudentsController extends Controller
             'created' => now(),
             'modified' => now(),
         ]);
-    }
+    }//-----------END TEMP METHODS FRO REMOTE DB--------------
+
     //--------------GET STUDENTS/STAFF DATA-----------
     public function getStudentStaff(Request $request){
         $validator = Validator::make($request->all(), [
@@ -66,7 +74,6 @@ class StudentsController extends Controller
     public function getStudentsDataFromRemoteDB(){
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
-
         $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created',today())->get();
         $users = DB::table('users')->get();
         
@@ -217,13 +224,27 @@ class StudentsController extends Controller
         return response()->json($ballance, 200);
     }
     //-------------GET ALL STUDENTS-------------
-    public function index($admin_id=null){
-        if($admin_id==null){
+    public function index(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id' => ['required',Rule::exists('users', 'id')],
+            'role' =>'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        if($request->role=='super_admin'){
             $students=Student::with('user','school')->get();
-        }else{
-            $admin=OrganizationAdmin::where('user_id',$admin_id)->first();
+        }else if($request->role=='organization_admin'){
+            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
             $students = Student::whereIn('school_id', $schoolIds)->with('user', 'school')->get();
+        }else if($request->role=='staff'){
+            $user=Staff::where('user_id',$request->user_id)->first();
+            $students = Student::where('school_id', $user->school_id)->with('user', 'school')->get();
+        }else if($request->role=='parent'){
+            $studentIds=Parents::where('parent_id',$request->user_id)->pluck('student_id')->toArray();
+            $students = Student::where('id', $studentIds)->with('user', 'school')->get();
         }
         return response()->json($students, 200);
     }
@@ -248,7 +269,8 @@ class StudentsController extends Controller
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'status'=>'required|string|max:255'
+            'status'=>'required|string|max:255',
+            'fsm'=>'required|boolean'
         ]);
         if ($validator->fails())
         {
@@ -281,6 +303,7 @@ class StudentsController extends Controller
             $student->allergies = $request->allergies;
             $student->medical_conditions = $request->medical_conditions;
             $student->enrollment_date = $request->enrollment_date;
+            $student->fsm_activated= $request->fsm;
             $student->save();
 
             $school=School::where('id',$request->school_id)->first();
@@ -340,6 +363,7 @@ class StudentsController extends Controller
             'zip'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
+            'fsm'=>'required|boolean'
         ]);
         if ($validator->fails())
         {
@@ -356,6 +380,7 @@ class StudentsController extends Controller
             $student->allergies = $request->allergies;
             $student->medical_conditions = $request->medical_conditions;
             $student->enrollment_date = $request->enrollment_date;
+            $student->fsm_activated = $request->fsm;
             $updateData = [
                 'phone' => $request->phone,
                 'email' => $request->email,

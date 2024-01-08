@@ -80,6 +80,20 @@ class ParentController extends Controller
             $userWallet->user_id=$user->id;
             $userWallet->ballance=0;
             $userWallet->save();
+
+            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $name=$request->first_name . ' ' . $request->last_name;
+            $customer=$stripe->customers->create([
+            'name' => $name,
+            'email' => $request->email,
+            ]);
+            $parent=User::where('id',$user->id)->first();
+            $parent->stripe_id=$customer->id;
+            $now = Carbon::now();
+            $parent->created_at = $now;
+            $parent->updated_at = $now;
+            $parent->save();
+
             DB::commit();
             //------------SEND WELCOME MAIL------------
             $studentName = $request->first_name . ' ' . $request->last_name;
