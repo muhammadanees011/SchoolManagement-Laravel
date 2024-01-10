@@ -218,8 +218,11 @@ class PaymentsController extends Controller
         if(!$wallet){
             $response['message']=["user wallet not found"];
             return response()->json($response, 422);
+        }else if(!$student){
+            $response['message']=["user not found"];
+            return response()->json($response, 422);
         }
-        if($wallet && $student){
+        if($wallet ){
             $response['ballance']=$wallet->ballance;
             $response['fsm_activated']=$student->fsm_activated==0 ? false:true ;
             $response['fsm_amount']=$student->fsm_amount;
