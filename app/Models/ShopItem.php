@@ -13,4 +13,9 @@ class ShopItem extends Model
     {
         return $this->belongsTo(SchoolShop::class);
     }
+
+    public function Attribute()
+    {
+        return $this->hasOne(Attribute::class,'id','attribute_id');
+    }
 }

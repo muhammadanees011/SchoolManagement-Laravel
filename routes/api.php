@@ -94,6 +94,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getStaffDataFromRemoteDB',[StaffController::class,'getStaffDataFromRemoteDB']);
     //--------------Attributes---------------
     Route::post('/createAttribute',[AttributesController::class,'createAttribute']);
+    Route::get('/getAllAttributes',[AttributesController::class,'getAllAttributes']);
+    Route::get('/editAttribute/{id}',[AttributesController::class,'editAttribute']);
+    Route::put('/updateAttribute/{id}',[AttributesController::class,'updateAttribute']);
+    Route::delete('/deleteAttribute/{id}',[AttributesController::class,'deleteAttribute']);
     //-------------Staff---------------------
     Route::post('/createStaff',[StaffController::class,'createStaff']);
     Route::put('/updateStaff/{id}',[StaffController::class,'updateStaff']);
@@ -112,7 +116,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/removePaymentMethod',[PaymentsController::class,'removePaymentMethod']);
     Route::post('/setupPaymentAccount',[PaymentsController::class,'setupPaymentAccount']);
     //------------School Shop-----------------
-    Route::get('/getSchoolShop',[SchoolShopsController::class,'getSchoolShop']);
+    Route::get('/getAllSchoolShop',[SchoolShopsController::class,'getAllSchoolShop']);
     Route::post('/addItem',[SchoolShopsController::class,'addItem']);
     Route::get('/getShopItems',[SchoolShopsController::class,'getShopItems']);
     Route::get('/editShopItem/{id}',[SchoolShopsController::class,'editShopItem']);

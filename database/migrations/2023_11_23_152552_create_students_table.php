@@ -19,6 +19,8 @@ return new class extends Migration
             $table->foreign('parent_id')->references('id')->on('users')->onDelete('cascade');
             $table->bigInteger('school_id')->unsigned()->nullable();
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
+            $table->bigInteger('attribute_id')->unsigned()->nullable();
+            $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
             $table->integer('student_id')->unique()->nullable();
             $table->string('upn')->nullable();
             $table->string('mifare_id')->unique()->nullable();

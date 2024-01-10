@@ -253,6 +253,7 @@ class StudentsController extends Controller
         $validator = Validator::make($request->all(), [
             'school_id' => ['required',Rule::exists('schools', 'id')],
             'student_id' =>'required|numeric',
+            'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
@@ -296,6 +297,7 @@ class StudentsController extends Controller
             $student->user_id = $user->id;
             $student->student_id = $request->student_id;
             $student->school_id = $request->school_id;
+            $student->attribute_id = $request->attribute_id;
             $student->stage = $request->stage;
             $student->dob = $request->date_of_birth;
             $student->emergency_contact_name = $request->emergency_contact_name;
@@ -346,6 +348,7 @@ class StudentsController extends Controller
         $validator = Validator::make($request->all(), [
             'school_id' => ['required',Rule::exists('schools', 'id')],
             'student_id' =>'required|numeric',
+            'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$student->user->id,
@@ -373,6 +376,7 @@ class StudentsController extends Controller
             DB::beginTransaction();
             $student->school_id = $request->school_id;
             $student->student_id = $request->student_id;
+            $student->attribute_id = $request->attribute_id;
             $student->stage = $request->stage;
             $student->dob = $request->date_of_birth;
             $student->emergency_contact_name = $request->emergency_contact_name;

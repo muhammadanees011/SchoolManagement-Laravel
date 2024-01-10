@@ -75,6 +75,7 @@ class SchoolsController extends Controller
             $school->save();
             $shop=new SchoolShop();
             $shop->school_id=$school->id;
+            $shop->shop_name=$request->title.' '.'Shop';
             $shop->save();
             DB::commit();
             $response = ['Successfully created the School'];

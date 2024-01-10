@@ -16,7 +16,7 @@ use App\Models\Attribute;
 class AttributesController extends Controller
 {
     //-------------GET ATTRIBUTES------------------
-    public function getAttributes(){
+    public function getAllAttributes(){
         $attributes=Attribute::get();
         return response()->json($attributes, 200);
     }
@@ -54,7 +54,7 @@ class AttributesController extends Controller
             $attribute->save();
             DB::commit();
             $response = ['Successfully created the Attribute'];
-            return response()->json($user, 200);
+            return response()->json($response, 200);
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {
@@ -65,8 +65,8 @@ class AttributesController extends Controller
         }
     }
 
-    //-------------FIND ATTRIBUTE----------------
-    public function findAttribute($id){
+    //-------------EDIT ATTRIBUTE----------------
+    public function editAttribute($id){
         try {
             $attribute=Attribute::find($id);
             return response()->json($attribute, 200);
@@ -114,7 +114,7 @@ class AttributesController extends Controller
             $attribute->save();
             DB::commit();
             $response = ['Successfully updated the Attribute'];
-            return response()->json($user, 200);
+            return response()->json($response, 200);
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {
