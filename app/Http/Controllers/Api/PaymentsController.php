@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UserCard;
+use App\Models\Student;
 use App\Models\User;
 use App\Models\TransactionHistory;
 use App\Models\Wallet;
@@ -213,12 +214,15 @@ class PaymentsController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         $wallet=Wallet::where('user_id',$request->student_id)->first();
+        $student=Student::where('user_id',$request->student_id)->first();
         if(!$wallet){
-            $response['message']=["user not found"];
+            $response['message']=["user wallet not found"];
             return response()->json($response, 422);
         }
         if($wallet){
             $response['ballance']=$wallet->ballance;
+            $response['fsm_activated']=$student->fsm_activated==0 ? false:true ;
+            $response['fsm_amount']=$student->fsm_amount;
             return response()->json($response, 200);
         }else{
             $response['message']=["not enoung amount"];
