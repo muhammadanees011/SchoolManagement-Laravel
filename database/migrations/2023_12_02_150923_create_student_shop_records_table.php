@@ -16,7 +16,7 @@ return new class extends Migration
             $table->bigInteger('student_id')->unsigned()->nullable();
             $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
             $table->bigInteger('shop_id')->unsigned()->nullable();
-            $table->foreign('shop_id')->references('id')->on('school_shops')->onDelete('cascade');
+            $table->foreign('shop_id')->references('id')->on('organization_shops')->onDelete('cascade');
             $table->bigInteger('item_id')->unsigned()->nullable();
             $table->foreign('item_id')->references('id')->on('shop_items')->onDelete('cascade');
             $table->integer('quantity')->nullable();

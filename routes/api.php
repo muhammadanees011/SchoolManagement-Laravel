@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\SchoolsController;
 use App\Http\Controllers\Api\StudentsController;
 use App\Http\Controllers\Api\PaymentsController;
-use App\Http\Controllers\Api\SchoolShopsController;
+use App\Http\Controllers\Api\OrganizationShopsController;
 use App\Http\Controllers\Api\MenusController;
 use App\Http\Controllers\Api\MenuItemsController;
 use App\Http\Controllers\Api\UserCartController;
@@ -116,13 +116,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/removePaymentMethod',[PaymentsController::class,'removePaymentMethod']);
     Route::post('/setupPaymentAccount',[PaymentsController::class,'setupPaymentAccount']);
     //------------School Shop-----------------
-    Route::get('/getAllSchoolShop',[SchoolShopsController::class,'getAllSchoolShop']);
-    Route::post('/addItem',[SchoolShopsController::class,'addItem']);
-    Route::get('/getShopItems',[SchoolShopsController::class,'getShopItems']);
-    Route::get('/editShopItem/{id}',[SchoolShopsController::class,'editShopItem']);
-    Route::put('/updateShopItem/{id}',[SchoolShopsController::class,'updateShopItem']);
-    Route::delete('/deleteShopItem/{id}',[SchoolShopsController::class,'deleteShopItem']);
-    Route::get('/findShopItem/{id}',[SchoolShopsController::class,'findShopItem']);
+    Route::get('/getAllSchoolShop',[OrganizationShopsController::class,'getAllSchoolShop']);
+    Route::post('/addItem',[OrganizationShopsController::class,'addItem']);
+    Route::get('/getShopItems',[OrganizationShopsController::class,'getShopItems']);
+    Route::get('/editShopItem/{id}',[OrganizationShopsController::class,'editShopItem']);
+    Route::put('/updateShopItem/{id}',[OrganizationShopsController::class,'updateShopItem']);
+    Route::delete('/deleteShopItem/{id}',[OrganizationShopsController::class,'deleteShopItem']);
+    Route::get('/findShopItem/{id}',[OrganizationShopsController::class,'findShopItem']);
     //------------Menus-------------------
     Route::post('/addMenu',[MenusController::class,'addMenu']);
     Route::get('/editMenu/{id}',[MenusController::class,'editMenu']);

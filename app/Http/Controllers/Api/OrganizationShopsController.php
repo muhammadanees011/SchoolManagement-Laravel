@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\SchoolShop;
+use App\Models\OrganizationShop;
 use App\Models\ShopItem;
 use App\Models\Student;
 use App\Models\Staff;
@@ -16,17 +16,16 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 
-class SchoolShopsController extends Controller
+class OrganizationShopsController extends Controller
 {
     //----------GET SCHOOL SHOP---------
     public function getAllSchoolShop(){
         $user=Auth::user();
         if($user->role=='super_admin'){
-            $shops=SchoolShop::get();
+            $shops=OrganizationShop::get();
         }else if($user->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $shops=SchoolShop::whereIn('school_id',$schoolIds)->get();
+            $shops=OrganizationShop::where('organization_id',$admin->organization_id)->get();
         }
         return response()->json($shops, 200);
     }
@@ -34,17 +33,18 @@ class SchoolShopsController extends Controller
     public function getShopItems(){
         $user=Auth::user();
         if($user->role=='super_admin'){
-            $shopItems=SchoolShop::with('shopItems.attribute')->get();
+            $shopItems=OrganizationShop::with('shopItems.attribute')->get();
         }else if($user->role=='student'){
             $student=Student::where('user_id',$user->id)->first();
-            $shopItems=SchoolShop::where('school_id',$student->school_id)->with('shopItems.attribute')->get();
+            $school=School::where('id',$student->school_id)->first();
+            $shopItems=OrganizationShop::where('organization_id',$school->organization_id)->with('shopItems.attribute')->get();
         }else if($user->role=='staff'){
             $staff=Staff::where('user_id',$user->id)->first();
-            $shopItems=SchoolShop::where('school_id',$staff->school_id)->with('shopItems.attribute')->get();
+            $school=School::where('id',$staff->school_id)->first();
+            $shopItems=OrganizationShop::where('organization_id',$school->organization_id)->with('shopItems.attribute')->get();
         }else if($user->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $shopItems=SchoolShop::whereIn('school_id',$schoolIds)->with('shopItems.attribute')->get();
+            $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with('shopItems.attribute')->get();
         }
         return response()->json($shopItems, 200);
     }
@@ -69,7 +69,8 @@ class SchoolShopsController extends Controller
                 $shop_id=$request->shop_id;
             }else if($user->role=="staff"){
                 $staff=Staff::where('user_id',$user->id)->first();
-                $shop=SchoolShop::where('school_id',$staff->school_id)->first();
+                $school=School::where('id',$staff->school_id)->first();                
+                $shop=OrganizationShop::where('organization_id',$school->organization_id)->first();
                 $shop_id=$shop->id;
             }
             $item = new ShopItem();
@@ -106,7 +107,7 @@ class SchoolShopsController extends Controller
     public function updateShopItem(Request $request,$id){
         $validator = Validator::make($request->all(), [
             'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
-            'shop_id' =>['nullable',Rule::exists('school_shops', 'id')],
+            'shop_id' =>['nullable',Rule::exists('organization_shops', 'id')],
             'name' => 'required|string',
             'detail' => 'required|string',
             'price' => 'required|numeric',
@@ -123,7 +124,8 @@ class SchoolShopsController extends Controller
                 $shop_id=$request->shop_id;
             }else if($user->role=="staff"){
                 $staff=Staff::where('user_id',$user->id)->first();
-                $shop=SchoolShop::where('school_id',$staff->school_id)->first();
+                $school=School::where('id',$staff->school_id)->first();                
+                $shop=OrganizationShop::where('organization_id',$school->organization_id)->first();
                 $shop_id=$shop->id;
             }
             $item =ShopItem::find($id);

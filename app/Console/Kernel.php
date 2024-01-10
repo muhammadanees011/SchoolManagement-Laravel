@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('registered:users')->everyFiveMinutes();
+        $schedule->command('sync:users')->everyFiveMinutes();
         $schedule->command('add:fsmamount')->everyFiveMinutes();
         // $schedule->command('your:command')->twiceDaily(6, 20); //6AM and 8PM 
     }

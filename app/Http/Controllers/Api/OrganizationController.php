@@ -12,6 +12,7 @@ use App\Models\Student;
 use App\Models\School;
 use App\Models\Parents;
 use App\Models\Staff;
+use App\Models\OrganizationShop;
 use App\Models\OrganizationAdmin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -87,6 +88,10 @@ class OrganizationController extends Controller
             $organization->zip=$request->zip;
             $organization->website=$request->website;
             $organization->save();
+            $shop=new OrganizationShop();
+            $shop->organization_id=$organization->id;
+            $shop->shop_name=$request->name.' '.'Shop';
+            $shop->save();
             DB::commit();
             $response = ['Successfully created organization'];
             return response()->json($response, 200);

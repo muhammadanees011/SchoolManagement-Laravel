@@ -14,14 +14,14 @@ use App\Models\User;
 use App\Models\Student;
 use App\Models\School;
 
-class RegisteredUsers extends Command
+class SyncUsers extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'add:fsmamount';
+    protected $signature = 'sync:users';
 
     /**
      * The console command description.

@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('shop_items', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('shop_id')->unsigned()->nullable();
-            $table->foreign('shop_id')->references('id')->on('school_shops')->onDelete('cascade');
+            $table->foreign('shop_id')->references('id')->on('organization_shops')->onDelete('cascade');
             $table->bigInteger('attribute_id')->unsigned()->nullable();
             $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
+            $table->bigInteger('school_id')->unsigned()->nullable();
+            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->string('name');
             $table->string('detail')->nullable();
             $table->double('price');

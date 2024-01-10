@@ -73,10 +73,6 @@ class SchoolsController extends Controller
             $school->teachers_count = $request->teachers_count;
             $school->students_count = $request->students_count;
             $school->save();
-            $shop=new SchoolShop();
-            $shop->school_id=$school->id;
-            $shop->shop_name=$request->title.' '.'Shop';
-            $shop->save();
             DB::commit();
             $response = ['Successfully created the School'];
             return response()->json($user, 200);
