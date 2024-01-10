@@ -70,6 +70,7 @@ class SyncUsers extends Command
                 $student=new Student();
                 $student->user_id = $userId;
                 $student->school_id = $school->id;
+                $student->student_id = $record->loginID;
                 $student->upn = $record->UPN;
                 $student->mifare_id = $record->miFareID;
                 $student->fsm_amount = $record->fsmAmount;
@@ -97,7 +98,6 @@ class SyncUsers extends Command
                 //----------CREATE STUDENT WALLET-------------
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
-                $userWallet->ballance=0;
                 $userWallet->save();
                 } catch (\Exception $e) {
             }
@@ -135,6 +135,7 @@ class SyncUsers extends Command
                 $staff=new Staff();
                 $staff->user_id = $userId;
                 $staff->school_id = $school->id;
+                $student->staff_id = $record->loginID;
                 $staff->upn = $record->UPN;
                 $staff->mifare_id = $record->miFareID;
                 $staff->site = $record->site;
@@ -160,7 +161,6 @@ class SyncUsers extends Command
                 //----------CREATE STUDENT WALLET-------------
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
-                $userWallet->ballance=0;
                 $userWallet->save();
                 } catch (\Exception $e) {
             }
