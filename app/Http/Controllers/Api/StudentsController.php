@@ -76,14 +76,12 @@ class StudentsController extends Controller
         // ->select('SHOW TABLES');
         $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created',today())->get();
         $users = DB::table('users')->get();
-        
         $tableEmails = $tables->pluck('eMail')->toArray();
         $userEmails = $users->pluck('email')->toArray();
         // Identify emails that are in $tables but not in $users
         $newEmails = array_diff($tableEmails, $userEmails);
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
-
         foreach ($newRecords as $record) {
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
@@ -102,7 +100,10 @@ class StudentsController extends Controller
                 $school=School::where('title',$record->site)->first();
                 $student=new Student();
                 $student->user_id = $userId;
-                $student->school_id = $school->id;
+                if($school){
+                    $student->school_id = $school->id;
+                }
+                $student->student_id = $record->loginID;
                 $student->upn = $record->UPN;
                 $student->mifare_id = $record->miFareID;
                 $student->fsm_amount = $record->fsmAmount;
@@ -130,7 +131,6 @@ class StudentsController extends Controller
                 //----------CREATE STUDENT WALLET-------------
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
-                $userWallet->ballance=0;
                 $userWallet->save();
                 $res="Email is sent successfully.";
                 return response()->json($res);
@@ -143,7 +143,8 @@ class StudentsController extends Controller
             }
     
         }
-        return response()->json($tables);
+        $res="No New Students Found.";
+        return response()->json($res);
     }
     //--------------GET STAFF DATA------------
     public function getStaffDataFromRemoteDB(){
@@ -177,7 +178,10 @@ class StudentsController extends Controller
                 $school=School::where('title',$record->site)->first();
                 $staff=new Staff();
                 $staff->user_id = $userId;
-                $staff->school_id = $school->id;
+                if($school){
+                    $staff->school_id = $school->id;
+                }
+                $student->staff_id = $record->loginID;
                 $staff->upn = $record->UPN;
                 $staff->mifare_id = $record->miFareID;
                 $staff->site = $record->site;
@@ -203,7 +207,6 @@ class StudentsController extends Controller
                 //----------CREATE STAFF WALLET-------------
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
-                $userWallet->ballance=0;
                 $userWallet->save();
                 $res="Email is sent successfully.";
                 return response()->json($res);
