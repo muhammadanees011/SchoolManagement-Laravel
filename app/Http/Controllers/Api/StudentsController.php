@@ -255,7 +255,7 @@ class StudentsController extends Controller
     public function create(Request $request){
         $validator = Validator::make($request->all(), [
             'school_id' => ['required',Rule::exists('schools', 'id')],
-            'student_id' =>'required|numeric',
+            'student_id' =>'required|string|max:255',
             'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -350,7 +350,7 @@ class StudentsController extends Controller
         $student=Student::with('user')->find($id);
         $validator = Validator::make($request->all(), [
             'school_id' => ['required',Rule::exists('schools', 'id')],
-            'student_id' =>'required|numeric',
+            'student_id' =>'required|string|max:255',
             'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
