@@ -223,9 +223,13 @@ class PaymentsController extends Controller
             return response()->json($response, 422);
         }
         if($wallet ){
-            $response['ballance']=$wallet->ballance;
-            $response['fsm_activated']=$student->fsm_activated==0 ? false:true ;
-            $response['fsm_amount']=$student->fsm_amount ? (float)number_format($student->fsm_amount, 2) :(float)number_format(0, 2);
+            if($student->fsm_activated){
+                $response['ballance']=$wallet->ballance + ($student->fsm_amount ? (float)$student->fsm_amount : 0 );
+            }else if(!$student->fsm_activated){
+                $response['ballance']=$wallet->ballance;
+            }
+            // $response['fsm_activated']=$student->fsm_activated==0 ? false:true ;
+            // $response['fsm_amount']=$student->fsm_amount ? (float)number_format($student->fsm_amount, 2) :(float)number_format(0, 2);
             return response()->json($response, 200);
         }else{
             $response['message']=["not enoung amount"];
@@ -242,14 +246,38 @@ class PaymentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $wallet=Wallet::where('user_id',$request->student_id)->first();
-        if(!$wallet){
+        $student=Student::where('student_id',$request->student_id)->first();
+        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        if(!$student){
             $response['message']=["user not found"];
             return response()->json($response, 422);
+        }else if(!$wallet){
+            $response['message']=["user wallet not found"];
+            return response()->json($response, 422);
         }
-        if($wallet->ballance >= $request->amount){
-            $wallet->ballance = $wallet->ballance - $request->amount;
-            $wallet->save();
+        $fsmAmount=$student->fsm_amount ? (float)$student->fsm_amount : 0 ;
+        if($student->fsm_activated){
+            $netBalance=$wallet->ballance + $fsmAmount;
+        }else if(!$student->fsm_activated){
+            $netBalance=$wallet->ballance;
+        }
+        if($netBalance >= $request->amount){
+            if($fsmAmount>=$request->amount){
+                $student->fsm_amount=$fsmAmount-$request->amount;
+                $student->save();
+            }else if($fsmAmount<$request->amount){
+                $student->fsm_amount=0;
+                $student->save();
+                $chargeBallance=$request->amount - $fsmAmount;
+                $wallet->ballance = $wallet->ballance - $chargeBallance;
+                $wallet->save();
+            }
+            //--------Save Transaction History-----------
+            $history=new TransactionHistory();
+            $history->user_id=$student->user_id;
+            $history->acct_id='acct_1NlWiGGYrt7SylQr';
+            $history->amount=$request->amount;
+            $history->save();
             $response['message']=["Payment Successfull"];
             return response()->json($response, 200);
         }else{
