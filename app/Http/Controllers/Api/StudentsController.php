@@ -223,7 +223,7 @@ class StudentsController extends Controller
 
     public function getStudentBalance($id){
         $wallet=Wallet::where('user_id',$id)->first();
-        $ballance=$wallet->ballance;
+        $ballance=$wallet ? $wallet->ballance:0;
         return response()->json($ballance, 200);
     }
     //-------------GET ALL STUDENTS-------------

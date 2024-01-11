@@ -213,19 +213,19 @@ class PaymentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $wallet=Wallet::where('user_id',$request->student_id)->first();
-        $student=Student::where('user_id',$request->student_id)->first();
-        if(!$wallet){
-            $response['message']=["user wallet not found"];
-            return response()->json($response, 422);
-        }else if(!$student){
+        $student=Student::where('student_id',$request->student_id)->first();
+        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        if(!$student){
             $response['message']=["user not found"];
+            return response()->json($response, 422);
+        }else if(!$wallet){
+            $response['message']=["user wallet not found"];
             return response()->json($response, 422);
         }
         if($wallet ){
             $response['ballance']=$wallet->ballance;
             $response['fsm_activated']=$student->fsm_activated==0 ? false:true ;
-            $response['fsm_amount']=$student->fsm_amount;
+            $response['fsm_amount']=$student->fsm_amount ? $student->fsm_amount :0;
             return response()->json($response, 200);
         }else{
             $response['message']=["not enoung amount"];
