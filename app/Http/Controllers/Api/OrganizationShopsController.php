@@ -52,7 +52,7 @@ class OrganizationShopsController extends Controller
     public function addItem(Request $request){
         $validator = Validator::make($request->all(), [
             'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
-            'shop_id' =>['nullable',Rule::exists('school_shops', 'id')],
+            'shop_id' =>['nullable',Rule::exists('organization_shops', 'id')],
             'name' => 'required|string',
             'detail' => 'required|string',
             'price' => 'required|numeric',
