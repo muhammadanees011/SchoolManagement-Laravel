@@ -225,7 +225,7 @@ class PaymentsController extends Controller
         if($wallet ){
             $response['ballance']=$wallet->ballance;
             $response['fsm_activated']=$student->fsm_activated==0 ? false:true ;
-            $response['fsm_amount']=$student->fsm_amount ? $student->fsm_amount :0;
+            $response['fsm_amount']=$student->fsm_amount ? (float)number_format($student->fsm_amount, 2) :(float)number_format(0, 2);
             return response()->json($response, 200);
         }else{
             $response['message']=["not enoung amount"];
