@@ -74,7 +74,6 @@ class OrganizationAdminsController extends Controller
 
             $userWallet=new Wallet();
             $userWallet->user_id=$user->id;
-            $userWallet->ballance=0;
             $userWallet->save();
             DB::commit();
             //------------SEND WELCOME MAIL------------

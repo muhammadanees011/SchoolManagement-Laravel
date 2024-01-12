@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
             $table->bigInteger('school_id')->unsigned()->nullable();
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
+            $table->json('attributes')->default(json_encode([]));
             $table->string('name');
             $table->string('detail')->nullable();
             $table->double('price');

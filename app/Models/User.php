@@ -54,4 +54,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(OrganizationAdmin::class);
     }
+
+    public function Balance()
+    {
+        return $this->hasOne(Wallet::class,'user_id','id');
+    }
 }

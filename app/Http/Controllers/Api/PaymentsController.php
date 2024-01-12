@@ -275,7 +275,7 @@ class PaymentsController extends Controller
             //--------Save Transaction History-----------
             $history=new TransactionHistory();
             $history->user_id=$student->user_id;
-            $history->acct_id='acct_1NlWiGGYrt7SylQr';
+            $history->type='pos_transaction';
             $history->amount=$request->amount;
             $history->save();
             $response['message']=["Payment Successfull"];

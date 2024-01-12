@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class ShopItem extends Model
 {
     use HasFactory;
+    protected $casts = [
+        'attributes' => 'json',
+    ];
 
     public function schoolShop()
     {

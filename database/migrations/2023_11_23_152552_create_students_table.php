@@ -21,11 +21,12 @@ return new class extends Migration
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->bigInteger('attribute_id')->unsigned()->nullable();
             $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
+            $table->json('attributes')->default(json_encode([]));
             $table->string('student_id')->unique()->nullable();
             $table->string('upn')->nullable();
             $table->string('mifare_id')->unique()->nullable();
             $table->boolean('fsm_activated')->default(false);
-            $table->string('fsm_amount')->nullable(); 
+            $table->double('fsm_amount')->default(0); 
             $table->string('purse_type')->nullable();
             $table->string('site')->nullable();
             $table->date('dob')->nullable();

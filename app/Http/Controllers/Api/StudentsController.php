@@ -237,17 +237,17 @@ class StudentsController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         if($request->role=='super_admin'){
-            $students=Student::with('user','school')->get();
+            $students=Student::with('user.balance','school')->get();
         }else if($request->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $students = Student::whereIn('school_id', $schoolIds)->with('user', 'school')->get();
+            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')->get();
         }else if($request->role=='staff'){
             $user=Staff::where('user_id',$request->user_id)->first();
-            $students = Student::where('school_id', $user->school_id)->with('user', 'school')->get();
+            $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')->get();
         }else if($request->role=='parent'){
             $studentIds=Parents::where('parent_id',$request->user_id)->pluck('student_id')->toArray();
-            $students = Student::where('id', $studentIds)->with('user', 'school')->get();
+            $students = Student::where('id', $studentIds)->with('user.balance', 'school')->get();
         }
         return response()->json($students, 200);
     }
@@ -257,6 +257,7 @@ class StudentsController extends Controller
             'school_id' => ['required',Rule::exists('schools', 'id')],
             'student_id' =>'required|string|max:255',
             'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
+            'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
@@ -301,6 +302,7 @@ class StudentsController extends Controller
             $student->student_id = $request->student_id;
             $student->school_id = $request->school_id;
             $student->attribute_id = $request->attribute_id;
+            $student->attributes =$request["attributes"];
             $student->stage = $request->stage;
             $student->dob = $request->date_of_birth;
             $student->emergency_contact_name = $request->emergency_contact_name;
@@ -334,7 +336,7 @@ class StudentsController extends Controller
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {
-                dd($exception);
+                return response()->json($exception, 500);
             } else {
             return response()->json($exception, 500);
             }
@@ -342,8 +344,10 @@ class StudentsController extends Controller
     }
     //-------------EDIT STUDENT------------------
     public function edit($id){
-        $school=Student::with('user')->find($id);
-        return response()->json($school, 200);
+        $student=Student::with('user')->find($id);
+        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        $student['balance']=$wallet->ballance ? $wallet->ballance :0;
+        return response()->json($student, 200);
     }
     //-------------UPDATE STUDENT--------------
     public function update(Request $request,$id){
@@ -369,7 +373,8 @@ class StudentsController extends Controller
             'zip'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
-            'fsm'=>'required|boolean'
+            'fsm'=>'required|boolean',
+            'balance' => 'nullable|numeric',
         ]);
         if ($validator->fails())
         {
@@ -402,6 +407,9 @@ class StudentsController extends Controller
             if ($request->password) {
                 $updateData['password'] = Hash::make($request->password);
             }
+            $wallet=Wallet::where('user_id',$student->user_id)->first();
+            $wallet->ballance=$request->balance;
+            $wallet->save();
             $student->user->update($updateData);
             $student->save();
             DB::commit();

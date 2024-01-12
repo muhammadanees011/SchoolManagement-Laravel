@@ -11,6 +11,7 @@ use App\Models\Staff;
 use App\Models\OrganizationAdmin;
 use App\Models\User;
 use App\Models\School;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -37,7 +38,18 @@ class OrganizationShopsController extends Controller
         }else if($user->role=='student'){
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
-            $shopItems=OrganizationShop::where('organization_id',$school->organization_id)->with('shopItems.attribute')->get();
+            $attributeValues = $student->attributes;
+            $shopItems = OrganizationShop::where('organization_id', $school->organization_id)
+            ->with(['shopItems' => function ($query) use ($attributeValues) {
+                $query->where(function ($subQuery) use ($attributeValues) {
+                    foreach ($attributeValues as $value) {
+                        $subQuery->orWhereJsonContains('attributes', $value);
+                    }
+                    // Include items with empty attributes as well
+                    $subQuery->orWhereJsonLength('attributes', 0);
+                });
+            }])
+            ->get();
         }else if($user->role=='staff'){
             $staff=Staff::where('user_id',$user->id)->first();
             $school=School::where('id',$staff->school_id)->first();
@@ -53,6 +65,7 @@ class OrganizationShopsController extends Controller
         $validator = Validator::make($request->all(), [
             'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'shop_id' =>['nullable',Rule::exists('organization_shops', 'id')],
+            'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
             'name' => 'required|string',
             'detail' => 'required|string',
             'price' => 'required|numeric',
@@ -76,6 +89,7 @@ class OrganizationShopsController extends Controller
             $item = new ShopItem();
             $item->shop_id=$shop_id;
             $item->attribute_id=$request->attribute_id;
+            $item->attributes =$request["attributes"];
             $item->name=$request->name;
             $item->detail=$request->detail;
             $item->price=$request->price;
@@ -87,7 +101,7 @@ class OrganizationShopsController extends Controller
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {
-                dd($exception);
+                return response()->json($exception, 500);
             } else {
                 return response()->json($exception, 500);
             }

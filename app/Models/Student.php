@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Student extends Model
 {
     use HasFactory;
+    protected $casts = [
+        'attributes' => 'json',
+    ];
     public function User()
     {
         return $this->hasOne(User::class,'id','user_id');

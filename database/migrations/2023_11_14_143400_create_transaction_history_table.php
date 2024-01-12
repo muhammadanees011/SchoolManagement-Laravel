@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('acct_id');
+            $table->string('acct_id')->nullable();
             $table->double('amount')->nullable();
-            $table->enum('type',['trip_funds','meal_funds','health_care','school_shop_funds','top_up']);
+            $table->enum('type', ['trip_funds', 'meal_funds', 'health_care', 'school_shop_funds', 'top_up','pos_transaction'])->nullable()->default(null);
             $table->enum('status',['successful','failed','pending','deleted'])->default('successful');
             $table->timestamps();
         });
