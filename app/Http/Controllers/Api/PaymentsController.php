@@ -214,11 +214,12 @@ class PaymentsController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         $student=Student::where('student_id',$request->student_id)->first();
-        $wallet=Wallet::where('user_id',$student->user_id)->first();
         if(!$student){
             $response['message']=["user not found"];
             return response()->json($response, 422);
-        }else if(!$wallet){
+        }
+        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        if(!$wallet){
             $response['message']=["user wallet not found"];
             return response()->json($response, 422);
         }
@@ -247,11 +248,12 @@ class PaymentsController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         $student=Student::where('student_id',$request->student_id)->first();
-        $wallet=Wallet::where('user_id',$student->user_id)->first();
         if(!$student){
             $response['message']=["user not found"];
             return response()->json($response, 422);
-        }else if(!$wallet){
+        }
+        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        if(!$wallet){
             $response['message']=["user wallet not found"];
             return response()->json($response, 422);
         }
