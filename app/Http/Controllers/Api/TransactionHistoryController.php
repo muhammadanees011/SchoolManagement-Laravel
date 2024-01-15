@@ -12,9 +12,32 @@ use App\Models\TransactionHistory;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class TransactionHistoryController extends Controller
 {
+    //-------------GET TOTAL Transactions--------------
+    public function getTotalTransactions(){
+        $user=Auth::user();
+        if($user->role=='super_admin'){
+            $transactions = TransactionHistory::sum('amount');
+        }else if($user->role=='organization_admin'){
+            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+            $studentIds = Student::where('school_id',$schoolIds)->pluck('user_id')->toArray();
+            $transactions = TransactionHistory::whereIn('user_id',$studentIds)->sum('amount');
+        }else if($user->role=='staff'){
+            $staff=Staff::with('school')->where('user_id',$user->id)->first();
+            $schoolIds=School::where('organization_id',$staff->school->organization_id)->pluck('id')->toArray();
+            $studentIds = Student::where('school_id',$schoolIds)->pluck('user_id')->toArray();
+            $transactions = TransactionHistory::whereIn('user_id',$studentIds)->sum('amount');
+        }else if($user->role=='student'){
+            $transactions = TransactionHistory::where('user_id',$user->id)->sum('amount');
+        }else if($user->role=='parent'){
+            $transactions=0;
+        }
+        return response()->json($transactions, 200);
+    }
     //----------GET TRANSACTION LIST-------------
     public function getTransactionHistory(Request $request){
         $validator = Validator::make($request->all(), [

@@ -8,15 +8,36 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\School;
 use App\Models\User;
 use App\Models\SchoolShop;
+use App\Models\Staff;
+use App\Models\Student;
+use App\Models\OrganizationAdmin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\Organization\list;
-use App\Models\OrganizationAdmin;
 
 class SchoolsController extends Controller
 {
+    //-------------GET TOTAL SCHOOLS------------
+    public function totalSchools(){
+        $user=Auth::user();
+        if($user->role=='super_admin'){
+            $schools=School::count();
+        }else if($user->role=='organization_admin'){
+            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+            $schools=School::where('organization_id',$admin->organization_id)->count();
+        }else if($user->role=='staff'){
+            $staff=Staff::with('school')->where('user_id',$user->id)->first();
+            $schools=School::where('organization_id',$staff->school->organization_id)->count();
+        }else if($user->role=='student'){
+            $student=Student::with('school')->where('user_id',$user->id)->first();
+            $schools=School::where('organization_id',$student->school->organization_id)->count();
+        }else if($user->role=='parent'){
+            $schools=1;
+        }
+        return response()->json($schools, 200);
+    }
     //-------------GET ALL SCHOOLS------------
     public function index($admin_id=null){
         if($admin_id==null){

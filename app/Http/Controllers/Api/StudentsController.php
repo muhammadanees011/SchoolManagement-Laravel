@@ -22,9 +22,31 @@ use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\StudentResource;
 use App\Http\Resources\StaffResource;
+use Illuminate\Support\Facades\Auth;
 
 class StudentsController extends Controller
 {
+    //-------------GET TOTAL STUDENTS--------------
+    public function getTotalStudents(){
+        $user=Auth::user();
+        if($user->role=='super_admin'){
+            $student = Student::count();
+        }else if($user->role=='organization_admin'){
+            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+            $student = Student::whereIn('school_id',$schoolIds)->count();
+        }else if($user->role=='staff'){
+            $staff=Staff::with('school')->where('user_id',$user->id)->first();
+            $schoolIds=School::where('organization_id',$staff->school->organization_id)->pluck('id')->toArray();
+            $student = Student::whereIn('school_id',$schoolIds)->count();
+        }else if($user->role=='student'){
+            $student=Student::where('user_id',$user->id)->first();
+            $student=Student::where('school_id',$student->school_id)->count();
+        }else if($user->role=='parent'){
+            $student=1;
+        }
+        return response()->json($student, 200);
+    }
     //-------------GET FREE SCHOOL MEAL AMOUNT--------------
     public function getAmountFSM($student_id){
         $student = Student::where('user_id', $student_id)->first();

@@ -287,4 +287,35 @@ class PaymentsController extends Controller
             return response()->json($response, 422);
         }
     }
+    //---------------REFUND THE AMOUNT----------------
+    public function refundAmount(Request $request){
+        $validator = Validator::make($request->all(), [
+            'student_id' => 'required',
+            'amount' => 'required|numeric|gt:0',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        $student=Student::where('student_id',$request->student_id)->first();
+        if(!$student){
+            $response['message']=["user not found"];
+            return response()->json($response, 422);
+        }
+        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        if(!$wallet){
+            $response['message']=["user wallet not found"];
+            return response()->json($response, 422);
+        }
+        $wallet->ballance = $wallet->ballance + $request->amount;
+        $wallet->save();
+        //--------Save Transaction History-----------
+        $history=new TransactionHistory();
+        $history->user_id=$student->user_id;
+        $history->type='pos_refund';
+        $history->amount=$request->amount;
+        $history->save();
+        $response['message']=["Refund Successfull"];
+        return response()->json($response, 200);
+    }
 }

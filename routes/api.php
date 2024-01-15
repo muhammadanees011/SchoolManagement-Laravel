@@ -47,6 +47,7 @@ Route::post('/set_new_password', [AuthController::class, 'set_new_password']);
 
 Route::post('/checkBalance', [PaymentsController::class, 'checkBalance']);
 Route::post('/redeemBalance', [PaymentsController::class, 'redeemBalance']);
+Route::post('/refundAmount', [PaymentsController::class, 'refundAmount']);
 Route::post('/getStudentStaff',[StudentsController::class,'getStudentStaff']);
 
 
@@ -78,12 +79,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/editSchool/{id}',[SchoolsController::class,'edit']);
     Route::put('/updateSchool/{id}/{admin_id?}',[SchoolsController::class,'update']);
     Route::delete('/deleteSchool/{id}',[SchoolsController::class,'delete']);
+    Route::get('/totalSchools',[SchoolsController::class,'totalSchools']);
     //-------------Students-----------------
     Route::post('/createStudent',[StudentsController::class,'create']);
     Route::post('/getAllStudents',[StudentsController::class,'index']);
     Route::get('/editStudent/{id}',[StudentsController::class,'edit']);
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
+    Route::get('/getTotalStudents',[StudentsController::class,'getTotalStudents']);
     Route::get('/getAmountFSM/{student_id}',[StudentsController::class,'getAmountFSM']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
 
@@ -143,6 +146,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/getTransactionHistory', [TransactionHistoryController::class, 'getTransactionHistory']);
     Route::delete('/deleteTransactionHistory/{id}', [TransactionHistoryController::class, 'deleteTransactionHistory']);
     Route::post('/filterTransactionHistory', [TransactionHistoryController::class, 'filterTransactionHistory']);
+    Route::get('/getTotalTransactions', [TransactionHistoryController::class, 'getTotalTransactions']);
     //------------stripe-----------
     Route::post('/createCard', [PaymentsController::class, 'createCard']);
     Route::post('/createCustomer', [PaymentsController::class, 'createCustomer']);
