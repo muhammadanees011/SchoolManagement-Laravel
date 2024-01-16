@@ -378,6 +378,7 @@ class StudentsController extends Controller
             'school_id' => ['required',Rule::exists('schools', 'id')],
             'student_id' =>'required|string|max:255',
             'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
+            'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$student->user->id,
@@ -407,6 +408,7 @@ class StudentsController extends Controller
             $student->school_id = $request->school_id;
             $student->student_id = $request->student_id;
             $student->attribute_id = $request->attribute_id;
+            $student->attributes =$request["attributes"];
             $student->stage = $request->stage;
             $student->dob = $request->date_of_birth;
             $student->emergency_contact_name = $request->emergency_contact_name;

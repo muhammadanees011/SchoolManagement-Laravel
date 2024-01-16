@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\TransactionHistoryController;
 use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\ParentController;
 use App\Http\Controllers\Api\AttributesController;
+use App\Http\Controllers\Api\TripsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -154,4 +155,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/removePaymentMethod', [PaymentsController::class, 'removePaymentMethod']);
     Route::get('/getWallet/{id}', [PaymentsController::class, 'getWallet']);
     Route::post('payment/initiate', [PaymentsController::class, 'initiatePayment']);
+    //------------Trips---------------------
+    Route::post('/createTrip',[TripsController::class,'createTrip']);
+
 });

@@ -122,6 +122,7 @@ class OrganizationShopsController extends Controller
         $validator = Validator::make($request->all(), [
             'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'shop_id' =>['nullable',Rule::exists('organization_shops', 'id')],
+            'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
             'name' => 'required|string',
             'detail' => 'required|string',
             'price' => 'required|numeric',
@@ -145,6 +146,7 @@ class OrganizationShopsController extends Controller
             $item =ShopItem::find($id);
             $item->attribute_id=$request->attribute_id;
             $item->shop_id=$shop_id;
+            $item->attributes =$request["attributes"];
             $item->name=$request->name;
             $item->detail=$request->detail;
             $item->price=$request->price;

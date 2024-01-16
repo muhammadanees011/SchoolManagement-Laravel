@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('course_id')->unsigned()->nullable();
             $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
+            $table->bigInteger('organization_id')->unsigned()->nullable();
+            $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
+            $table->json('attributes')->nullable();
             $table->string('title');
             $table->string('description');
             $table->integer('total_booking')->nullable();
