@@ -157,5 +157,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('payment/initiate', [PaymentsController::class, 'initiatePayment']);
     //------------Trips---------------------
     Route::post('/createTrip',[TripsController::class,'createTrip']);
-
+    Route::get('/findTrip/{id?}',[TripsController::class,'findTrip']);
+    Route::put('/updateTrip/{id}',[TripsController::class,'updateTrip']);
+    Route::delete('/deleteTrip/{id}',[TripsController::class,'deleteTrip']);
+    Route::get('/getAllTrips',[TripsController::class,'getAllTrips']);
 });

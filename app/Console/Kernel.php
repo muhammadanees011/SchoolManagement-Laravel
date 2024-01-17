@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('sync:users')->weekdays()->everyFiveMinutes();
-        $schedule->command('add:fsmamount')->weekdays()->everyFiveMinutes();
+        $schedule->command('add:fsmamount')->weekdays()->daily();
         // $schedule->command('your:command')->twiceDaily(6, 20); //6AM and 8PM 
     }
 

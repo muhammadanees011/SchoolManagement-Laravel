@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
             $table->json('attributes')->nullable();
             $table->string('title');
-            $table->string('description');
+            $table->text('description');
             $table->integer('total_booking')->nullable();
             $table->string('accomodation_details')->nullable();
             $table->string('transportation_details')->nullable();

@@ -8,6 +8,7 @@ use App\Models\Trip;
 use App\Models\OrganizationAdmin;
 use App\Models\Staff;
 use App\Models\School;
+use App\Models\Student;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -16,6 +17,33 @@ use Illuminate\Support\Facades\Auth;
 
 class TripsController extends Controller
 {
+    public function getAllTrips(){
+        $user=Auth::user();
+        if($user->role=='super_admin'){
+            $trips=Trip::with('Organization')->get();
+        }else if($user->role=='student'){
+            $student=Student::where('user_id',$user->id)->first();
+            $school=School::where('id',$student->school_id)->first();
+            $attributeValues = $student->attributes;
+            $trips = Trip::where('organization_id', $school->organization_id)
+            ->where(function ($query) use ($attributeValues) {
+                foreach ($attributeValues as $value) {
+                    $query->orWhereJsonContains('attributes', $value);
+                }
+                // Include items with empty attributes as well
+                $query->orWhereJsonLength('attributes', 0);
+            })
+            ->get();
+        }else if($user->role=='staff'){
+            $staff=Staff::where('user_id',$user->id)->first();
+            $school=School::where('id',$staff->school_id)->first();
+            $trips=Trip::where('organization_id',$school->organization_id)->get();
+        }else if($user->role=='organization_admin'){
+            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+            $trips=Trip::where('organization_id',$admin->organization_id)->get();
+        }
+        return response()->json($trips, 200);
+    }
     //------------CREATE TRIP--------------
     public function createTrip(Request $request){
         $validator = Validator::make($request->all(), [
@@ -23,11 +51,11 @@ class TripsController extends Controller
             'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
             'title' => 'required|string',
             'description' => 'nullable|string',
-            'total_booking' => 'required|numeric',
+            'total_seats' => 'required|numeric',
             'accomodation_details'=>'required|string',
             'start_date'=>'required|string',
             'end_date'=>'required|string',
-            'budget'=>'required|numeric',
+            'total_funds'=>'required|numeric',
         ]);
         if ($validator->fails())
         {
@@ -49,13 +77,14 @@ class TripsController extends Controller
             }
             $trip = new Trip();
             $trip->organization_id=$organization_id;
-            $trip->attributes =$request["attributes"];
+            $trip->attributes=$request["attributes"];
             $trip->title=$request->title;
             $trip->description=$request->description;
             $trip->accomodation_details=$request->accomodation_details;
             $trip->start_date=$request->start_date;
             $trip->end_date=$request->end_date;
-            $trip->budget=$request->budget;
+            $trip->budget=$request->total_funds;
+            $trip->total_booking=$request->total_seats;
             $trip->save();
             DB::commit();
             $response = ['Successfully Created Trip'];
@@ -82,11 +111,11 @@ class TripsController extends Controller
             'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
             'title' => 'required|string',
             'description' => 'nullable|string',
-            'total_booking' => 'required|numeric',
+            'total_seats' => 'required|numeric',
             'accomodation_details'=>'required|string',
             'start_date'=>'required|string',
             'end_date'=>'required|string',
-            'budget'=>'required|numeric',
+            'total_funds'=>'required|numeric',
         ]);
         if ($validator->fails())
         {
@@ -114,7 +143,8 @@ class TripsController extends Controller
             $trip->accomodation_details=$request->accomodation_details;
             $trip->start_date=$request->start_date;
             $trip->end_date=$request->end_date;
-            $trip->budget=$request->budget;
+            $trip->budget=$request->total_funds;
+            $trip->total_booking=$request->total_seats;
             $trip->save();
             DB::commit();
             $response = ['Successfully Updated Trip'];
