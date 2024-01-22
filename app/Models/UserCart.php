@@ -13,4 +13,8 @@ class UserCart extends Model
     {
         return $this->hasOne(ShopItem::class,'id','shop_item_id');
     }
+    public function Trip()
+    {
+        return $this->hasOne(Trip::class,'id','trip_id');
+    }
 }

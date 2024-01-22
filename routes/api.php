@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\ParentController;
 use App\Http\Controllers\Api\AttributesController;
 use App\Http\Controllers\Api\TripsController;
+use App\Http\Controllers\Api\PermissionsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -141,8 +142,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getItemsByMenuId/{id}',[MenuItemsController::class,'getItemsByMenuId']);
     //----------Item Cart--------------------
     Route::post('/addItemToCart', [UserCartController::class, 'addItemToCart']);
+    Route::post('/addTripToCart', [UserCartController::class, 'addTripToCart']);
     Route::post('/removeItemFromCart', [UserCartController::class, 'removeItemFromCart']);
     Route::get('/getUserCartItems', [UserCartController::class, 'getUserCartItems']);
+    Route::post('/checkout', [UserCartController::class, 'checkout']);
     //----------Transaction History----------
     Route::post('/getTransactionHistory', [TransactionHistoryController::class, 'getTransactionHistory']);
     Route::delete('/deleteTransactionHistory/{id}', [TransactionHistoryController::class, 'deleteTransactionHistory']);
@@ -161,4 +164,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::put('/updateTrip/{id}',[TripsController::class,'updateTrip']);
     Route::delete('/deleteTrip/{id}',[TripsController::class,'deleteTrip']);
     Route::get('/getAllTrips',[TripsController::class,'getAllTrips']);
+    Route::get('/getTripParticipants/{id}',[TripsController::class,'getTripParticipants']);
+    //------------Permissions----------------
+    Route::get('/getAllPermissions',[PermissionsController::class,'getAllPermissions']);
+    Route::get('/getUserPermissions/{id?}',[PermissionsController::class,'getUserPermissions']);
+    Route::post('/updateUserPermissions',[PermissionsController::class,'updateUserPermissions']);
 });

@@ -41,7 +41,8 @@ class SyncUsers extends Command
     }
 
     private function storeNewStudent(){
-        $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created',today())->get();
+        // $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created',today())->get();
+        $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $users = DB::table('users')->get();
         
         $tableEmails = $tables->pluck('eMail')->toArray();
@@ -83,7 +84,7 @@ class SyncUsers extends Command
                     'body' => $randomPassword,
                     'user_name'=> $studentName,
                 ];
-                Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
+                // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
                 //----------CREATE STRIPE CUSTOMER------------
                 $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
                 $customer=$stripe->customers->create([
@@ -106,7 +107,8 @@ class SyncUsers extends Command
     }
 
     private function storeNewStaff(){
-        $tables = DB::connection('remote_mysql')->table('ebStaff')->whereDate('created',today())->get();
+        // $tables = DB::connection('remote_mysql')->table('ebStaff')->whereDate('created',today())->get();
+        $tables = DB::connection('remote_mysql')->table('ebStaff')->get();
         $users = DB::table('users')->get();
         
         $tableEmails = $tables->pluck('eMail')->toArray();
@@ -146,7 +148,7 @@ class SyncUsers extends Command
                     'body' => $randomPassword,
                     'user_name'=> $studentName,
                 ];
-                Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
+                // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
                 //----------CREATE STRIPE CUSTOMER------------
                 $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
                 $customer=$stripe->customers->create([

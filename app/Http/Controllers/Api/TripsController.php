@@ -9,6 +9,8 @@ use App\Models\OrganizationAdmin;
 use App\Models\Staff;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\TripParticipant;
+use App\Http\Resources\TripParticipantResource;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -25,7 +27,7 @@ class TripsController extends Controller
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
             $attributeValues = $student->attributes;
-            $trips = Trip::where('organization_id', $school->organization_id)
+            $trips = Trip::with('cart')->where('organization_id', $school->organization_id)
             ->where(function ($query) use ($attributeValues) {
                 foreach ($attributeValues as $value) {
                     $query->orWhereJsonContains('attributes', $value);
@@ -173,6 +175,20 @@ class TripsController extends Controller
                 $response['message'] = ['Trip not found'];
                 return response()->json($response, 404);
 
+            }
+        }
+    }
+    //--------------TRIP PARTICIPANTS--------------
+    public function getTripParticipants($id){
+        try{
+        $trip = TripParticipantResource::collection(TripParticipant::where('trip_id', $id)->get());
+        return response()->json($trip, 200);
+        } catch (\Exception $exception) {
+            if (('APP_ENV') == 'local') {
+                dd($exception);
+            } else {
+                $response['message'] = ['Trip not found'];
+                return response()->json($response, 404);
             }
         }
     }

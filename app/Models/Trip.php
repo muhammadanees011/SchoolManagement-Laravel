@@ -16,4 +16,14 @@ class Trip extends Model
     {
         return $this->hasOne(Organization::class,'id','organization_id');
     }
+
+    public function Cart()
+    {
+        return $this->hasOne(UserCart::class,'trip_id','id');
+    }
+
+    public function participants()
+    {
+        return $this->hasMany(TripParticipant::class,'trip_id','id');    
+    }
 }
