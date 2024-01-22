@@ -138,7 +138,7 @@ class StudentsController extends Controller
                     'body' => $randomPassword,
                     'user_name'=> $studentName,
                 ];
-                Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
+                // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
                 //----------CREATE STRIPE CUSTOMER------------
                 $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
                 $customer=$stripe->customers->create([
@@ -154,8 +154,8 @@ class StudentsController extends Controller
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
                 $userWallet->save();
-                $res="Email is sent successfully.";
-                return response()->json($res);
+                // $res="Email is sent successfully.";
+                // return response()->json($res);
                 // return response()->json($customer, 200);
                 } catch (\Exception $e) {
                 return response()->json([
@@ -214,7 +214,7 @@ class StudentsController extends Controller
                     'body' => $randomPassword,
                     'user_name'=> $studentName,
                 ];
-                Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
+                // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
                 //----------CREATE STRIPE CUSTOMER------------
                 $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
                 $customer=$stripe->customers->create([
@@ -230,8 +230,8 @@ class StudentsController extends Controller
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
                 $userWallet->save();
-                $res="Email is sent successfully.";
-                return response()->json($res);
+                // $res="Email is sent successfully.";
+                // return response()->json($res);
                 // return response()->json($customer, 200);
                 } catch (\Exception $e) {
                 return response()->json([

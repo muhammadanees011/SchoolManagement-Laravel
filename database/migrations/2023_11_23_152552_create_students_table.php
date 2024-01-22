@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('upn')->nullable();
             $table->string('mifare_id')->unique()->nullable();
             $table->boolean('fsm_activated')->default(false);
-            $table->double('fsm_amount')->default(0); 
+            $table->double('fsm_amount')->nullable(); 
             $table->string('purse_type')->nullable();
             $table->string('site')->nullable();
             $table->date('dob')->nullable();
