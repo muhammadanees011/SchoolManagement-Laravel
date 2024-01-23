@@ -259,7 +259,7 @@ class StudentsController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         if($request->role=='super_admin'){
-            $students=Student::with('user.balance','school')->paginate(6);
+            $students=Student::with('user.balance','school')->paginate(60);
         }else if($request->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
