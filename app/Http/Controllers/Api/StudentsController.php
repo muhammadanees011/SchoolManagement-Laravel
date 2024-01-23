@@ -97,6 +97,7 @@ class StudentsController extends Controller
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
+        return $tables;
         $users = DB::table('users')->get();
         $tableEmails = $tables->pluck('eMail')->toArray();
         $userEmails = $users->pluck('email')->toArray();
@@ -174,6 +175,7 @@ class StudentsController extends Controller
         // ->select('SHOW TABLES');
 
         $tables = DB::connection('remote_mysql')->table('ebStaff')->get();
+        return $tables;
         $users = DB::table('users')->get();
         
         $tableEmails = $tables->pluck('eMail')->toArray();

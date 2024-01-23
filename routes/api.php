@@ -96,7 +96,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/storeStudentInRemoteDB',[StudentsController::class,'storeStudentInRemoteDB']);
     Route::post('/deleteStudentFromRemoteDB',[StudentsController::class,'deleteStudentFromRemoteDB']);
 
-    Route::get('/getStaffDataFromRemoteDB',[StaffController::class,'getStaffDataFromRemoteDB']);
+    Route::get('/getStaffDataFromRemoteDB',[StudentsController::class,'getStaffDataFromRemoteDB']);
     //--------------Attributes---------------
     Route::post('/createAttribute',[AttributesController::class,'createAttribute']);
     Route::get('/getAllAttributes',[AttributesController::class,'getAllAttributes']);

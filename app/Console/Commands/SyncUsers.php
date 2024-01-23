@@ -69,6 +69,8 @@ class SyncUsers extends Command
                 ]);
                 //-----------SAVE STUDENT----------------
                 $school=School::where('title',$record->site)->first();
+                $school->students_count=$school->students_count + 1;
+                $school->save();
                 $student=new Student();
                 $student->user_id = $userId;
                 $student->school_id = $school->id;
@@ -135,6 +137,8 @@ class SyncUsers extends Command
                 ]);
                 //-----------SAVE STAFF----------------
                 $school=School::where('title',$record->site)->first();
+                $school->staff_count=$school->staff_count + 1;
+                $school->save();
                 $staff=new Staff();
                 $staff->user_id = $userId;
                 $staff->school_id = $school->id;
