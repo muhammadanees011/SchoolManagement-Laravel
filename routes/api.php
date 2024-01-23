@@ -106,7 +106,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     //-------------Staff---------------------
     Route::post('/createStaff',[StaffController::class,'createStaff']);
     Route::put('/updateStaff/{id}',[StaffController::class,'updateStaff']);
-    Route::get('/getAllStaff/{admin_id?}',[StaffController::class,'getAllStaff']);
+    Route::post('/getAllStaff',[StaffController::class,'getAllStaff']);
     Route::get('/editStaff/{id}',[StaffController::class,'editStaff']);
     Route::delete('/deleteStaff/{id}',[StaffController::class,'deleteStaff']);
     //------------Parents---------------------

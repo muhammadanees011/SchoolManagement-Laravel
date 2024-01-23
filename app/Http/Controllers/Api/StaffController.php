@@ -21,15 +21,24 @@ use App\Http\Resources\StaffResource;
 class StaffController extends Controller
 {
     //-------------GET ALL STAFF-------------
-    public function getAllStaff($admin_id=null){
-        if($admin_id==null){
-        $staff=StaffResource::collection(Staff::with('user','school')->get());
+    public function getAllStaff(Request $request){
+        if($request->user_id==null){
+        $staff = Staff::with('user', 'school')->paginate(20);
+        $staff=StaffResource::collection($staff);
+        $pagination = [
+        'current_page' => $staff->currentPage(),
+        'last_page' => $staff->lastPage(),
+        'per_page' => $staff->perPage(),
+        'total' => $staff->total(),
+        ];
         }else{
-            $admin=OrganizationAdmin::where('user_id',$admin_id)->first();
+            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $staff= StaffResource::collection(Staff::with('user', 'school')->whereIn('school_id', $schoolIds)->get());
+            $staff= StaffResource::collection(Staff::with('user', 'school')->whereIn('school_id', $schoolIds)->paginate(20));
         }
-        return response()->json($staff, 200);
+        $response['data']=$staff;
+        $response['pagination']=$pagination;
+        return response()->json($response, 200);
     }
     //-------------CREATE STAFF--------------
     public function createStaff(Request $request){

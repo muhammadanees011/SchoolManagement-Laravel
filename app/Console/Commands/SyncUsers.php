@@ -13,6 +13,7 @@ use App\Models\Wallet;
 use App\Models\User;
 use App\Models\Student;
 use App\Models\School;
+use App\Models\Staff;
 
 class SyncUsers extends Command
 {
