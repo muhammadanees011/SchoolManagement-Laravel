@@ -58,6 +58,9 @@ class SyncUsers extends Command
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
+                if(!$this->checkIfStudentExist($record)){
+                    return;
+                }
                 $userId=DB::table('users')->insertGetId([
                     'first_name' => $record->firstName,
                     'last_name' => $record->surname,
@@ -183,5 +186,22 @@ class SyncUsers extends Command
             }
     
         }
+    }
+
+    public function checkIfStudentExist($record){
+        $user=User::where('email',$record->eMail)->first();
+        if($user){
+            $student=Student::where('user_id',$user->id)->first();
+            if($student){
+                // do nothing
+                return false;
+            }else{
+                $user->delete();
+                return true;
+            }
+        }else{
+            return true;
+        }
+        
     }
 }
