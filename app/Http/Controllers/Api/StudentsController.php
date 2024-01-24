@@ -120,8 +120,8 @@ class StudentsController extends Controller
         $students=Student::get();
         $userIds = $users->pluck('id')->toArray();
         $studentIds = $students->pluck('user_id')->toArray();
-        $newIds = array_diff($studentIds, $userIds);
-        return $studentIds;
+        $newIds = array_diff($userIds, $studentIds);
+        return $newIds;
         $newUsers=User::whereIn('id',$newIds)->pluck('email')->toArray();
         $otherUsers=DB::connection('remote_mysql')->table('ebStudent')->whereIn('eMail',$newUsers)->get();
 
