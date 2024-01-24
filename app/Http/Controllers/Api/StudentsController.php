@@ -125,7 +125,7 @@ class StudentsController extends Controller
         $newUsers=User::whereIn('id',$newIds)->pluck('email')->toArray();
         $otherUsers=DB::connection('remote_mysql')->table('ebStudent')->whereIn('eMail',$newUsers)->get();
         // return $otherUsers;
-        return $totalUsers;
+        return $tables;
 
         // Identify emails that are in $tables but not in $users
         $newEmails = array_diff($tableEmails, $userEmails);
