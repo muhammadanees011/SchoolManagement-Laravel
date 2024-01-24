@@ -92,6 +92,22 @@ class StudentsController extends Controller
         return $response;
 
     }   
+    public function checkIfStudentExist($record){
+        $user=User::where('email',$record->eMail)->first();
+        if($user){
+            $student=Student::where('user_id',$user->id)->first();
+            if($student){
+                // do nothing
+                return false;
+            }else{
+                $user->delete();
+                return true;
+            }
+        }else{
+            return true;
+        }
+        
+    }
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
         // $tables = DB::connection('remote_mysql')
@@ -105,62 +121,63 @@ class StudentsController extends Controller
         $newEmails = array_diff($tableEmails, $userEmails);
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
-        return $students;
+        // return $students;
         foreach ($newRecords as $record) {
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
+            $this->checkIfStudentExist($record);
             // try{
-                $userId=DB::table('users')->insertGetId([
-                    'first_name' => $record->firstName,
-                    'last_name' => $record->surname,
-                    'email' => $record->eMail,
-                    'password' => bcrypt($randomPassword),
-                    'role' => 'student',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                //-----------SAVE STUDENT----------------
-                // $school=School::where('title',$record->site)->first();
-                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
-                if($school){
-                $school->students_count=$school->students_count + 1;
-                $school->save();
-                }
-                $student=new Student();
-                $student->user_id = $userId;
-                if($school){
-                    $student->school_id = $school->id;
-                }
-                $student->student_id = $record->loginID;
-                $student->upn = $record->UPN;
-                $student->mifare_id = $record->miFareID;
-                $student->fsm_amount = $record->fsmAmount;
-                $student->purse_type = $record->purseType;
-                $student->site = $record->site;
-                $student->save();
-                //------------SEND WELCOME MAIL------------
-                $mailData = [
-                    'title' => 'Congratulations you have successfully created your StudentPay account!',
-                    'body' => $randomPassword,
-                    'user_name'=> $studentName,
-                ];
-                // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
-                //----------CREATE STRIPE CUSTOMER------------
-                $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
-                $customer=$stripe->customers->create([
-                'name' => $studentName,
-                'email' => $record->eMail,
-                ]);
-                $user=User::where('id',$userId)->first();
-                $user->stripe_id=$customer->id;
-                $user->created_at=now();
-                $user->updated_at=now();
-                $user->save();
-                //----------CREATE STUDENT WALLET-------------
-                $userWallet=new Wallet();
-                $userWallet->user_id=$userId;
-                $userWallet->save();
+                // $userId=DB::table('users')->insertGetId([
+                //     'first_name' => $record->firstName,
+                //     'last_name' => $record->surname,
+                //     'email' => $record->eMail,
+                //     'password' => bcrypt($randomPassword),
+                //     'role' => 'student',
+                //     'created_at' => now(),
+                //     'updated_at' => now(),
+                // ]);
+                // //-----------SAVE STUDENT----------------
+                // // $school=School::where('title',$record->site)->first();
+                // $school = School::where('title', 'like', '%' . $record->site . '%')->first();
+                // if($school){
+                // $school->students_count=$school->students_count + 1;
+                // $school->save();
+                // }
+                // $student=new Student();
+                // $student->user_id = $userId;
+                // if($school){
+                //     $student->school_id = $school->id;
+                // }
+                // $student->student_id = $record->loginID;
+                // $student->upn = $record->UPN;
+                // $student->mifare_id = $record->miFareID;
+                // $student->fsm_amount = $record->fsmAmount;
+                // $student->purse_type = $record->purseType;
+                // $student->site = $record->site;
+                // $student->save();
+                // //------------SEND WELCOME MAIL------------
+                // $mailData = [
+                //     'title' => 'Congratulations you have successfully created your StudentPay account!',
+                //     'body' => $randomPassword,
+                //     'user_name'=> $studentName,
+                // ];
+                // // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
+                // //----------CREATE STRIPE CUSTOMER------------
+                // $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+                // $customer=$stripe->customers->create([
+                // 'name' => $studentName,
+                // 'email' => $record->eMail,
+                // ]);
+                // $user=User::where('id',$userId)->first();
+                // $user->stripe_id=$customer->id;
+                // $user->created_at=now();
+                // $user->updated_at=now();
+                // $user->save();
+                // //----------CREATE STUDENT WALLET-------------
+                // $userWallet=new Wallet();
+                // $userWallet->user_id=$userId;
+                // $userWallet->save();
                 // $res="Email is sent successfully.";
                 // return response()->json($res);
                 // return response()->json($customer, 200);
