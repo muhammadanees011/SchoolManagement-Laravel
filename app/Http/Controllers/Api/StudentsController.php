@@ -97,7 +97,7 @@ class StudentsController extends Controller
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
-        $users = DB::connection('mysql')->table('users')->get();
+        $users = User::get();
         $tableEmails = $tables->pluck('eMail')->toArray();
         $userEmails = $users->pluck('email')->toArray();
         return $userEmails;
