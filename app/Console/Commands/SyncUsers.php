@@ -144,12 +144,11 @@ class SyncUsers extends Command
                 // $school=School::where('title',$record->site)->first();
                 $school = School::where('title', 'like', '%' . $record->site . '%')->first();
                 if($school){
-                    $school->staff_count=$school->staff_count + 1;
+                    $school->teachers_count=$school->teachers_count + 1;
                     $school->save();
                 }
                 $staff=new Staff();
                 $staff->user_id = $userId;
-                $staff->school_id = $school->id;
                 if($school){
                     $staff->school_id = $school->id;
                 }
