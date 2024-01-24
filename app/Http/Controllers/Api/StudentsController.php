@@ -99,7 +99,7 @@ class StudentsController extends Controller
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $users = User::get();
         $students=Student::count();
-        return $students;
+        return $tables;
         $tableEmails = $tables->pluck('eMail')->toArray();
         $userEmails = $users->pluck('email')->toArray();
         // Identify emails that are in $tables but not in $users
