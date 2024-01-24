@@ -102,9 +102,9 @@ class StudentsController extends Controller
         $userEmails = $users->pluck('email')->toArray();
         // Identify emails that are in $tables but not in $users
         $newEmails = array_diff($tableEmails, $userEmails);
+        return $newRecords;
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
-        return $newRecords;
         foreach ($newRecords as $record) {
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
