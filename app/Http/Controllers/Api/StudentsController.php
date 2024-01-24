@@ -98,14 +98,14 @@ class StudentsController extends Controller
         // ->select('SHOW TABLES');
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $users = User::get();
-        $students=User::where('role','student')->latest()->first();
+        $students=User::count();
         $tableEmails = $tables->pluck('eMail')->toArray();
         $userEmails = $users->pluck('email')->toArray();
         // Identify emails that are in $tables but not in $users
         $newEmails = array_diff($tableEmails, $userEmails);
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
-        return $tables;
+        return $students;
         foreach ($newRecords as $record) {
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
