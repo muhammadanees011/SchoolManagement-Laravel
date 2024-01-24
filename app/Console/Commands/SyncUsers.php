@@ -87,11 +87,11 @@ class SyncUsers extends Command
                 $student->site = $record->site;
                 $student->save();
                 //----------SEND WELCOME MAIL--------------
-                $mailData = [
-                    'title' => 'Congratulations you have successfully created your StudentPay account!',
-                    'body' => $randomPassword,
-                    'user_name'=> $studentName,
-                ];
+                // $mailData = [
+                //     'title' => 'Congratulations you have successfully created your StudentPay account!',
+                //     'body' => $randomPassword,
+                //     'user_name'=> $studentName,
+                // ];
                 // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
                 //----------CREATE STRIPE CUSTOMER------------
                 $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
