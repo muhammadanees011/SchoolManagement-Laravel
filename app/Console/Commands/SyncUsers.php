@@ -68,12 +68,17 @@ class SyncUsers extends Command
                     'updated_at' => now(),
                 ]);
                 //-----------SAVE STUDENT----------------
-                $school=School::where('title',$record->site)->first();
-                $school->students_count=$school->students_count + 1;
-                $school->save();
+                // $school=School::where('title',$record->site)->first();
+                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
+                if($school){
+                    $school->students_count=$school->students_count + 1;
+                    $school->save();
+                }
                 $student=new Student();
                 $student->user_id = $userId;
-                $student->school_id = $school->id;
+                if($school){
+                    $student->school_id = $school->id;
+                }
                 $student->student_id = $record->loginID;
                 $student->upn = $record->UPN;
                 $student->mifare_id = $record->miFareID;
@@ -136,12 +141,18 @@ class SyncUsers extends Command
                     'updated_at' => now(),
                 ]);
                 //-----------SAVE STAFF----------------
-                $school=School::where('title',$record->site)->first();
-                $school->staff_count=$school->staff_count + 1;
-                $school->save();
+                // $school=School::where('title',$record->site)->first();
+                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
+                if($school){
+                    $school->staff_count=$school->staff_count + 1;
+                    $school->save();
+                }
                 $staff=new Staff();
                 $staff->user_id = $userId;
                 $staff->school_id = $school->id;
+                if($school){
+                    $staff->school_id = $school->id;
+                }
                 $student->staff_id = $record->loginID;
                 $staff->upn = $record->UPN;
                 $staff->mifare_id = $record->miFareID;

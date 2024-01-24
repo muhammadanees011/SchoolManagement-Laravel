@@ -97,7 +97,6 @@ class StudentsController extends Controller
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
-        return $tables;
         $users = DB::table('users')->get();
         $tableEmails = $tables->pluck('eMail')->toArray();
         $userEmails = $users->pluck('email')->toArray();
@@ -109,7 +108,7 @@ class StudentsController extends Controller
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
-            try{
+            // try{
                 $userId=DB::table('users')->insertGetId([
                     'first_name' => $record->firstName,
                     'last_name' => $record->surname,
@@ -120,7 +119,12 @@ class StudentsController extends Controller
                     'updated_at' => now(),
                 ]);
                 //-----------SAVE STUDENT----------------
-                $school=School::where('title',$record->site)->first();
+                // $school=School::where('title',$record->site)->first();
+                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
+                if($school){
+                $school->students_count=$school->students_count + 1;
+                $school->save();
+                }
                 $student=new Student();
                 $student->user_id = $userId;
                 if($school){
@@ -158,12 +162,12 @@ class StudentsController extends Controller
                 // $res="Email is sent successfully.";
                 // return response()->json($res);
                 // return response()->json($customer, 200);
-                } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage()
-                ], 500);
-            }
+            //     } catch (\Exception $e) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => $e->getMessage()
+            //     ], 500);
+            // }
     
         }
         $res="No New Students Found.";
@@ -200,6 +204,8 @@ class StudentsController extends Controller
                 ]);
                 //-----------SAVE STAFF----------------
                 $school=School::where('title',$record->site)->first();
+                $school->staff_count=$school->staff_count + 1;
+                $school->save();
                 $staff=new Staff();
                 $staff->user_id = $userId;
                 if($school){
