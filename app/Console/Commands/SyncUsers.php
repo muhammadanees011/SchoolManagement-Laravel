@@ -53,7 +53,7 @@ class SyncUsers extends Command
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
 
-        foreach ($newRecords as $record) {
+        foreach ($tables as $record) {
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;

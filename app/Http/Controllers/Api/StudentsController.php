@@ -121,12 +121,11 @@ class StudentsController extends Controller
         $newEmails = array_diff($tableEmails, $userEmails);
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
-        // return $students;
+        return $students;
         foreach ($newRecords as $record) {
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
-            $this->checkIfStudentExist($record);
             // try{
                 // $userId=DB::table('users')->insertGetId([
                 //     'first_name' => $record->firstName,
