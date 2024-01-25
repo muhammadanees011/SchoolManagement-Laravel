@@ -160,6 +160,34 @@ class PaymentsController extends Controller
         $wallet=Wallet::with('user')->where('user_id',$id)->first();
         return response()->json($wallet, 200);
     }
+     //--------------ADMIN TOPUP-------------
+     public function adminTopUp(Request $request)
+     {
+        $user=Auth::user();
+         try {
+            if($user->role=='super_admin' || $user->role=='organization_admin'|| $user->role=='staff')
+            {
+             $wallet=Wallet::where('user_id',$request->user_id)->first();
+             $wallet->ballance=$wallet->ballance + $request->amount;
+             $wallet->save();
+ 
+             $history=new TransactionHistory();
+             $history->user_id=$request->user_id;
+             $history->amount=$request->amount;
+             $history->type=$request->type;
+             $history->save();
+             // TOPUP was successful
+            $response['message']="TopUp Successfull";
+            return response()->json($response, 200);
+            }else{
+                $response['message']="TopUp Failed";
+                return response()->json($response, 422);
+            }
+         }catch (Exception $e) {
+             // Handle other errors
+             return response()->json(['error' => $e->getMessage()], 500);
+         }
+        }
     //--------------MAKET A PAYMENT-------------
     public function initiatePayment(Request $request)
     {
@@ -223,14 +251,15 @@ class PaymentsController extends Controller
             $response['message']=["user wallet not found"];
             return response()->json($response, 422);
         }
-        if($wallet ){
-            if($student->fsm_activated){
-                $response['ballance']=$wallet->ballance + ($student->fsm_amount ? (float)$student->fsm_amount : 0 );
-            }else if(!$student->fsm_activated){
-                $response['ballance']=$wallet->ballance;
-            }
+        if($wallet){
+            // if($student->fsm_activated){
+                // $response['ballance']=$wallet->ballance + ($student->fsm_amount ? (float)$student->fsm_amount : 0 );
+            // }else if(!$student->fsm_activated){
+                // $response['ballance']=$wallet->ballance;
+            // }
             // $response['fsm_activated']=$student->fsm_activated==0 ? false:true ;
-            // $response['fsm_amount']=$student->fsm_amount ? (float)number_format($student->fsm_amount, 2) :(float)number_format(0, 2);
+            $response['ballance']=$wallet->ballance;
+            $response['fsm_amount']=$student->fsm_amount ? (float)number_format($student->fsm_amount, 2) :(float)number_format(0, 2);
             return response()->json($response, 200);
         }else{
             $response['message']=["not enoung amount"];

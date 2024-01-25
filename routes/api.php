@@ -91,6 +91,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
     Route::get('/getTotalStudents',[StudentsController::class,'getTotalStudents']);
+    Route::post('/filterStudent',[StudentsController::class,'filterStudent']);
     Route::get('/getAmountFSM/{student_id}',[StudentsController::class,'getAmountFSM']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
 
@@ -160,6 +161,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/removePaymentMethod', [PaymentsController::class, 'removePaymentMethod']);
     Route::get('/getWallet/{id}', [PaymentsController::class, 'getWallet']);
     Route::post('payment/initiate', [PaymentsController::class, 'initiatePayment']);
+    Route::post('/adminTopUp',[PaymentsController::class,'adminTopUp']);
     //------------Trips---------------------
     Route::post('/createTrip',[TripsController::class,'createTrip']);
     Route::get('/findTrip/{id?}',[TripsController::class,'findTrip']);

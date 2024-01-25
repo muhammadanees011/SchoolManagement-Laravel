@@ -92,7 +92,42 @@ class StudentsController extends Controller
         }
         return $response;
 
-    }   
+    }  
+    //--------------FILTER STUDENT---------------- 
+    public function filterStudent(Request $request){
+        $validator = Validator::make($request->all(), [
+            'type' => 'required',
+            'value' => 'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        if($request->type=='Student Id'){
+            $students=Student::with('user.balance','school')
+            ->where('student_id', 'like', '%' . $request->value . '%')->paginate(60);
+        }else if($request->type=='Name'){
+            $students = Student::with(['user' => function ($query) {
+                $query->with('balance');
+            }, 'school'])
+            ->where(function ($query) use ($request) {
+                $query->whereHas('user', function ($subquery) use ($request) {
+                    $subquery->where('first_name', 'like', '%' . $request->value . '%')
+                    ->orWhere('last_name', 'like', '%' . $request->value . '%')
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
+                });
+            })
+            ->paginate(60);
+        }else if($request->type=='Email'){
+            $students = Student::with(['user' => function ($query) {
+                $query->with('balance');
+            }, 'school'])
+            ->whereHas('user', function ($subquery) use ($request) {
+                $subquery->where('email', 'like', '%' . $request->value . '%');
+            })->paginate(60);
+        }
+        return response()->json($students, 200);
+    }
     //--------------GET STUDENT DETAILS POS----------------
     public function getStudentDetails(Request $request){
         $validator = Validator::make($request->all(), [
