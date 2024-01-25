@@ -154,6 +154,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/deleteTransactionHistory/{id}', [TransactionHistoryController::class, 'deleteTransactionHistory']);
     Route::post('/filterTransactionHistory', [TransactionHistoryController::class, 'filterTransactionHistory']);
     Route::get('/getTotalTransactions', [TransactionHistoryController::class, 'getTotalTransactions']);
+    Route::get('/studentDashboard', [TransactionHistoryController::class, 'studentDashboard']);
     //------------stripe-----------
     Route::post('/createCard', [PaymentsController::class, 'createCard']);
     Route::post('/createCustomer', [PaymentsController::class, 'createCustomer']);

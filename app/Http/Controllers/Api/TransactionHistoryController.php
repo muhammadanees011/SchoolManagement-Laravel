@@ -8,6 +8,7 @@ use App\Models\OrganizationAdmin;
 use App\Models\Student;
 use App\Models\School;
 use App\Models\Staff;
+use App\Models\Wallet;
 use App\Models\TransactionHistory;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -94,6 +95,30 @@ class TransactionHistoryController extends Controller
             $history=TransactionHistory::where('user_id',$request->user_id)->get();
         }
         return response()->json($history, 200);
+    }
+    //-----------STUDENT DASHBOARD TRANSACTION-----------
+    public function studentDashboard(Request $request){
+        $user=Auth::user();
+
+        $startOfWeek = Carbon::now()->startOfWeek()->subWeek();
+        $endOfWeek = Carbon::now()->endOfWeek()->subWeek();
+        $totalAmountLastWeek = TransactionHistory::where('user_id', $user->id)
+        ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+        ->sum('amount');
+
+        $startOfMonth = Carbon::now()->startOfMonth()->subMonth();
+        $endOfMonth = Carbon::now()->endOfMonth()->subMonth();
+        $totalAmountLastMonth = TransactionHistory::where('user_id', $user->id)
+        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+        ->sum('amount');
+
+        $currenctBalance=Wallet::where('user_id',$user->id)->first();
+
+        $response['last_week']=$totalAmountLastWeek;
+        $response['last_month']=$totalAmountLastMonth;
+        $response['current_balance']=$currenctBalance->ballance;
+
+        return response()->json($response, 200);
     }
     //----------DELETE TRANSACTION----------------
     public function deleteTransactionHistory($id){
