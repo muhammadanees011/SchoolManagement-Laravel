@@ -21,6 +21,7 @@ use App\Mail\WelcomeEmail;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\StudentResource;
+use App\Http\Resources\StudentDetailsResource;
 use App\Http\Resources\StaffResource;
 use Illuminate\Support\Facades\Auth;
 
@@ -92,21 +93,23 @@ class StudentsController extends Controller
         return $response;
 
     }   
-    public function checkIfStudentExist($record){
-        $user=User::where('email',$record->eMail)->first();
-        if($user){
-            $student=Student::where('user_id',$user->id)->first();
-            if($student){
-                // do nothing
-                return false;
-            }else{
-                $user->delete();
-                return true;
-            }
-        }else{
-            return true;
+    //--------------GET STUDENT DETAILS POS----------------
+    public function getStudentDetails(Request $request){
+        $validator = Validator::make($request->all(), [
+            'student_id' => 'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        
+        $student =Student::where('student_id', $request->student_id)->first();
+        if($student){
+            $response['student']=new StudentDetailsResource($student);
+            return response()->json($response, 200);
+        }else{
+            $response['message']=["user not found"];
+            return response()->json($response, 422);
+        }
     }
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){

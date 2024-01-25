@@ -91,6 +91,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getTotalStudents',[StudentsController::class,'getTotalStudents']);
     Route::get('/getAmountFSM/{student_id}',[StudentsController::class,'getAmountFSM']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
+    Route::post('/getStudentDetails',[StudentsController::class,'getStudentDetails']);
 
     Route::get('/getStudentsDataFromRemoteDB',[StudentsController::class,'getStudentsDataFromRemoteDB']);
     Route::post('/storeStudentInRemoteDB',[StudentsController::class,'storeStudentInRemoteDB']);
