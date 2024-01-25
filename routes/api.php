@@ -47,10 +47,12 @@ Route::post('/forgot_password', [AuthController::class, 'send_forgot_password_ot
 Route::post('/forgot_password_verify_otp', [AuthController::class, 'forgot_password_verify_otp']);
 Route::post('/set_new_password', [AuthController::class, 'set_new_password']);
 
+//---------------POS APIS-------------------
 Route::post('/checkBalance', [PaymentsController::class, 'checkBalance']);
 Route::post('/redeemBalance', [PaymentsController::class, 'redeemBalance']);
 Route::post('/refundAmount', [PaymentsController::class, 'refundAmount']);
 Route::post('/getStudentStaff',[StudentsController::class,'getStudentStaff']);
+Route::post('/getStudentDetails',[StudentsController::class,'getStudentDetails']);
 
 
 Route::group(['middleware' => 'auth:api'], function () {
@@ -91,7 +93,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getTotalStudents',[StudentsController::class,'getTotalStudents']);
     Route::get('/getAmountFSM/{student_id}',[StudentsController::class,'getAmountFSM']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
-    Route::post('/getStudentDetails',[StudentsController::class,'getStudentDetails']);
 
     Route::get('/getStudentsDataFromRemoteDB',[StudentsController::class,'getStudentsDataFromRemoteDB']);
     Route::post('/storeStudentInRemoteDB',[StudentsController::class,'storeStudentInRemoteDB']);
