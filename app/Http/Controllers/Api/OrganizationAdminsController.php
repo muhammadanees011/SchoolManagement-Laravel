@@ -16,13 +16,27 @@ use App\Models\Wallet;
 use App\Models\OrganizationAdmin;
 use App\Models\Role;
 use App\Models\OrganizationAdminRole;
+use Illuminate\Support\Facades\Auth;
 
 class OrganizationAdminsController extends Controller
 {
     //-------------GET ALL ORGANIZATION ADMINS--------------
     public function getAllOrganizationAdmins(){
-        // $admins=OrganizationAdmin::with('admin','organization')->get();
-        $admins=User::with('OrganizationAdmin.organization')->where('role','organization_admin')->get();
+        $user=Auth::user();
+        if($user->role=='organization_admin'){
+            $organizationAdmin=OrganizationAdmin::where('user_id',$user->id)->first();
+            if ($organizationAdmin) {
+                $organizationId = $organizationAdmin->organization_id;
+                $admins = User::with('OrganizationAdmin.organization')
+                ->whereHas('OrganizationAdmin', function ($query) use ($organizationId) {
+                    $query->where('organization_id', $organizationId);
+                })
+                ->where('role', 'organization_admin')
+                ->get();
+            }
+        }else if($user->role=='super_admin'){
+            $admins=User::with('OrganizationAdmin.organization')->where('role','organization_admin')->get();
+        }
         return response()->json($admins, 200);
     }
 

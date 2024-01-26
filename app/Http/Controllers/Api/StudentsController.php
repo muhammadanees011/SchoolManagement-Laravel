@@ -93,6 +93,30 @@ class StudentsController extends Controller
         return $response;
 
     }  
+    //---------------------SEARCH STUDENT POS SYSTEM-----------------
+    public function searchStudent(Request $request){
+        $validator = Validator::make($request->all(), [
+            'searchString' => 'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+    
+        $students = Student::with(['user' => function ($query) {
+            $query->with('balance');
+        }, 'school'])
+        ->where(function ($query) use ($request) {
+            $query->whereHas('user', function ($subquery) use ($request) {
+                $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
+                ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
+                ->orWhere('student_id', 'like', '%' . $request->searchString . '%')
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
+            });
+        })->get();
+        $response['students']=StudentDetailsResource::collection($students);
+        return response()->json($response, 200);
+    }
     //--------------FILTER STUDENT---------------- 
     public function filterStudent(Request $request){
         $validator = Validator::make($request->all(), [

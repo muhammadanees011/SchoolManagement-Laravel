@@ -92,6 +92,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
     Route::get('/getTotalStudents',[StudentsController::class,'getTotalStudents']);
     Route::post('/filterStudent',[StudentsController::class,'filterStudent']);
+    Route::post('/searchStudent',[StudentsController::class,'searchStudent']);
     Route::get('/getAmountFSM/{student_id}',[StudentsController::class,'getAmountFSM']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
 

@@ -57,7 +57,13 @@ class OrganizationController extends Controller
     //-------------GET ALL ORGANIZATIONS------------
     public function index(){
         // return OrganizationListResource::collection(Organization::all());
-        $organizations=Organization::with('User')->get();
+        $user=Auth::user();
+        if($user->role=='organization_admin'){
+            $organizationAdmin=OrganizationAdmin::where('user_id',$user->id)->first();
+            $organizations=Organization::with('User')->where('id',$organizationAdmin->id)->get();
+        }else if($user->role=='super_admin'){
+            $organizations=Organization::with('User')->get();
+        }
         return response()->json($organizations, 200);
     }
     //-------------CREATE ORGANIZATIONS------------
