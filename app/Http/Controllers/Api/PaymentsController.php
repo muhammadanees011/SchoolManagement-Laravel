@@ -292,7 +292,7 @@ class PaymentsController extends Controller
         }else if(!$student->fsm_activated){
             $netBalance=$wallet->ballance;
         }
-        if($netBalance >= $request->amount){
+        if($netBalance > 0){
             if($fsmAmount>=$request->amount){
                 $student->fsm_amount=$fsmAmount-$request->amount;
                 $student->save();
@@ -300,8 +300,13 @@ class PaymentsController extends Controller
                 $student->fsm_amount=0;
                 $student->save();
                 $chargeBallance=$request->amount - $fsmAmount;
-                $wallet->ballance = $wallet->ballance - $chargeBallance;
-                $wallet->save();
+                if($wallet->ballance >= $chargeBallance){
+                    $wallet->ballance = $wallet->ballance - $chargeBallance;
+                    $wallet->save();
+                }else if($wallet->ballance < $chargeBallance){
+                    $wallet->ballance = 0;
+                    $wallet->save();
+                }
             }
             //--------Save Transaction History-----------
             $history=new TransactionHistory();
