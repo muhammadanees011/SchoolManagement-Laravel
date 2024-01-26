@@ -53,8 +53,8 @@ class SchoolsController extends Controller
         $validator = Validator::make($request->all(), [
             'organization_id' => 'nullable',
             'title' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users',
-            'phone' => 'nullable|string|unique:users',
+            'email' => 'required|email|max:255|unique:schools',
+            'phone' => 'nullable|string|unique:schools',
             'website'=>'required|string|max:255',
             'address'=>'required|string|max:255',
             'country'=>'required|string|max:255',
@@ -117,8 +117,8 @@ class SchoolsController extends Controller
         $validator = Validator::make($request->all(), [
             'organization_id'=>'nullable',
             'title' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255',
-            'phone' => 'nullable|string',
+            'email' => 'required|email|max:255|unique:schools,email,' . $id,
+            'phone' => 'nullable|string|unique:schools,phone,' . $id,
             'website'=>'required|string|max:255',
             'address'=>'required|string|max:255',
             'country'=>'required|string|max:255',

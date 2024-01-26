@@ -64,8 +64,8 @@ class OrganizationController extends Controller
     public function create(Request $request){
         $validator = Validator::make($request->all(), [
             'name'=>'required|string|max:255',
-            'email'=>'required|email|max:255',
-            'phone'=>'nullable|string|max:255',
+            'email'=>'required|email|max:255|unique:organizations',
+            'phone'=>'nullable|string|max:255|unique:organizations',
             'address' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'city' => 'required|string|max:255',
@@ -118,8 +118,8 @@ class OrganizationController extends Controller
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
             'address'=>'required|string|max:255',
-            'email'=>'required|email|max:255',
-            'phone'=>'nullable|string|max:255',
+            'email' => 'required|email|max:255|unique:organizations,email,' . $id,
+            'phone' => 'nullable|string|unique:organizations,phone,' . $id,
         ]);
         if ($validator->fails())
         {
