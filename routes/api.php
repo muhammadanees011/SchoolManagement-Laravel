@@ -47,7 +47,7 @@ Route::post('/forgot_password', [AuthController::class, 'send_forgot_password_ot
 Route::post('/forgot_password_verify_otp', [AuthController::class, 'forgot_password_verify_otp']);
 Route::post('/set_new_password', [AuthController::class, 'set_new_password']);
 
-//---------------POS APIS-------------------
+//---------------POS SYSTEM APIS-------------------
 Route::post('/checkBalance', [PaymentsController::class, 'checkBalance']);
 Route::post('/redeemBalance', [PaymentsController::class, 'redeemBalance']);
 Route::post('/refundAmount', [PaymentsController::class, 'refundAmount']);

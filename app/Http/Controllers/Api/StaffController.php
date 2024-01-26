@@ -25,17 +25,17 @@ class StaffController extends Controller
         if($request->user_id==null){
         $staff = Staff::with('user', 'school')->paginate(20);
         $staff=StaffResource::collection($staff);
+        }else{
+            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+            $staff= StaffResource::collection(Staff::with('user', 'school')->whereIn('school_id', $schoolIds)->paginate(20));
+        }
         $pagination = [
         'current_page' => $staff->currentPage(),
         'last_page' => $staff->lastPage(),
         'per_page' => $staff->perPage(),
         'total' => $staff->total(),
         ];
-        }else{
-            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $staff= StaffResource::collection(Staff::with('user', 'school')->whereIn('school_id', $schoolIds)->paginate(20));
-        }
         $response['data']=$staff;
         $response['pagination']=$pagination;
         return response()->json($response, 200);
