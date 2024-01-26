@@ -53,6 +53,7 @@ Route::post('/redeemBalance', [PaymentsController::class, 'redeemBalance']);
 Route::post('/refundAmount', [PaymentsController::class, 'refundAmount']);
 Route::post('/getStudentStaff',[StudentsController::class,'getStudentStaff']);
 Route::post('/getStudentDetails',[StudentsController::class,'getStudentDetails']);
+Route::post('/searchStudent',[StudentsController::class,'searchStudent']);
 
 
 Route::group(['middleware' => 'auth:api'], function () {
@@ -92,7 +93,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
     Route::get('/getTotalStudents',[StudentsController::class,'getTotalStudents']);
     Route::post('/filterStudent',[StudentsController::class,'filterStudent']);
-    Route::post('/searchStudent',[StudentsController::class,'searchStudent']);
     Route::get('/getAmountFSM/{student_id}',[StudentsController::class,'getAmountFSM']);
     Route::get('/getStudentBalance/{id}',[StudentsController::class,'getStudentBalance']);
 
