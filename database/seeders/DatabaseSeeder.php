@@ -15,25 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // \App\Models\User::factory(10)->create();
-
-        \App\Models\User::factory()->create([
-            'first_name' => 'Admin',
-            'last_name' => 'User',
-            'gender' => 'Male',
-            'phone' => '3488313291',
-            'email' => 'admin@example.com',
-            'password' =>  Hash::make('password'),
-            'role'=>'super_admin'
-        ]);
-
-        \App\Models\User::factory()->create([
-            'first_name' => 'student',
-            'last_name' => 'User',
-            'gender' => 'Male',
-            'email' => 'student@example.com',
-            'phone' => '3478345293',
-            'password' =>  Hash::make('password'),
-            'role'=>'student'
-        ]);
+        $this->call(RoleSeeder::class);
+        $this->call(AdminSeeder::class);
     }
 }

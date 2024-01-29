@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\ParentController;
 use App\Http\Controllers\Api\AttributesController;
 use App\Http\Controllers\Api\TripsController;
+use App\Http\Controllers\Api\LegacyPermissionsController;
+use App\Http\Controllers\Api\RolesController;
 use App\Http\Controllers\Api\PermissionsController;
 
 /*
@@ -172,7 +174,23 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getAllTrips',[TripsController::class,'getAllTrips']);
     Route::get('/getTripParticipants/{id}',[TripsController::class,'getTripParticipants']);
     //------------Permissions----------------
+    Route::get('/getAllPermissions',[LegacyPermissionsController::class,'getAllPermissions']);
+    Route::get('/getUserPermissions/{id?}',[LegacyPermissionsController::class,'getUserPermissions']);
+    Route::post('/updateUserPermissions',[LegacyPermissionsController::class,'updateUserPermissions']);
+
+    //-----------Spatie Roles---------------------
+    Route::get('/getAllRoles',[RolesController::class,'getAllRoles']);
+    Route::post('/createRole',[RolesController::class,'createRole']);
+    Route::get('/findRole/{id?}',[RolesController::class,'findRole']);
+    Route::put('/updateRole/{id?}',[RolesController::class,'updateRole']);
+    Route::delete('/deleteRole/{id?}',[RolesController::class,'deleteRole']);
+    Route::post('/givePermission/{id}',[RolesController::class,'givePermission']);
+    Route::get('/getPermissionsOfaRole/{id}',[RolesController::class,'getPermissionsOfaRole']);
+    Route::post('/removePermission/{id}',[RolesController::class,'removePermission']);
+    //-----------Spatie Permissions---------------
     Route::get('/getAllPermissions',[PermissionsController::class,'getAllPermissions']);
-    Route::get('/getUserPermissions/{id?}',[PermissionsController::class,'getUserPermissions']);
-    Route::post('/updateUserPermissions',[PermissionsController::class,'updateUserPermissions']);
+    Route::post('/createPermission',[PermissionsController::class,'createPermission']);
+    Route::get('/findPermission/{id?}',[PermissionsController::class,'findPermission']);
+    Route::put('/updatePermission/{id?}',[PermissionsController::class,'updatePermission']);
+    Route::delete('/deletePermission/{id?}',[PermissionsController::class,'deletePermission']);
 });

@@ -18,9 +18,9 @@ return new class extends Migration
             //--------------Installment Plan-----------------
             $table->integer('total_installments')->nullable();
             $table->double('amount_per_installment')->nullable();
-            $table->double('initial_deposit')->nullable();
-            $table->date('initial_deposit_deadline')->nullable();
-            $table->json('other_installments_deadline')->nullable();
+            $table->double('initial_deposit_installments')->nullable();
+            $table->date('initial_deposit_deadline_installments')->nullable();
+            $table->json('other_installments_deadline_installments')->nullable();
             //--------------Deposit Plan------------------
             $table->integer('total_deposit')->nullable();
             $table->double('initial_deposit')->nullable();
