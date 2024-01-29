@@ -233,6 +233,8 @@ class SyncUsers extends Command
                 $newSchool->organization_id=$organization->id;
                 $newSchool->title=$record->site;
                 $newSchool->save();
+                $student->school_id=$newSchool->id;
+                $student->save();
                 return true;
             }
         }else{
