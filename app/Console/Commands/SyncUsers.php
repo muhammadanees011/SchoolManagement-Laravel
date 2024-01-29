@@ -224,7 +224,7 @@ class SyncUsers extends Command
         $user=User::where('email',$record->eMail)->first();
         if($user){
             $student=Student::where('user_id',$user->id)->first();
-            if($student->school_id){
+            if($student && $student->school_id){
                 // do nothing
                 return false;
             }else{
