@@ -227,7 +227,7 @@ class SyncUsers extends Command
             if($student && $student->school_id){
                 // do nothing
                 return false;
-            }else{
+            }else if($student && $student->school_id==null){
                 $organization=Organization::where('name','Education Training Collective')->first();
                 $newSchool=new School();
                 $newSchool->organization_id=$organization->id;
