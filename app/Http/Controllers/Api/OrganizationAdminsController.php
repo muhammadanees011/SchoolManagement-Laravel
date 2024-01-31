@@ -27,7 +27,7 @@ class OrganizationAdminsController extends Controller
             $organizationAdmin=OrganizationAdmin::where('user_id',$user->id)->first();
             if ($organizationAdmin) {
                 $organizationId = $organizationAdmin->organization_id;
-                $admins = User::with('OrganizationAdmin.organization')
+                $admins = User::with('OrganizationAdmin.organization','UserRole.Role')
                 ->whereHas('OrganizationAdmin', function ($query) use ($organizationId) {
                     $query->where('organization_id', $organizationId);
                 })
@@ -35,7 +35,7 @@ class OrganizationAdminsController extends Controller
                 ->get();
             }
         }else if($user->role=='super_admin'){
-            $admins=User::with('OrganizationAdmin.organization')->where('role','organization_admin')->get();
+            $admins=User::with('OrganizationAdmin.organization','UserRole.Role')->where('role','organization_admin')->get();
         }
         return response()->json($admins, 200);
     }
@@ -59,7 +59,8 @@ class OrganizationAdminsController extends Controller
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'status'=>'required|string|max:255'
+            'status'=>'required|string|max:255',
+            'role'=>'required|string|max:255'
         ]);
         if ($validator->fails())
         {
@@ -80,6 +81,8 @@ class OrganizationAdminsController extends Controller
             $user->zip=$request->zip;
             $user->status = $request->status;
             $user->save();
+            $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
+            $user->assignRole($role);
 
             $organization_admin=new OrganizationAdmin();
             $organization_admin->user_id = $user->id;
@@ -113,7 +116,7 @@ class OrganizationAdminsController extends Controller
 
     //-------------EDIT ORGANIZATION ADMIN--------------
     public function editOrganizationAdmin($id){
-        $admin=User::with('OrganizationAdmin.organization')->where('id',$id)->first();
+        $admin=User::with('OrganizationAdmin.organization','UserRole.Role')->where('id',$id)->first();
         return response()->json($admin, 200);
     }
 
@@ -131,6 +134,7 @@ class OrganizationAdminsController extends Controller
             'zip'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
+            'role' => 'required|string',
         ]);
         if ($validator->fails())
         {
@@ -152,6 +156,9 @@ class OrganizationAdminsController extends Controller
                 $user->password=Hash::make($request->password);
             }
             $user->save();
+            $user->syncRoles([]);
+            $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
+            $user->assignRole($role);
             $admin=OrganizationAdmin::where('user_id',$id)->first();
             $admin->organization_id=$request->organization_id;
             $admin->save();

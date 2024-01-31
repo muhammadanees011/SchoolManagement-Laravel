@@ -83,8 +83,9 @@ class RolesController extends Controller
     public function givePermission(Request $request,$id){
         $role =Role::find($id);
         if($role->hasPermissionTo($request->permission)){
-            $response['message']="Permission Exists";
-            return response()->json($response, 422);
+            $role->revokePermissionTo($request->permission);
+            $response['message']="Permission Removed";
+            return response()->json($response, 200);
         }else{
             $role->givePermissionTo($request->permission);
             $response['message']="Permission Added";
@@ -110,6 +111,14 @@ class RolesController extends Controller
         // $users=$users->getPermissionsViaRoles();
         $role =Role::find($id);
         $permissions=$role->permissions;
+        return response()->json($permissions,200);
+    }
+    //----------------PERMISSIONS OF A USER----------------
+    public function getUserRolePermissions($id){
+        $user=User::where('id',$id)->first();
+        $permissions=$user->getPermissionsViaRoles();
+        // $role =Role::find($id);
+        // $permissions=$role->permissions;
         return response()->json($permissions,200);
     }
 }

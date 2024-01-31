@@ -23,7 +23,7 @@ class AdminSeeder extends Seeder
             'role'=>'super_admin'
         ]);
 
-        $roleName = 'admin';
+        $roleName = 'Admin';
         $guardName = ['api'];
 
         $role = \Spatie\Permission\Models\Role::where('name', $roleName)->where('guard_name', $guardName)->first();

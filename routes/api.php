@@ -178,7 +178,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getUserPermissions/{id?}',[LegacyPermissionsController::class,'getUserPermissions']);
     Route::post('/updateUserPermissions',[LegacyPermissionsController::class,'updateUserPermissions']);
 
+    
     //-----------Spatie Roles---------------------
+    Route::get('/getUserRolePermissions/{id}',[RolesController::class,'getUserRolePermissions']);
     Route::get('/getAllRoles',[RolesController::class,'getAllRoles']);
     Route::post('/createRole',[RolesController::class,'createRole']);
     Route::get('/findRole/{id?}',[RolesController::class,'findRole']);

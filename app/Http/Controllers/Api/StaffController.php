@@ -54,7 +54,8 @@ class StaffController extends Controller
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'status'=>'required|string|max:255'
+            'status'=>'required|string|max:255',
+            'role'=>'required|string|max:255'
         ]);
         if ($validator->fails())
         {
@@ -75,6 +76,9 @@ class StaffController extends Controller
             $user->zip=$request->zip;
             $user->status = $request->status;
             $user->save();
+
+            $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
+            $user->assignRole($role);
 
             $staff=new Staff();
             $staff->user_id = $user->id;
@@ -114,7 +118,7 @@ class StaffController extends Controller
 
     //-------------EDIT STAFF------------------
     public function editStaff($id){
-        $school=Staff::with('user')->find($id);
+        $school=Staff::with('user.UserRole.Role')->find($id);
         return response()->json($school, 200);
     }
 
@@ -134,6 +138,7 @@ class StaffController extends Controller
             'zip'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
+            'role'=>'required|string|max:255'
         ]);
         if ($validator->fails())
         {
@@ -159,6 +164,11 @@ class StaffController extends Controller
                 }
                 $staff->user->update($updateData);
                 $staff->save();
+
+                $user=User::where('id',$staff->user_id)->first();
+                $user->syncRoles([]);
+                $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
+                $user->assignRole($role);
 
             DB::commit();
             $response = ['Successfully Updated the Staff'];
