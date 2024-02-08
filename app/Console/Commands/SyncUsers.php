@@ -141,7 +141,7 @@ class SyncUsers extends Command
         $newRecords = $tables->whereIn('eMail', $newEmails);
 
         foreach ($newRecords as $record) {
-           // ----------STORE NEW STUDENT------------
+           // ----------STORE NEW STAFF------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
@@ -174,17 +174,17 @@ class SyncUsers extends Command
                 if($school){
                     $staff->school_id = $school->id;
                 }
-                $student->staff_id = $record->loginID;
+                $staff->staff_id = $record->loginID;
                 $staff->upn = $record->UPN;
                 $staff->mifare_id = $record->miFareID;
                 $staff->site = $record->site;
                 $staff->save();
                 //----------SEND WELCOME MAIL--------------
-                $mailData = [
-                    'title' => 'Congratulations you have successfully created your StudentPay account!',
-                    'body' => $randomPassword,
-                    'user_name'=> $studentName,
-                ];
+                // $mailData = [
+                //     'title' => 'Congratulations you have successfully created your StudentPay account!',
+                //     'body' => $randomPassword,
+                //     'user_name'=> $studentName,
+                // ];
                 // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
                 //----------CREATE STRIPE CUSTOMER------------
                 $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));

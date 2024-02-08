@@ -9,6 +9,7 @@ use App\Models\OrganizationAdmin;
 use App\Models\Staff;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\PaymentPlan;
 use App\Models\TripParticipant;
 use App\Http\Resources\TripParticipantResource;
 use Illuminate\Support\Str;
@@ -57,8 +58,8 @@ class TripsController extends Controller
             'accomodation_details'=>'required|string',
             'start_date'=>'required|string',
             'end_date'=>'required|string',
-            'total_funds'=>'required|numeric',
-        ]);
+            'total_funds'=>'required|numeric', 
+            ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
@@ -88,7 +89,13 @@ class TripsController extends Controller
             $trip->budget=$request->total_funds;
             $trip->total_booking=$request->total_seats;
             $trip->save();
-            DB::commit();
+            if($this->paymentPlan($request,$trip->id)){
+                DB::commit();
+            }else{
+                DB::rollback();
+                $response = ['Error Creating Payment Plan'];
+                return response()->json($response, 500);
+            }
             $response = ['Successfully Created Trip'];
             return response()->json($response, 200);
         } catch (\Exception $exception) {
@@ -100,6 +107,78 @@ class TripsController extends Controller
             }
         }
         
+    }
+    public function paymentPlan($request,$trip_id){
+        $validator = Validator::make($request->all(), [
+            'payment_plan' => 'required|in:deposit,manual,installments',
+            //------------Installments-----------
+            'total_installments' => 'required_if:payment_plan,installments|integer',
+            'amount_per_installment' => 'required_if:payment_plan,installments|numeric',
+            'initial_deposit_installments' => 'required_if:payment_plan,installments|numeric',
+            'initial_deposit_deadline_installments' => 'required_if:payment_plan,installments|date',
+            'other_installments_deadline_installments' => 'required_if:payment_plan,installments|array', 
+            //-----------Deposit-----------------
+            'total_deposit'=>'required_if:payment_plan,deposit|numeric',
+            'initial_deposit'=>'required_if:payment_plan,deposit|numeric', 
+            'final_deposit'=>'required_if:payment_plan,deposit|numeric', 
+            'initial_deposit_deadline'=>'required_if:payment_plan,deposit|date', 
+            'final_deposit_deadline'=>'required_if:payment_plan,deposit|date',
+            //-----------Manual------------------
+            'total_amount'=>'required_if:payment_plan,manual|numeric',
+            'initial_amount'=>'required_if:payment_plan,manual|numeric',
+            'final_amount'=>'required_if:payment_plan,manual|numeric',
+            'initial_amount_deadline'=>'required_if:payment_plan,manual|date',
+            'final_amount_deadline'=>'required_if:payment_plan,manual|date',
+            'comments'=>'required_if:payment_plan,manual|string',
+            ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        try {
+            DB::beginTransaction();
+            if($request->payment_plan=='installments'){
+                $plan=new PaymentPlan();
+                $plan->trip_id=$trip_id;
+                $plan->total_installments=$request->total_installments;
+                $plan->amount_per_installment=$request->amount_per_installment;
+                $plan->initial_deposit_installments=$request->initial_deposit_installments;
+                $plan->initial_deposit_deadline_installments=$request->initial_deposit_deadline_installments;
+                $plan->other_installments_deadline_installments=$request["other_installments_deadline_installments"];
+                $plan->save();
+                DB::commit();
+                return true;
+            }
+            if($request->payment_plan=='manual'){
+                $plan=new PaymentPlan();
+                $plan->trip_id=$trip_id;
+                $plan->total_amount=$request->total_amount;
+                $plan->initial_amount=$request->initial_amount;
+                $plan->final_amount=$request->final_amount;
+                $plan->initial_amount_deadline=$request->initial_amount_deadline;
+                $plan->final_amount_deadline=$request->final_amount_deadline;
+                $plan->comments=$request->comments;
+                $plan->save();
+                DB::commit();
+                return true;
+            }
+            if($request->payment_plan=='deposit'){
+                $plan=new PaymentPlan();
+                $plan->trip_id=$trip_id;
+                $plan->total_deposit=$request->total_deposit;
+                $plan->initial_deposit=$request->initial_deposit;
+                $plan->final_deposit=$request->final_deposit;
+                $plan->initial_deposit_deadline=$request->initial_deposit_deadline;
+                $plan->final_deposit_deadline=$request->final_deposit_deadline;
+                $plan->save();
+                DB::commit();
+                return true;
+            }
+            return false;
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return false;
+        }
     }
     //-------------FIND TRIP-------------======
     public function findTrip($id){
