@@ -141,12 +141,11 @@ class SyncUsers extends Command
         $newRecords = $tables->whereIn('eMail', $newEmails);
 
         foreach ($tables as $record) {
-            $this->checkIfStaffExist($record);
-            return;
            // ----------STORE NEW STAFF------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
+                if($this->checkIfStaffExist($record)){
                 $userId=DB::table('users')->insertGetId([
                     'first_name' => $record->firstName,
                     'last_name' => $record->surname,
@@ -203,6 +202,7 @@ class SyncUsers extends Command
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
                 $userWallet->save();
+                }
                 } catch (\Exception $e) {
             }
     
