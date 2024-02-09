@@ -140,7 +140,8 @@ class SyncUsers extends Command
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
 
-        foreach ($newRecords as $record) {
+        foreach ($tables as $record) {
+            $this->checkIfStaffExist($record);
            // ----------STORE NEW STAFF------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
@@ -205,6 +206,23 @@ class SyncUsers extends Command
             }
     
         }
+    }
+
+    public function checkIfStaffExist($record){
+        $user=User::where('email',$record->eMail)->first();
+        if($user){
+            $student=Staff::where('user_id',$user->id)->first();
+            if($student){
+                // do nothing
+                return false;
+            }else{
+                $user->delete();
+                return true;
+            }
+        }else{
+            return true;
+        }
+        
     }
 
     public function checkIfStudentExist($record){
