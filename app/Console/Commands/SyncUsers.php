@@ -129,6 +129,7 @@ class SyncUsers extends Command
     }
 
     private function storeNewStaff(){
+        $this->checkIfStaffExist();
         // $tables = DB::connection('remote_mysql')->table('ebStaff')->whereDate('created',today())->get();
         $tables = DB::connection('remote_mysql')->table('ebStaff')->get();
         $users = DB::table('users')->get();
