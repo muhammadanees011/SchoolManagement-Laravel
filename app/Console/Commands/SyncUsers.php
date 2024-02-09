@@ -43,8 +43,8 @@ class SyncUsers extends Command
     }
 
     private function storeNewStudent(){
-        $this->removeAllStudents();
-        $this->removeSchools();
+        // $this->removeAllStudents();
+        // $this->removeSchools();
         // $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created',today())->get();
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $users = DB::table('users')->get();

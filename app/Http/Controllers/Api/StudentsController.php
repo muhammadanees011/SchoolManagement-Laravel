@@ -429,7 +429,7 @@ class StudentsController extends Controller
             $student->allergies = $request->allergies;
             $student->medical_conditions = $request->medical_conditions;
             $student->enrollment_date = $request->enrollment_date;
-            $student->fsm_activated= $request->fsm;
+            $student->fsm_amount= $request->fsm ? 0:null;
             $student->save();
 
             $school=School::where('id',$request->school_id)->first();
