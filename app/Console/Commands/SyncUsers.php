@@ -129,6 +129,7 @@ class SyncUsers extends Command
     }
 
     private function storeNewStaff(){
+        $this->checkIfStaffExist();
         // $tables = DB::connection('remote_mysql')->table('ebStaff')->whereDate('created',today())->get();
         $tables = DB::connection('remote_mysql')->table('ebStaff')->get();
         $users = DB::table('users')->get();
@@ -210,7 +211,8 @@ class SyncUsers extends Command
     }
 
     public function checkIfStaffExist($record){
-        $user=User::where('email',$record->eMail)->first();
+        $user=User::where('role','staff')->delete();
+        return;
         if($user){
             $student=Staff::where('user_id',$user->id)->first();
             if($student){
