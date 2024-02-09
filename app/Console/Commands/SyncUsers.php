@@ -210,7 +210,7 @@ class SyncUsers extends Command
         }
     }
 
-    public function checkIfStaffExist($record){
+    public function checkIfStaffExist(){
         $user=User::where('role','staff')->delete();
         return;
         if($user){
