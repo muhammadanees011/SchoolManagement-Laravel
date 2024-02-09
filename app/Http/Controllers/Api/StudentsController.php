@@ -276,7 +276,7 @@ class StudentsController extends Controller
         $newEmails = array_diff($tableEmails, $userEmails);
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
-        return $newEmails;
+        return $tableEmails;
         foreach ($newRecords as $record) {
             //----------STORE NEW STAFF------------
             $randomPassword = Str::random(10);
