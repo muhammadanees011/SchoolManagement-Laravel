@@ -142,6 +142,7 @@ class SyncUsers extends Command
 
         foreach ($tables as $record) {
             $this->checkIfStaffExist($record);
+            return;
            // ----------STORE NEW STAFF------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
