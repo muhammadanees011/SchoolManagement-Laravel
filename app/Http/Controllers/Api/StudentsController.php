@@ -268,7 +268,6 @@ class StudentsController extends Controller
         // ->select('SHOW TABLES');
 
         $tables = DB::connection('remote_mysql')->table('ebStaff')->get();
-        return $tables;
         $users = DB::table('users')->get();
         
         $tableEmails = $tables->pluck('eMail')->toArray();
@@ -277,6 +276,7 @@ class StudentsController extends Controller
         $newEmails = array_diff($tableEmails, $userEmails);
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
+        return $tables;
         foreach ($newRecords as $record) {
             //----------STORE NEW STAFF------------
             $randomPassword = Str::random(10);
