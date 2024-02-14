@@ -38,7 +38,7 @@ class SyncUsers extends Command
     public function handle()
     {
         info("Cron Job running at ". now());
-        // $this->storeNewStudent();
+        $this->storeNewStudent();
         $this->storeNewStaff();
     }
 
