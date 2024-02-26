@@ -175,6 +175,7 @@ class StudentsController extends Controller
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
+        // $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $users = User::get();
         $totalUsers = User::count();
         $tableEmails = $tables->pluck('eMail')->toArray();
@@ -187,7 +188,7 @@ class StudentsController extends Controller
         $newUsers=User::whereIn('id',$newIds)->pluck('email')->toArray();
         $otherUsers=DB::connection('remote_mysql')->table('ebStudent')->whereIn('eMail',$newUsers)->get();
         // return $otherUsers;
-        return $totalUsers;
+        return $tables;
 
         // Identify emails that are in $tables but not in $users
         $newEmails = array_diff($tableEmails, $userEmails);

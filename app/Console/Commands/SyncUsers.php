@@ -43,8 +43,6 @@ class SyncUsers extends Command
     }
 
     private function storeNewStudent(){
-        // $this->removeAllStudents();
-        // $this->removeSchools();
         // $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created',today())->get();
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $users = DB::table('users')->get();
@@ -56,13 +54,13 @@ class SyncUsers extends Command
         // Fetch the records corresponding to the new emails
         $newRecords = $tables->whereIn('eMail', $newEmails);
 
-        foreach ($tables as $record) {
+        foreach ($newRecords as $record) {
 
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
-                if($this->checkIfStudentExist($record)){
+                // if($this->checkIfStudentExist($record)){
                 $userId=DB::table('users')->insertGetId([
                     'first_name' => $record->firstName,
                     'last_name' => $record->surname,
@@ -121,7 +119,7 @@ class SyncUsers extends Command
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
                 $userWallet->save();
-                }
+                // }
                 } catch (\Exception $e) {
             }
     

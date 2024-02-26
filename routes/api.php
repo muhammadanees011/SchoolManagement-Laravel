@@ -114,6 +114,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::put('/updateStaff/{id}',[StaffController::class,'updateStaff']);
     Route::post('/getAllStaff',[StaffController::class,'getAllStaff']);
     Route::get('/editStaff/{id}',[StaffController::class,'editStaff']);
+    Route::post('/searchStaff',[StaffController::class,'searchStaff']);
     Route::delete('/deleteStaff/{id}',[StaffController::class,'deleteStaff']);
     //------------Parents---------------------
     Route::post('/createParent',[ParentController::class,'createParent']);

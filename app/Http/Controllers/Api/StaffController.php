@@ -16,6 +16,7 @@ use App\Models\OrganizationAdmin;
 use App\Models\School;
 use App\Mail\WelcomeEmail;
 use App\Http\Resources\StaffResource;
+use Illuminate\Support\Facades\Auth;
 
 
 class StaffController extends Controller
@@ -203,4 +204,72 @@ class StaffController extends Controller
             }
         }
     }
+
+    //-------------SEARCH STAFF----------------
+
+    public function searchStaff(Request $request){
+        $validator = Validator::make($request->all(), [
+            'searchString' => 'nullable',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+
+        if($request->searchString==null){
+            if($request->user_id==null){
+                $staff = Staff::with('user', 'school')->paginate(20);
+                $staff=StaffResource::collection($staff);
+                }else{
+                    $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
+                    $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+                    $staff= StaffResource::collection(Staff::with('user', 'school')->whereIn('school_id', $schoolIds)->paginate(20));
+                }
+                $pagination = [
+                'current_page' => $staff->currentPage(),
+                'last_page' => $staff->lastPage(),
+                'per_page' => $staff->perPage(),
+                'total' => $staff->total(),
+                ];
+                $response['data']=$staff;
+                $response['pagination']=$pagination;
+                return response()->json($response, 200);
+        }else{
+                $user=Auth::user();
+                if($user->role=='super_admin'){
+                    $staff = Staff::with(['user' => function ($query) {
+                        $query->with('balance');
+                    }, 'school'])
+                    ->where(function ($query) use ($request) {
+                        $query->whereHas('user', function ($subquery) use ($request) {
+                            $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
+                            ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
+                            ->orWhere('staff_id', 'like', '%' . $request->searchString . '%')
+                            ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
+                        });
+                    })->get();
+                    $response= StaffResource::collection($staff);
+                }else{
+                    $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+                    $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+
+                    $staff = Staff::with(['user' => function ($query) {
+                        $query->with('balance');
+                    }, 'school'])
+                    ->whereIn('school_id', $schoolIds) // Filter based on school_id
+                    ->where(function ($query) use ($request) {
+                        $query->whereHas('user', function ($subquery) use ($request) {
+                            $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
+                            ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
+                            ->orWhere('staff_id', 'like', '%' . $request->searchString . '%')
+                            ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
+                        });
+                    })->get();
+                    $response= StaffResource::collection($staff);
+                }
+            }
+
+        return response()->json($response, 200);
+    }
+
 }
