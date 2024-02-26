@@ -231,7 +231,7 @@ class StaffController extends Controller
                 'per_page' => $staff->perPage(),
                 'total' => $staff->total(),
                 ];
-                $response['data']=$staff;
+                $response=$staff;
                 $response['pagination']=$pagination;
                 return response()->json($response, 200);
         }else{
