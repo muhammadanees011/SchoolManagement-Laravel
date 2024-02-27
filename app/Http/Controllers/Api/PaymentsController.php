@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UserCard;
 use App\Models\Student;
+use App\Models\Staff;
 use App\Models\User;
 use App\Models\TransactionHistory;
 use App\Models\Wallet;
