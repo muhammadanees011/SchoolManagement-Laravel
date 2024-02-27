@@ -20,6 +20,7 @@ class StaffResource extends JsonResource
             'upn' => $this->upn,
             'mifare_id' => $this->mifare_id,
             'site' => $this->site,
+            'balance' => $this->balance->ballance,
             'created_at' => (string) $this->created_at,
             'updated_at' => (string) $this->updated_at,
             'user' => [

@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('staff_id')->unique()->nullable();
             $table->string('upn')->nullable();
             $table->string('mifare_id')->unique()->nullable();
+            $table->double('fsm_amount')->nullable();
+            $table->boolean('fsm_activated')->default(false); 
             $table->string('site')->nullable();
             $table->string('about_me')->nullable();
             $table->string('photo_url')->nullable();

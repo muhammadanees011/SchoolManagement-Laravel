@@ -241,12 +241,15 @@ class PaymentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $student=Student::where('mifare_id',$request->student_id)->first();
-        if(!$student){
+        $user=Student::where('mifare_id',$request->student_id)->first();
+        if(!$user){
+            $user=Staff::where('mifare_id',$request->student_id)->first();
+        }
+        if(!$user){
             $response['message']=["user not found"];
             return response()->json($response, 422);
         }
-        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        $wallet=Wallet::where('user_id',$user->user_id)->first();
         if(!$wallet){
             $response['message']=["user wallet not found"];
             return response()->json($response, 422);
@@ -259,7 +262,7 @@ class PaymentsController extends Controller
             // }
             // $response['fsm_activated']=$student->fsm_activated==0 ? false:true ;
             $response['ballance']=$wallet->ballance;
-            $response['fsm_amount']=$student->fsm_amount ? (float)number_format($student->fsm_amount, 2) :(float)number_format(0, 2);
+            $response['fsm_amount']=$user->fsm_amount ? (float)number_format($user->fsm_amount, 2) :(float)number_format(0, 2);
             return response()->json($response, 200);
         }else{
             $response['message']=["not enoung amount"];
@@ -276,29 +279,32 @@ class PaymentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $student=Student::where('mifare_id',$request->student_id)->first();
-        if(!$student){
+        $user=Student::where('mifare_id',$request->student_id)->first();
+        if(!$user){
+            $user=Staff::where('mifare_id',$request->student_id)->first();
+        }
+        if(!$user){
             $response['message']=["user not found"];
             return response()->json($response, 422);
         }
-        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        $wallet=Wallet::where('user_id',$user->user_id)->first();
         if(!$wallet){
             $response['message']=["user wallet not found"];
             return response()->json($response, 422);
         }
-        $fsmAmount=$student->fsm_amount ? (float)$student->fsm_amount : 0 ;
-        if($student->fsm_activated){
+        $fsmAmount=$user->fsm_amount ? (float)$user->fsm_amount : 0 ;
+        if($user->fsm_activated){
             $netBalance=$wallet->ballance + $fsmAmount;
-        }else if(!$student->fsm_activated){
+        }else if(!$user->fsm_activated){
             $netBalance=$wallet->ballance;
         }
         if($netBalance > 0){
             if($fsmAmount>=$request->amount){
-                $student->fsm_amount=$fsmAmount-$request->amount;
-                $student->save();
+                $user->fsm_amount=$fsmAmount-$request->amount;
+                $user->save();
             }else if($fsmAmount<$request->amount){
-                $student->fsm_amount=0;
-                $student->save();
+                $user->fsm_amount=0;
+                $user->save();
                 $chargeBallance=$request->amount - $fsmAmount;
                 if($wallet->ballance >= $chargeBallance){
                     $wallet->ballance = $wallet->ballance - $chargeBallance;
@@ -310,7 +316,7 @@ class PaymentsController extends Controller
             }
             //--------Save Transaction History-----------
             $history=new TransactionHistory();
-            $history->user_id=$student->user_id;
+            $history->user_id=$user->user_id;
             $history->type='pos_transaction';
             $history->amount=$request->amount;
             $history->save();
@@ -331,12 +337,15 @@ class PaymentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $student=Student::where('mifare_id',$request->student_id)->first();
-        if(!$student){
+        $user=Student::where('mifare_id',$request->student_id)->first();
+        if(!$user){
+            $user=Staff::where('mifare_id',$request->student_id)->first();
+        }
+        if(!$user){
             $response['message']=["user not found"];
             return response()->json($response, 422);
         }
-        $wallet=Wallet::where('user_id',$student->user_id)->first();
+        $wallet=Wallet::where('user_id',$user->user_id)->first();
         if(!$wallet){
             $response['message']=["user wallet not found"];
             return response()->json($response, 422);
@@ -345,7 +354,7 @@ class PaymentsController extends Controller
         $wallet->save();
         //--------Save Transaction History-----------
         $history=new TransactionHistory();
-        $history->user_id=$student->user_id;
+        $history->user_id=$user->user_id;
         $history->type='pos_refund';
         $history->amount=$request->amount;
         $history->save();

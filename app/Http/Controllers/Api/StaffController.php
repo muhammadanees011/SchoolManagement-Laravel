@@ -45,7 +45,8 @@ class StaffController extends Controller
     public function createStaff(Request $request){
         $validator = Validator::make($request->all(), [
             'school_id' => ['required',Rule::exists('schools', 'id')],
-            'staff_id' =>'required|numeric',
+            'staff_id' =>'required',
+            'mifare_id' =>'required|numeric',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
@@ -84,6 +85,7 @@ class StaffController extends Controller
             $staff=new Staff();
             $staff->user_id = $user->id;
             $staff->staff_id = $request->staff_id;
+            $staff->mifare_id = $request->mifare_id;
             $staff->school_id = $request->school_id;
             $staff->save();
 
@@ -128,7 +130,8 @@ class StaffController extends Controller
         $staff=Staff::with('user')->find($id);
         $validator = Validator::make($request->all(), [
             'school_id' => ['required',Rule::exists('schools', 'id')],
-            'staff_id' =>'required|numeric',
+            'staff_id' =>'required',
+            'mifare_id' =>'required|numeric',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$staff->user->id,
@@ -139,7 +142,8 @@ class StaffController extends Controller
             'zip'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
-            'role'=>'required|string|max:255'
+            'role'=>'required|string|max:255',
+            'balance' => 'nullable|numeric',
         ]);
         if ($validator->fails())
         {
@@ -149,6 +153,7 @@ class StaffController extends Controller
             DB::beginTransaction();
                 $staff->school_id = $request->school_id;
                 $staff->staff_id = $request->staff_id;
+                $staff->mifare_id = $request->mifare_id;
                 $updateData = [
                     'phone' => $request->phone,
                     'email' => $request->email,
@@ -163,6 +168,9 @@ class StaffController extends Controller
                 if ($request->password) {
                     $updateData['password'] = Hash::make($request->password);
                 }
+                $wallet=Wallet::where('user_id',$staff->user_id)->first();
+                $wallet->ballance=$request->balance;
+                $wallet->save();
                 $staff->user->update($updateData);
                 $staff->save();
 

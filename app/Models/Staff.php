@@ -16,4 +16,9 @@ class Staff extends Model
     {
         return $this->hasOne(School::class,'id','school_id');
     }
+    public function Balance()
+    {
+        return $this->hasOne(Wallet::class,'user_id','user_id');
+    }
+
 }
