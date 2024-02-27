@@ -225,7 +225,7 @@ class StaffController extends Controller
                 $query->whereHas('user', function ($subquery) use ($request) {
                     $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
                     ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('staff_id', 'like', '%' . $request->searchString . '%')
+                    ->orWhere('mifare_id', 'like', '%' . $request->searchString . '%')
                     ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
                 });
             })->get();

@@ -129,7 +129,7 @@ class StudentsController extends Controller
         }
         if($request->type=='Student Id'){
             $students=Student::with('user.balance','school')
-            ->where('student_id', 'like', '%' . $request->value . '%')->paginate(60);
+            ->where('mifare_id', 'like', '%' . $request->value . '%')->paginate(60);
         }else if($request->type=='Name'){
             $students = Student::with(['user' => function ($query) {
                 $query->with('balance');

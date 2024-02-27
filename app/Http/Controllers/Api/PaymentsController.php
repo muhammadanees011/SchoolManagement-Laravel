@@ -241,7 +241,7 @@ class PaymentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $student=Student::where('student_id',$request->student_id)->first();
+        $student=Student::where('mifare_id',$request->student_id)->first();
         if(!$student){
             $response['message']=["user not found"];
             return response()->json($response, 422);
@@ -276,7 +276,7 @@ class PaymentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $student=Student::where('student_id',$request->student_id)->first();
+        $student=Student::where('mifare_id',$request->student_id)->first();
         if(!$student){
             $response['message']=["user not found"];
             return response()->json($response, 422);
@@ -331,7 +331,7 @@ class PaymentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $student=Student::where('student_id',$request->student_id)->first();
+        $student=Student::where('mifare_id',$request->student_id)->first();
         if(!$student){
             $response['message']=["user not found"];
             return response()->json($response, 422);
