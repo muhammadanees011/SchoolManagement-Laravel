@@ -233,23 +233,23 @@ class StudentsController extends Controller
             }
         }
     }
-    
+
     //--------------GET STUDENTSTAFF DETAILS POS----------------
     public function getStudentStaffDetails(Request $request){
         $validator = Validator::make($request->all(), [
-            'student_id' => 'required',
+            'mifare_id' => 'required',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $student =Student::where('mifare_id', $request->student_id)->first();
+        $student =Student::where('mifare_id', $request->mifare_id)->first();
         if($student){
             $response['student']=new StudentDetailsResource($student);
             return response()->json($response, 200);
         }
         else if(!$student){
-            $student =Staff::where('mifare_id', $request->student_id)->first(); 
+            $student =Staff::where('mifare_id', $request->mifare_id)->first(); 
             if($student){
                 $response['student']=new StaffDetailsResource($student); 
                 return response()->json($response, 200);
