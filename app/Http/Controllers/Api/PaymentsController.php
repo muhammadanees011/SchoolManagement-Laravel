@@ -235,16 +235,17 @@ class PaymentsController extends Controller
     //-------------CHECK BALANCE BEFORE MAKING PAYMENT---------
     public function checkBalance(Request $request){
         $validator = Validator::make($request->all(), [
-            'student_id' => 'required',
-            // 'amount' => 'required|numeric',
+            'mifare_id' => 'required',
+            'user_type' => 'required',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $user=Student::where('mifare_id',$request->student_id)->first();
-        if(!$user){
-            $user=Staff::where('mifare_id',$request->student_id)->first();
+        if($request->user_type=='student'){
+            $user=Student::where('mifare_id',$request->mifare_id)->first();
+        }else if($request->user_type=='staff'){
+            $user=Staff::where('mifare_id',$request->mifare_id)->first();
         }
         if(!$user){
             $response['message']=["user not found"];
@@ -273,16 +274,18 @@ class PaymentsController extends Controller
     //---------------CHARGE THE AMOUNT----------------
     public function redeemBalance(Request $request){
         $validator = Validator::make($request->all(), [
-            'student_id' => 'required',
+            'mifare_id' => 'required',
             'amount' => 'required|numeric',
+            'user_type' => 'required',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $user=Student::where('mifare_id',$request->student_id)->first();
-        if(!$user){
-            $user=Staff::where('mifare_id',$request->student_id)->first();
+        if($request->user_type=='student'){
+            $user=Student::where('mifare_id',$request->mifare_id)->first();
+        }else if($request->user_type=='staff'){
+            $user=Staff::where('mifare_id',$request->mifare_id)->first();
         }
         if(!$user){
             $response['message']=["user not found"];
@@ -331,16 +334,18 @@ class PaymentsController extends Controller
     //---------------REFUND THE AMOUNT----------------
     public function refundAmount(Request $request){
         $validator = Validator::make($request->all(), [
-            'student_id' => 'required',
+            'mifare_id' => 'required',
             'amount' => 'required|numeric|gt:0',
+            'user_type' => 'required',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        $user=Student::where('mifare_id',$request->student_id)->first();
-        if(!$user){
-            $user=Staff::where('mifare_id',$request->student_id)->first();
+        if($request->user_type=='student'){
+            $user=Student::where('mifare_id',$request->mifare_id)->first();
+        }else if($request->user_type=='staff'){
+            $user=Staff::where('mifare_id',$request->mifare_id)->first();
         }
         if(!$user){
             $response['message']=["user not found"];

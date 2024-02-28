@@ -56,6 +56,8 @@ Route::post('/refundAmount', [PaymentsController::class, 'refundAmount']);
 Route::post('/getStudentStaff',[StudentsController::class,'getStudentStaff']);
 Route::post('/getStudentDetails',[StudentsController::class,'getStudentDetails']);
 Route::post('/searchStudent',[StudentsController::class,'searchStudent']);
+Route::post('/getStudentStaffDetails',[StudentsController::class,'getStudentStaffDetails']);
+Route::post('/searchStudentStaff',[StudentsController::class,'searchStudentStaff']);
 
 
 Route::group(['middleware' => 'auth:api'], function () {

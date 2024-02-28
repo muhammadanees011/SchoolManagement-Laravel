@@ -21,6 +21,7 @@ class StudentDetailsResource extends JsonResource
             'email' => $this->user->email,
             'phone' => $this->user->phone,
             'upn' => $this->upn,
+            'user_type' =>'student',
             'mifare_id' => $this->mifare_id,
             'purse_type' => $this->purse_type,
             'site' => $this->site,

@@ -133,6 +133,46 @@ class StudentsController extends Controller
         }
         return response()->json($response, 200);
     }
+
+    //---------------------SEARCH STUDENTSTAFF POS SYSTEM-----------------
+    public function searchStudentStaff(Request $request){
+        $validator = Validator::make($request->all(), [
+            'searchString' => 'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+    
+        $students = Student::with(['user' => function ($query) {
+            $query->with('balance');
+        }, 'school'])
+        ->where(function ($query) use ($request) {
+            $query->whereHas('user', function ($subquery) use ($request) {
+                $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
+                ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
+                ->orWhere('mifare_id', 'like', '%' . $request->searchString . '%')
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
+            });
+        })->get();
+        if($students->isEmpty()){
+            $students = Staff::with(['user' => function ($query) {
+                $query->with('balance');
+            }, 'school'])
+            ->where(function ($query) use ($request) {
+                $query->whereHas('user', function ($subquery) use ($request) {
+                    $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
+                    ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
+                    ->orWhere('mifare_id', 'like', '%' . $request->searchString . '%')
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
+                });
+            })->get();
+            $response['students']=StaffDetailsResource::collection($students);
+        }else{
+            $response['students']=StudentDetailsResource::collection($students);
+        }
+        return response()->json($response, 200);
+    }
     //--------------FILTER STUDENT---------------- 
     public function filterStudent(Request $request){
         $validator = Validator::make($request->all(), [
@@ -193,6 +233,33 @@ class StudentsController extends Controller
             }
         }
     }
+    
+    //--------------GET STUDENTSTAFF DETAILS POS----------------
+    public function getStudentStaffDetails(Request $request){
+        $validator = Validator::make($request->all(), [
+            'student_id' => 'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        $student =Student::where('mifare_id', $request->student_id)->first();
+        if($student){
+            $response['student']=new StudentDetailsResource($student);
+            return response()->json($response, 200);
+        }
+        else if(!$student){
+            $student =Staff::where('mifare_id', $request->student_id)->first(); 
+            if($student){
+                $response['student']=new StaffDetailsResource($student); 
+                return response()->json($response, 200);
+            }else if(!$student){
+                $response['message']=["user not found"];
+                return response()->json($response, 422);
+            }
+        }
+    }
+
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
         // $tables = DB::connection('remote_mysql')

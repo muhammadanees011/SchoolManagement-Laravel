@@ -23,6 +23,7 @@ class StaffDetailsResource extends JsonResource
             'upn' => $this->upn,
             'mifare_id' => $this->mifare_id,
             'purse_type' =>null,
+            'user_type' =>'staff',
             'site' => $this->site,
             'school' => $this->school ? $this->school->title:''
         ];
