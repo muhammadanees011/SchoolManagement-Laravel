@@ -143,7 +143,7 @@ class StudentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-    
+        //-----------SEARCH FROM STUDENTS------------
         $students = Student::with(['user' => function ($query) {
             $query->with('balance');
         }, 'school'])
@@ -155,22 +155,24 @@ class StudentsController extends Controller
                 ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
             });
         })->get();
-        if($students->isEmpty()){
-            $students = Staff::with(['user' => function ($query) {
-                $query->with('balance');
-            }, 'school'])
-            ->where(function ($query) use ($request) {
-                $query->whereHas('user', function ($subquery) use ($request) {
-                    $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('mifare_id', 'like', '%' . $request->searchString . '%')
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
-                });
-            })->get();
-            $response['students']=StaffDetailsResource::collection($students);
-        }else{
-            $response['students']=StudentDetailsResource::collection($students);
-        }
+        $studentsResult=StudentDetailsResource::collection($students);
+
+        //-----------SEARCH FROM STAFF------------
+        $staff = Staff::with(['user' => function ($query) {
+            $query->with('balance');
+        }, 'school'])
+        ->where(function ($query) use ($request) {
+            $query->whereHas('user', function ($subquery) use ($request) {
+                $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
+                ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
+                ->orWhere('mifare_id', 'like', '%' . $request->searchString . '%')
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
+            });
+        })->get();
+        $staffResult=StaffDetailsResource::collection($staff);
+
+        $response['students'] = ($studentsResult)->merge($staffResult);
+
         return response()->json($response, 200);
     }
     //--------------FILTER STUDENT---------------- 
