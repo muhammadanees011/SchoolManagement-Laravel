@@ -40,6 +40,7 @@ class SyncUsers extends Command
         info("Cron Job running at ". now());
         $this->storeNewStudent();
         $this->storeNewStaff();
+        $this->updateData();
     }
 
     private function storeNewStudent(){
@@ -93,7 +94,7 @@ class SyncUsers extends Command
                 $student->student_id = $record->loginID ?: null;
                 $student->upn = $record->UPN ?: null;
                 $student->mifare_id  = $record->miFareID ?: null;
-                $student->fsm_amount = $record->fsmAmount ?: null;
+                $student->fsm_amount = $record->fsmAmount;
                 $student->purse_type = $record->purseType ?: null;
                 $student->site = $record->site ?: null;
                 $student->save();
@@ -202,6 +203,23 @@ class SyncUsers extends Command
                 } catch (\Exception $e) {
             }
     
+        }
+    }
+
+    public function updateData(){
+        $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
+        foreach ($tables as $record) {
+            try{
+                //-----------UPDATE STUDENT----------------
+                $user=User::where('email',$record->eMail)->first();
+                $student=Student::where('user_id',$user->id)->first();
+                $student->upn = $record->UPN ?: null;
+                $student->mifare_id  = $record->miFareID ?: null;
+                $student->fsm_amount = $record->fsmAmount;
+                $student->purse_type = $record->purseType ?: null;
+                $student->save();
+                } catch (\Exception $e) {
+            }
         }
     }
 
