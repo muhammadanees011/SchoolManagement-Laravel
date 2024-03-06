@@ -28,6 +28,8 @@ class addAmountFSM extends Command
     public function handle()
     {
         info("FSM Cron Job running at ". now());
-        $student = Student::where('fsm_activated', true)->update(['fsm_amount' => 3]);
+        // $student = Student::where('fsm_activated', true)->update(['fsm_amount' => 3]);
+        $student = Student::whereNotNull('fsm_amount')->update(['fsm_amount' => 3]);
+
     }
 }
