@@ -297,11 +297,7 @@ class PaymentsController extends Controller
             return response()->json($response, 422);
         }
         $fsmAmount=$user->fsm_amount ? (float)$user->fsm_amount : 0 ;
-        // if($user->fsm_activated){
-            $netBalance=$wallet->ballance + ($fsmAmount ? $fsmAmount :0);
-        // }else if(!$user->fsm_activated){
-        //     $netBalance=$wallet->ballance;
-        // }
+        $netBalance=$wallet->ballance + ($fsmAmount ? $fsmAmount :0);
         if($netBalance > 0){
             if($fsmAmount>=$request->amount){
                 $user->fsm_amount=$fsmAmount-$request->amount;

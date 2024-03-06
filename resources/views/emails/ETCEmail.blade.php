@@ -59,6 +59,7 @@
             <p>
                 This is an auto-generated email, Please do not respond to this email.
                 <br>
+                <br>
                 Best Regards,<br>
                 StudentPay Team
             </p>
