@@ -48,11 +48,11 @@
 
 <body>
     <div class="container">
-        <h4 style="color:#235667;">Your Daily Update From StudentPay!</h4>
+        <h4 style="color:#235667;">Your Daily Update From StudentPay</h4>
         <p>
-            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_students']}}</strong> students today. and we have <strong style="color:#235667 !important;">{{$mailData['total_students']}}</strong> total students now.
+            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_students']}}</strong> students today. bringing our total number of students to  <strong style="color:#235667 !important;">{{$mailData['total_students']}}</strong> .
             <br>
-            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_staff']}}</strong> staff today. and we have <strong style="color:#235667 !important;">{{$mailData['total_staff']}}</strong> total staff now.
+            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_staff']}}</strong> staff today. bringing our total number of students to  <strong style="color:#235667 !important;">{{$mailData['total_staff']}}</strong> .
             <br>
         </p>
         <footer>
