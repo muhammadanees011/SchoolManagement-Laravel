@@ -41,6 +41,7 @@ class SyncUsers extends Command
         $this->storeNewStudent();
         $this->storeNewStaff();
         $this->updateData();
+        $this->sendEmailToETC();
     }
 
     private function storeNewStudent(){
@@ -221,6 +222,26 @@ class SyncUsers extends Command
                 } catch (\Exception $e) {
             }
         }
+    }
+
+    public function sendEmailToETC()
+    {
+        $total_students=Student::count();
+        $today_students=Student::whereDate('created_at', Carbon::today())->count();
+
+        $total_staff=Staff::count();
+        $today_staff=Staff::whereDate('created_at', Carbon::today())->count();
+        $data['total_students']=$total_students;
+        $data['today_students']=$today_students;
+        $data['total_staff']=$total_staff;
+        $data['today_staff']=$today_staff;
+        //----------SEND ETC MAIL--------------
+        $mailData = [
+            'title' => 'Student And Staff Data Updated',
+            'body' => $data,
+        ];
+        Mail::to('itsanees011@gmail.com')->send(new ETCEmail($mailData));
+
     }
 
     public function checkIfStaffExist(){
