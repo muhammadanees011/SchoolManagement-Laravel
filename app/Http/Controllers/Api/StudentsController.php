@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Mail\ETCEmail;
 use App\Models\Student;
 use App\Models\Staff;
 use App\Models\Wallet;

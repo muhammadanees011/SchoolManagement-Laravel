@@ -48,27 +48,15 @@
 
 <body>
     <div class="container">
-        <img src="https://via.placeholder.com/100" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px;">
         <h4 style="color:#235667;">Your Daily Update From StudentPay!</h4>
         <p>
-            we have received {{$mailData['body']}}
-            <br><strong style="color:#235667 !important;">Password:</strong> {{ $mailData['body'] }}
+            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_students']}}</strong> students today. and we have <strong style="color:#235667 !important;">{{$mailData['total_students']}}</strong> total students now.
             <br>
-            For your security, we recommend changing your password as soon as you log in for the first time.
-            Simply visit your profile settings to update your password <a style="color:#22C55D; font-size:1rem !important;" href="https://student-pay.co.uk/profile">click here</a>.
-            Embrace the convenience of secure, cashless transactions with StudentPay. From school meals to exciting events, 
-            our platform provides a hassle-free way to handle all school-related expenses.
-            If you have any questions or need assistance, feel free to contact our support team at
+            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_staff']}}</strong>staff today. and we have <strong style="color:#235667 !important;">{{$mailData['total_staff']}}</strong> total staff now.
+            <br>
+            This is an auto-generated email, Please do not respond to this email.
         </p>
         <footer>
-            <p>
-                <strong>Contact Us:</strong><br>
-                Sales: 0345 0345 930<br>
-                Technical Support: 0121 387 0007
-            </p>
-            <p>
-                This is an automatic email. Do not respond to this message!
-            </p>
             <p>
                 Best Regards,<br>
                 StudentPay Team

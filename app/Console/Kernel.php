@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('sync:users')->weekdays()->dailyAt('13:13');
+        $schedule->command('sync:users')->weekdays()->dailyAt('13:41');
         // $schedule->command('add:fsmamount')->weekdays()->daily();
         $schedule->command('add:fsmamount')->weekdays()->dailyAt('12:40');
     }

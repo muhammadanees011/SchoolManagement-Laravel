@@ -237,11 +237,7 @@ class SyncUsers extends Command
         $data['total_staff']=$total_staff;
         $data['today_staff']=$today_staff;
         //----------SEND ETC MAIL--------------
-        $mailData = [
-            'title' => 'Student And Staff Data Updated',
-            'body' => $data,
-        ];
-        Mail::to('itsanees011@gmail.com')->send(new ETCEmail($mailData));
+        Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
 
     }
 
