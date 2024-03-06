@@ -27,7 +27,7 @@ class ETCEmail extends Mailable
      */
     public function build()
     {
-        return $this->view('emails.ETCMail')
+        return $this->view('emails.ETCEmail')
             ->subject('StudentPay Data Updated')
             ->with('mailData', $this->data);
     }
