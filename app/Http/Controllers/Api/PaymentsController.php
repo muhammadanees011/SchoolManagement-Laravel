@@ -267,7 +267,7 @@ class PaymentsController extends Controller
             $response['fsm_amount']=$user->fsm_amount ? (float)number_format($user->fsm_amount, 2) :(float)number_format(0, 2);
             return response()->json($response, 200);
         }else{
-            $response['message']=["not enoung amount"];
+            $response['message']=["not enough amount"];
             return response()->json($response, 422);
         }
     }
@@ -327,7 +327,7 @@ class PaymentsController extends Controller
             $response['message']=["Payment Successfull"];
             return response()->json($response, 200);
         }else{
-            $response['message']=["not enoung amount"];
+            $response['message']=["not enough amount"];
             return response()->json($response, 422);
         }
     }

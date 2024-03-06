@@ -52,12 +52,13 @@
         <p>
             we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_students']}}</strong> students today. and we have <strong style="color:#235667 !important;">{{$mailData['total_students']}}</strong> total students now.
             <br>
-            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_staff']}}</strong>staff today. and we have <strong style="color:#235667 !important;">{{$mailData['total_staff']}}</strong> total staff now.
+            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_staff']}}</strong> staff today. and we have <strong style="color:#235667 !important;">{{$mailData['total_staff']}}</strong> total staff now.
             <br>
-            This is an auto-generated email, Please do not respond to this email.
         </p>
         <footer>
             <p>
+                This is an auto-generated email, Please do not respond to this email.
+                <br>
                 Best Regards,<br>
                 StudentPay Team
             </p>
