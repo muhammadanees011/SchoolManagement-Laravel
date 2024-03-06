@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\WelcomeEmail;
+use App\Mail\ETCEmail;
 use Carbon\Carbon;
 use App\Models\Wallet;
 use App\Models\User;
