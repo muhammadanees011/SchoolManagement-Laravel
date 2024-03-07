@@ -121,6 +121,7 @@ class SyncUsers extends Command
                 //----------CREATE STUDENT WALLET-------------
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
+                $userWallet->ballance= 0;
                 $userWallet->save();
                 // }
                 } catch (\Exception $e) {
@@ -201,6 +202,7 @@ class SyncUsers extends Command
                 //----------CREATE STUDENT WALLET-------------
                 $userWallet=new Wallet();
                 $userWallet->user_id=$userId;
+                $userWallet->ballance= 0;
                 $userWallet->save();
                 } catch (\Exception $e) {
             }
@@ -238,7 +240,10 @@ class SyncUsers extends Command
         $data['today_staff']=$today_staff;
         //----------SEND ETC MAIL--------------
         Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
-
+        Mail::to('abeer.waseem@xepos.co.uk')->send(new ETCEmail($data));
+        Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
+        Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
+        Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
     }
 
     public function checkIfStaffExist(){

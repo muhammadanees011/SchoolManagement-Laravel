@@ -59,7 +59,7 @@ class StaffController extends Controller
             'zip'=>'nullable|string|max:255',
             'status'=>'nullable|string|max:255',
             'role'=>'required|string|max:255',
-            'balance'=>'required|numeric'
+            'balance'=>'nullable|numeric'
         ]);
         if ($validator->fails())
         {
