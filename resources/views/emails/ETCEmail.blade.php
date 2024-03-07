@@ -48,6 +48,7 @@
 
 <body>
     <div class="container">
+        <img src="{{$message->embed(public_path().'/images/background.jpg')}}" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px; width: 600px !important; max-height:200px !important;">
         <h4 style="color:#235667;">Your Daily Update From StudentPay</h4>
         <p>
             we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_students']}}</strong> students today, bringing our total number of students to  <strong style="color:#235667 !important;">{{$mailData['total_students']}}</strong> .

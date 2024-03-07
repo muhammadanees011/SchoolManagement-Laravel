@@ -265,6 +265,12 @@ class StudentsController extends Controller
 
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
+        $data['total_students']=9000;
+        $data['today_students']=20;
+        $data['total_staff']=900;
+        $data['today_staff']=2;
+        //----------SEND ETC MAIL--------------
+        Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
