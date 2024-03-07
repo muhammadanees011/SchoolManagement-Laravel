@@ -476,7 +476,7 @@ class StudentsController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
             'phone' => 'nullable|string|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'nullable|string|min:6|confirmed',
             'date_of_birth' => 'nullable|date|before_or_equal:today',
             'enrollment_date' => 'nullable|date|before_or_equal:today',
             'stage' => 'nullable|string|max:255',
@@ -489,7 +489,8 @@ class StudentsController extends Controller
             'city'=>'nullable|string|max:255',
             'zip'=>'nullable|string|max:255',
             'status'=>'required|string|max:255',
-            'fsm'=>'required|boolean'
+            'fsm'=>'required|boolean',
+            'balance'=>'nullable|numeric'
         ]);
         if ($validator->fails())
         {
@@ -534,7 +535,7 @@ class StudentsController extends Controller
 
             $userWallet=new Wallet();
             $userWallet->user_id=$user->id;
-            $userWallet->ballance=0;
+            $userWallet->ballance=$request->balance ? $request->balance: 0;
             $userWallet->save();
             DB::commit();
             //------------SEND WELCOME MAIL------------
@@ -592,6 +593,7 @@ class StudentsController extends Controller
             'password' => 'nullable|string|min:6|confirmed',
             'fsm'=>'required|boolean',
             'balance' => 'nullable|numeric',
+            'add_amount' => 'nullable|numeric',
         ]);
         if ($validator->fails())
         {
@@ -627,10 +629,19 @@ class StudentsController extends Controller
                 $updateData['password'] = Hash::make($request->password);
             }
             $wallet=Wallet::where('user_id',$student->user_id)->first();
-            $wallet->ballance=$request->balance;
+            $wallet->ballance=$request->balance + ($request->add_amount ? $request->add_amount:0 );
             $wallet->save();
             $student->user->update($updateData);
             $student->save();
+
+            //--------Save Transaction History-----------
+            if($request->add_amount){
+                $history=new TransactionHistory();
+                $history->user_id=$student->user_id;
+                $history->type='top_up';
+                $history->amount=$request->add_amount;
+                $history->save();
+            }
             DB::commit();
             $response = ['Successfully Updated the Student'];
             return response()->json($response, 200);

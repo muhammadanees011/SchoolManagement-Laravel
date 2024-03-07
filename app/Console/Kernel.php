@@ -14,8 +14,6 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('sync:users')->weekdays()->dailyAt('08:30');
         // $schedule->command('add:fsmamount')->weekdays()->daily();
-
-        // $schedule->command('add:fsmamount')->weekdays()->dailyAt('12:40');
     }
 
     /**

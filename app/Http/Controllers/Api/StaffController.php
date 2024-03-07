@@ -13,6 +13,7 @@ use App\Models\Staff;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\OrganizationAdmin;
+use App\Models\TransactionHistory;
 use App\Models\School;
 use App\Mail\WelcomeEmail;
 use App\Http\Resources\StaffResource;
@@ -51,13 +52,14 @@ class StaffController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
             'phone' => 'nullable|string|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-            'address'=>'required|string|max:255',
-            'country'=>'required|string|max:255',
-            'city'=>'required|string|max:255',
-            'zip'=>'required|string|max:255',
-            'status'=>'required|string|max:255',
-            'role'=>'required|string|max:255'
+            'password' => 'nullable|string|min:6|confirmed',
+            'address'=>'nullable|string|max:255',
+            'country'=>'nullable|string|max:255',
+            'city'=>'nullable|string|max:255',
+            'zip'=>'nullable|string|max:255',
+            'status'=>'nullable|string|max:255',
+            'role'=>'required|string|max:255',
+            'balance'=>'required|numeric'
         ]);
         if ($validator->fails())
         {
@@ -95,7 +97,7 @@ class StaffController extends Controller
 
             $userWallet=new Wallet();
             $userWallet->user_id=$user->id;
-            $userWallet->ballance=0;
+            $userWallet->ballance=$request->balance ? $request->balance: 0;
             $userWallet->save();
             DB::commit();
             //------------SEND WELCOME MAIL------------
@@ -121,7 +123,7 @@ class StaffController extends Controller
 
     //-------------EDIT STAFF------------------
     public function editStaff($id){
-        $school=Staff::with('user.UserRole.Role')->find($id);
+        $school=Staff::with('user.UserRole.Role','balance')->find($id);
         return response()->json($school, 200);
     }
 
@@ -136,14 +138,15 @@ class StaffController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$staff->user->id,
             'phone' => 'nullable|string|unique:users,phone,'.$staff->user->id,
-            'address'=>'required|string|max:255',
-            'country'=>'required|string|max:255',
-            'city'=>'required|string|max:255',
-            'zip'=>'required|string|max:255',
-            'status'=>'required|string|max:255',
+            'address'=>'nullable|string|max:255',
+            'country'=>'nullable|string|max:255',
+            'city'=>'nullable|string|max:255',
+            'zip'=>'nullable|string|max:255',
+            'status'=>'nullable|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
-            'role'=>'required|string|max:255',
+            'role'=>'nullable|string|max:255',
             'balance' => 'nullable|numeric',
+            'add_amount' => 'nullable|numeric',
         ]);
         if ($validator->fails())
         {
@@ -163,21 +166,30 @@ class StaffController extends Controller
                     'country' => $request->country,
                     'city' => $request->city,
                     'zip' => $request->zip,
-                    'status' => $request->status,
+                    // 'status' => $request->status,
                 ];
                 if ($request->password) {
                     $updateData['password'] = Hash::make($request->password);
                 }
                 $wallet=Wallet::where('user_id',$staff->user_id)->first();
-                $wallet->ballance=$request->balance;
+                $wallet->ballance=$request->balance + ($request->add_amount ? $request->add_amount:0 );
                 $wallet->save();
                 $staff->user->update($updateData);
                 $staff->save();
 
-                $user=User::where('id',$staff->user_id)->first();
-                $user->syncRoles([]);
-                $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
-                $user->assignRole($role);
+                $user=User::where('id',$staff->user_id)->update(['status'=>$request->status]);
+
+                //--------Save Transaction History-----------
+                if($request->add_amount){
+                    $history=new TransactionHistory();
+                    $history->user_id=$staff->user_id;
+                    $history->type='top_up';
+                    $history->amount=$request->add_amount;
+                    $history->save();
+                }
+                // $user->syncRoles([]);
+                // $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
+                // $user->assignRole($role);
 
             DB::commit();
             $response = ['Successfully Updated the Staff'];
