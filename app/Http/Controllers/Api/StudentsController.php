@@ -270,7 +270,7 @@ class StudentsController extends Controller
 
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         foreach ($tables as $record) {
-            try{
+            // try{
                 //-----------UPDATE STUDENT----------------
                 $user=User::where('email',$record->eMail)->first();
                 $student=Student::where('user_id',$user->id)->first();
@@ -279,8 +279,8 @@ class StudentsController extends Controller
                 $student->fsm_amount = $record->fsmAmount;
                 $student->purse_type = $record->purseType ?: null;
                 $student->save();
-                } catch (\Exception $e) {
-            }
+            //     } catch (\Exception $e) {
+            // }
         }
 
         return $tables;
