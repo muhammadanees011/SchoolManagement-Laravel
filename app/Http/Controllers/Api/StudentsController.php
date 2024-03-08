@@ -280,6 +280,7 @@ class StudentsController extends Controller
                         $student->mifare_id  = $record->miFareID ?: null;
                         $student->fsm_amount = $record->fsmAmount;
                         $student->purse_type = $record->purseType ?: null;
+                        $student->updated_at = now();
                         $student->save();
                     }
                 }
