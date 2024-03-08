@@ -63,7 +63,9 @@ class TransactionHistoryController extends Controller
             }else if($request->role=='staff' && $request->admin_id!=null){
                 $user=Staff::where('user_id',$request->admin_id)->first();
                 $studentIds = Student::where('school_id', $user->school_id)->pluck('user_id')->toArray();
-                $history=TransactionHistory::whereIn('user_id',$studentIds)->with('user')->orderBy('created_at', 'desc')->get(); 
+                $history=TransactionHistory::whereIn('user_id',$studentIds)
+                ->orWhere('user_id', $request->admin_id)
+                ->with('user')->orderBy('created_at', 'desc')->get(); 
             }else if($request->role=='parent' && $request->admin_id!=null){
                 $history=TransactionHistory::where('user_id',$request->admin_id)->with('user')->orderBy('created_at', 'desc')->get(); 
             }
