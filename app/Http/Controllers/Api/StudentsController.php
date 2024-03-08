@@ -273,12 +273,17 @@ class StudentsController extends Controller
             // try{
                 //-----------UPDATE STUDENT----------------
                 $user=User::where('email',$record->eMail)->first();
-                $student=Student::where('user_id',$user->id)->first();
-                $student->upn = $record->UPN ?: null;
-                $student->mifare_id  = $record->miFareID ?: null;
-                $student->fsm_amount = $record->fsmAmount;
-                $student->purse_type = $record->purseType ?: null;
-                $student->save();
+                if($user){
+                    $student=Student::where('user_id',$user->id)->first();
+                    if($student){
+                        $student->upn = $record->UPN ?: null;
+                        $student->mifare_id  = $record->miFareID ?: null;
+                        $student->fsm_amount = $record->fsmAmount;
+                        $student->purse_type = $record->purseType ?: null;
+                        $student->save();
+                    }
+                }
+          
             //     } catch (\Exception $e) {
             // }
         }
