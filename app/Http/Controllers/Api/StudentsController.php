@@ -265,14 +265,26 @@ class StudentsController extends Controller
 
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
-        $data['total_students']=9000;
-        $data['today_students']=20;
-        $data['total_staff']=900;
-        $data['today_staff']=2;
-        //----------SEND ETC MAIL--------------
-        Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
         // $tables = DB::connection('remote_mysql')
         // ->select('SHOW TABLES');
+
+        $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
+        foreach ($tables as $record) {
+            try{
+                //-----------UPDATE STUDENT----------------
+                $user=User::where('email',$record->eMail)->first();
+                $student=Student::where('user_id',$user->id)->first();
+                $student->upn = $record->UPN ?: null;
+                $student->mifare_id  = $record->miFareID ?: null;
+                $student->fsm_amount = $record->fsmAmount;
+                $student->purse_type = $record->purseType ?: null;
+                $student->save();
+                } catch (\Exception $e) {
+            }
+        }
+
+        return $tables;
+
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         // $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $users = User::get();
@@ -287,7 +299,6 @@ class StudentsController extends Controller
         $newUsers=User::whereIn('id',$newIds)->pluck('email')->toArray();
         $otherUsers=DB::connection('remote_mysql')->table('ebStudent')->whereIn('eMail',$newUsers)->get();
         // return $otherUsers;
-        return $tables;
 
         // Identify emails that are in $tables but not in $users
         $newEmails = array_diff($tableEmails, $userEmails);
