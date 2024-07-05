@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\Organization\list;
+use Illuminate\Support\Facades\Storage;
 
 class SchoolsController extends Controller
 {
@@ -41,10 +42,10 @@ class SchoolsController extends Controller
     //-------------GET ALL SCHOOLS------------
     public function index($admin_id=null){
         if($admin_id==null){
-            $schools=School::with('user','organization')->get();
+            $schools=School::where('status','!=','deleted')->with('user','organization')->get();
         }else{
             $admin=OrganizationAdmin::where('user_id',$admin_id)->first();
-            $schools=School::where('organization_id',$admin->organization_id)->with('user','organization')->get();
+            $schools=School::where('status','!=','deleted')->where('organization_id',$admin->organization_id)->with('user','organization')->get();
         }
         return response()->json($schools, 200);
     }
@@ -171,8 +172,9 @@ class SchoolsController extends Controller
     public function delete($id){
         try {
             DB::beginTransaction();
-            $school =School::findOrFail($id);
-            $school->delete();
+            $school =School::find($id);
+            $school->status='deleted';
+            $school->save();
             DB::commit();
             $response = ['Successfully deleted School'];
             return response()->json($response, 200);
@@ -186,5 +188,57 @@ class SchoolsController extends Controller
 
             }
         }
+    }
+
+    public function storeBrandingSettings(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'school_id'=>'required',
+            'primary_color' => 'nullable',
+            'secondary_color' => 'nullable',
+            'logo' => 'nullable',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        $school=School::find($request->school_id);
+        $school->primary_color=$request->primary_color;
+        $school->secondary_color=$request->secondary_color;
+        if($request->file('logo')){
+        $path = $request->file('logo')->store('uploads', 'public');
+        $school->logo=Storage::url($path);
+        }
+        $school->save();   
+        $response = ['Successfully updated School branding'];
+        return response()->json($response, 200);
+    }
+
+    public function getSettings(Request $request)
+    {
+        $school=School::find($request->school_id);
+        return response()->json($school, 200);
+    }
+
+    //-------------GET ARCHIVED SCHOOLS------------
+    public function archivedSchools($admin_id=null){
+        if($admin_id==null){
+            $schools=School::where('status','deleted')->with('user','organization')->get();
+        }else{
+            $admin=OrganizationAdmin::where('user_id',$admin_id)->first();
+            $schools=School::where('organization_id',$admin->organization_id)->where('status','deleted')->with('user','organization')->get();
+        }
+        return response()->json($schools, 200);
+    }
+
+    public function bulkRestoreSchools(Request $request)
+    {
+        $ids = $request->all();
+        foreach ($ids as $record) {
+            $school=School::where('id',$record)->first();
+            $school->status='active';
+            $school->save();
+        }
+        return response()->json(['message' => 'Schools restored successfully'], 200);
     }
 }

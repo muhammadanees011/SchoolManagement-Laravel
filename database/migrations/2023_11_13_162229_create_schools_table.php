@@ -31,6 +31,9 @@ return new class extends Migration
             $table->string('stages')->nullable();
             $table->string('tagline')->nullable();
             $table->string('description')->nullable();
+            $table->string('primary_color')->nullable();
+            $table->string('secondary_color')->nullable();
+            $table->string('logo')->nullable();
             $table->enum('status',['active','inactive','pending','blocked','deleted'])->default('active');
             $table->timestamps();
         });

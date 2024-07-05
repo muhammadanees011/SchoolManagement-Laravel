@@ -53,12 +53,7 @@ class OrganizationAdminsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'phone' => 'nullable|string|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'address'=>'required|string|max:255',
-            'country'=>'required|string|max:255',
-            'city'=>'required|string|max:255',
-            'zip'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'role'=>'required|string|max:255'
         ]);
@@ -72,13 +67,8 @@ class OrganizationAdminsController extends Controller
             $user->first_name=$request->first_name;
             $user->last_name=$request->last_name;
             $user->email=$request->email;
-            $user->phone=$request->phone;
             $user->password=Hash::make($request['password']);
             $user->role='organization_admin';
-            $user->address=$request->address;
-            $user->country=$request->country;
-            $user->city=$request->city;
-            $user->zip=$request->zip;
             $user->status = $request->status;
             $user->save();
             $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
@@ -127,11 +117,6 @@ class OrganizationAdminsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $id,
-            'phone' => 'nullable|string|unique:users,phone,' . $id,
-            'address'=>'required|string|max:255',
-            'country'=>'required|string|max:255',
-            'city'=>'required|string|max:255',
-            'zip'=>'required|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
             'role' => 'required|string',
@@ -146,11 +131,6 @@ class OrganizationAdminsController extends Controller
             $user->first_name=$request->first_name;
             $user->last_name=$request->last_name;
             $user->email=$request->email;
-            $user->phone=$request->phone;
-            $user->address=$request->address;
-            $user->country=$request->country;
-            $user->city=$request->city;
-            $user->zip=$request->zip;
             $user->status = $request->status;
             if($request->password){
                 $user->password=Hash::make($request->password);

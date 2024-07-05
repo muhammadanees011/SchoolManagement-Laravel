@@ -24,8 +24,6 @@ return new class extends Migration
             $table->double('fsm_amount')->nullable();
             $table->boolean('fsm_activated')->default(false); 
             $table->string('site')->nullable();
-            $table->string('about_me')->nullable();
-            $table->string('photo_url')->nullable();
             $table->timestamps();
         });
     }

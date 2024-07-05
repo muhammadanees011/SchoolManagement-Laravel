@@ -6,12 +6,15 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "dcblogdev/laravel-microsoft-graph": "^4.0",
         "doctrine/dbal": "^3.2",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
         "laravel/passport": "^11.10",
         "laravel/sanctum": "^3.3",
+        "laravel/socialite": "^5.15",
         "laravel/tinker": "^2.8",
+        "socialiteproviders/microsoft": "^4.3",
         "spatie/laravel-permission": "^6.3",
         "stripe/stripe-php": "^13.5"
     },

@@ -56,6 +56,16 @@
             And we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_staff']}}</strong> staff today, bringing our total number of staff to  <strong style="color:#235667 !important;">{{$mailData['total_staff']}}</strong> .
             <br>
         </p>
+
+        @if (!empty($mailData['new_schools']))
+            <p><strong>Users associated with the following schools have been dropped as these schools are not found on the StudentPay portal:</strong></p>
+            <ul>
+                @foreach ($mailData['new_schools'] as $new_schools)
+                    <li>{{ $new_schools }}</li>
+                @endforeach
+            </ul>
+        @endif
+
         <footer>
             <p>
                 This is an auto-generated email, Please do not respond to this email.

@@ -8,16 +8,46 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\User;
+use App\Models\Student;
+use App\Models\School;
+use App\Models\Parents;
+use App\Models\Staff;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Laravel\Passport\Passport;
 use App\Mail\ForgotPasswordEmail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Socialite\Facades\Socialite;
 
 
 class AuthController extends Controller
 {
+      // Redirect the user to the Microsoft authentication page.
+      public function redirectToMicrosoft()
+      {
+          return Socialite::driver('microsoft')->redirect();
+      }
+  
+      // Obtain the user information from Microsoft.
+      public function handleMicrosoftCallback()
+      {
+          $microsoftUser = Socialite::driver('microsoft')->user();
+  
+          // Find or create the user in the local database.
+          $user = User::firstOrCreate([
+              'email' => $microsoftUser->getEmail(),
+          ], [
+              'name' => $microsoftUser->getName(),
+              'password' => bcrypt(str_random(24)),
+              'microsoft_id' => $microsoftUser->getId(),
+              // Add other fields as necessary
+          ]);
+          // Log the user in
+          Auth::login($user, true);
+          // Redirect to a protected route
+          return redirect()->intended('home');
+      }
     //------------REGISTER USER--------------
     public function register(Request $request){
         $validator = Validator::make($request->all(), [
@@ -53,6 +83,24 @@ class AuthController extends Controller
             $token = $tokenResult;
             $data['access_token'] = $token;
             $data['user'] =  $user;
+            $school=null;
+
+            if($user->role=='student'){
+                $student=Student::where('user_id',$user->id)->first();
+                $school=School::where('id',$student->school_id)->first();
+            }elseif($user->role=='staff'){
+                $staff=Staff::where('user_id',$user->id)->first();
+                $school=School::where('id',$staff->school_id)->first();
+            }elseif($user->role=='parent'){
+                $parent=Parents::where('parent_id',$user->id)->first();
+                $student=Student::where('id',$parent->student_id)->first();
+                $school=School::where('id',$student->school_id)->first();
+            }
+
+            $data["primary_color"]=$school!=null ? $school->primary_color : '#424246';
+            $data["secondary_color"]=$school!=null ? $school->secondary_color : '#424246';
+            $data["logo"]=$school ? $school->logo : null;
+
             return response()->json($data);
         } 
         else{ 
@@ -202,10 +250,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required',
             'last_name' => 'required',
-            // 'email' => 'required|email|unique:users',
-            // 'phone' => 'required|unique:users',
             'email' => 'required|string|email|max:255|unique:users,email,'.$user_id->id,
-            'phone' => 'nullable|string|unique:users,phone,'.$user_id->id,            
         ]);
         if ($validator->fails()) {
             return response()->json($validator->messages()->first(), 403);
@@ -218,7 +263,6 @@ class AuthController extends Controller
         $user->first_name=$request->first_name;
         $user->last_name=$request->last_name;
         $user->email=$request->email;
-        $user->phone=$request->phone;
         $user->created_at=$created_at;
         $user->updated_at=$updated_at;
         $user->save();

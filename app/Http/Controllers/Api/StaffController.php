@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Staff;
 use App\Models\User;
 use App\Models\Wallet;
+use Illuminate\Support\Str;
 use App\Models\OrganizationAdmin;
 use App\Models\TransactionHistory;
 use App\Models\School;
@@ -25,12 +26,22 @@ class StaffController extends Controller
     //-------------GET ALL STAFF-------------
     public function getAllStaff(Request $request){
         if($request->user_id==null){
-        $staff = Staff::with('user', 'school')->paginate(20);
+        $staff = Staff::with('user', 'school')
+        ->whereHas('user', function($query) {
+            $query->where('status', 'active');
+        })
+        ->orderBy('created_at', 'desc')->paginate(20);
         $staff=StaffResource::collection($staff);
         }else{
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $staff= StaffResource::collection(Staff::with('user', 'school')->whereIn('school_id', $schoolIds)->paginate(20));
+            $staff= StaffResource::collection(
+                Staff::with('user', 'school')->whereIn('school_id', $schoolIds)
+                ->whereHas('user', function($query) {
+                    $query->where('status', 'active');
+                })
+                ->orderBy('created_at', 'desc')->paginate(20)
+            );
         }
         $pagination = [
         'current_page' => $staff->currentPage(),
@@ -51,12 +62,6 @@ class StaffController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'phone' => 'nullable|string|unique:users',
-            'password' => 'nullable|string|min:6|confirmed',
-            'address'=>'nullable|string|max:255',
-            'country'=>'nullable|string|max:255',
-            'city'=>'nullable|string|max:255',
-            'zip'=>'nullable|string|max:255',
             'status'=>'nullable|string|max:255',
             'role'=>'required|string|max:255',
             'balance'=>'nullable|numeric'
@@ -71,13 +76,9 @@ class StaffController extends Controller
             $user->first_name=$request->first_name;
             $user->last_name=$request->last_name;
             $user->email=$request->email;
-            $user->phone=$request->phone;
-            $user->password=Hash::make($request['password']);
+            $randomPassword = Str::random(10);
+            $user->password=Hash::make($randomPassword);
             $user->role='staff';
-            $user->address=$request->address;
-            $user->country=$request->country;
-            $user->city=$request->city;
-            $user->zip=$request->zip;
             $user->status = $request->status;
             $user->save();
 
@@ -104,7 +105,7 @@ class StaffController extends Controller
             $studentName = $request->first_name . ' ' . $request->last_name;
             $mailData = [
             'title' => 'Congratulations you have successfully created your StudentPay account!',
-            'body' => $request['password'],
+            'body' => $randomPassword,
             'user_name'=> $studentName,
             ];
             Mail::to($request->email)->send(new WelcomeEmail($mailData));
@@ -137,11 +138,6 @@ class StaffController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$staff->user->id,
-            'phone' => 'nullable|string|unique:users,phone,'.$staff->user->id,
-            'address'=>'nullable|string|max:255',
-            'country'=>'nullable|string|max:255',
-            'city'=>'nullable|string|max:255',
-            'zip'=>'nullable|string|max:255',
             'status'=>'nullable|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
             'role'=>'nullable|string|max:255',
@@ -158,14 +154,9 @@ class StaffController extends Controller
                 $staff->staff_id = $request->staff_id;
                 $staff->mifare_id = $request->mifare_id;
                 $updateData = [
-                    'phone' => $request->phone,
                     'email' => $request->email,
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
-                    'address' => $request->address,
-                    'country' => $request->country,
-                    'city' => $request->city,
-                    'zip' => $request->zip,
                     // 'status' => $request->status,
                 ];
                 if ($request->password) {
@@ -209,7 +200,9 @@ class StaffController extends Controller
         try {
             DB::beginTransaction();
             $staff =User::findOrFail($id);
-            $staff->delete();
+            $staff->status='deleted';
+            $staff->save();
+            // $staff->delete();
             DB::commit();
             $response = ['Successfully deleted Staff'];
             return response()->json($response, 200);
@@ -270,6 +263,105 @@ class StaffController extends Controller
         }
 
         return response()->json($response, 200);
+    }
+
+    //-------------SEARCH ARCHIVED STAFF----------------
+
+    public function searchArchivedStaff(Request $request){
+        $validator = Validator::make($request->all(), [
+            'searchString' => 'nullable',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        
+        $user=Auth::user();
+        if($user->role=='super_admin'){
+            $staff = Staff::with(['user' => function ($query) {
+                $query->with('balance');
+            }, 'school'])
+            ->where(function ($query) use ($request) {
+                $query->whereHas('user', function ($subquery) use ($request) {
+                    $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
+                    ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
+                    ->orWhere('mifare_id', 'like', '%' . $request->searchString . '%')
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
+                });
+            })->get();
+            $response= StaffResource::collection($staff);
+        }else{
+            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+
+            $staff = Staff::with(['user' => function ($query) {
+                $query->with('balance');
+            }, 'school'])
+            ->whereIn('school_id', $schoolIds) // Filter based on school_id
+            ->where(function ($query) use ($request) {
+                $query->whereHas('user', function ($subquery) use ($request) {
+                    $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
+                    ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
+                    ->orWhere('staff_id', 'like', '%' . $request->searchString . '%')
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
+                });
+            })->get();
+            $response= StaffResource::collection($staff);
+        }
+
+        return response()->json($response, 200);
+    }
+    
+
+    //-------------GET ARCHIVED STAFF-------------
+    public function archivedStaff(Request $request){
+        if($request->user_id==null){
+        $staff = Staff::with('user', 'school')
+        ->whereHas('user', function($query) {
+            $query->where('status', 'deleted');
+        })
+        ->orderBy('created_at', 'desc')->paginate(20);
+        $staff=StaffResource::collection($staff);
+        }else{
+            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+            $staff= StaffResource::collection(
+                Staff::with('user', 'school')->whereIn('school_id', $schoolIds)
+                ->whereHas('user', function($query) {
+                    $query->where('status', 'deleted');
+                })
+                ->orderBy('created_at', 'desc')->paginate(20)
+            );
+        }
+        $pagination = [
+        'current_page' => $staff->currentPage(),
+        'last_page' => $staff->lastPage(),
+        'per_page' => $staff->perPage(),
+        'total' => $staff->total(),
+        ];
+        $response['data']=$staff;
+        $response['pagination']=$pagination;
+        return response()->json($response, 200);
+    }
+
+    //-------------BULK DELETE STAFF--------
+    public function bulkDeleteStaff(Request $request)
+    {
+        $ids = $request->all();
+        User::whereIn('id', $ids)->delete();
+        return response()->json(['message' => 'Staff deleted successfully'], 200);
+    }
+
+    //-------------BULK RESTORE STAFF--------
+    public function bulkRestoreStaff(Request $request)
+    {
+        $ids = $request->all();
+        foreach ($ids as $record) {
+            $user=User::where('id',$record)->first();
+            $user->status='active';
+            $user->save();
+        }
+        return response()->json(['message' => 'Staff restored successfully'], 200);
     }
 
 }

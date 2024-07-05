@@ -33,6 +33,8 @@ class SyncUsers extends Command
      */
     protected $description = 'Command description';
 
+    protected $newSchools = [];
+
     /**
      * Execute the console command.
      */
@@ -42,6 +44,7 @@ class SyncUsers extends Command
         $this->storeNewStudent();
         $this->storeNewStaff();
         $this->updateData();
+        $this->archiveUsers();
         $this->sendEmailToETC();
     }
 
@@ -59,11 +62,28 @@ class SyncUsers extends Command
 
         foreach ($newRecords as $record) {
 
+            $school = School::where('title', 'like', '%' . $record->site . '%')->first();
+            if($school){
+                $school->students_count=$school->students_count + 1;
+                $school->save();
+            }else{
+                if (!in_array($record->site, $this->newSchools)) {
+                    $this->newSchools[] = $record->site;
+                }
+                continue;
+                // $organization=Organization::where('name','Education Training Collective')->first();
+                // $newSchool=new School();
+                // $newSchool->organization_id=$organization->id;
+                // $newSchool->title=$record->site;
+                // $newSchool->students_count=1;
+                // $newSchool->save();
+                // $school=$newSchool;
+            }
+
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
-                // if($this->checkIfStudentExist($record)){
                 $userId=DB::table('users')->insertGetId([
                     'first_name' => $record->firstName,
                     'last_name' => $record->surname,
@@ -73,21 +93,7 @@ class SyncUsers extends Command
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-                //-----------SAVE STUDENT----------------
-                // $school=School::where('title',$record->site)->first();
-                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
-                if($school){
-                    $school->students_count=$school->students_count + 1;
-                    $school->save();
-                }else{
-                    $organization=Organization::where('name','Education Training Collective')->first();
-                    $newSchool=new School();
-                    $newSchool->organization_id=$organization->id;
-                    $newSchool->title=$record->site;
-                    $newSchool->students_count=1;
-                    $newSchool->save();
-                    $school=$newSchool;
-                }
+                //-----------SAVE STUDENT----------------        
                 $student=new Student();
                 $student->user_id = $userId;
                 if($school){
@@ -123,7 +129,6 @@ class SyncUsers extends Command
                 $userWallet->user_id=$userId;
                 $userWallet->ballance= 0;
                 $userWallet->save();
-                // }
                 } catch (\Exception $e) {
             }
     
@@ -143,6 +148,25 @@ class SyncUsers extends Command
         $newRecords = $tables->whereIn('eMail', $newEmails);
 
         foreach ($newRecords as $record) {
+            // $school=School::where('title',$record->site)->first();
+            $school = School::where('title', 'like', '%' . $record->site . '%')->first();
+            if($school){
+                $school->teachers_count=$school->teachers_count + 1;
+                $school->save();
+            }else{
+                if (!in_array($record->site, $this->newSchools)) {
+                    $this->newSchools[] = $record->site;
+                }
+                continue;
+                // $organization=Organization::where('name','Education Training Collective')->first();
+                // $newSchool=new School();
+                // $newSchool->organization_id=$organization->id;
+                // $newSchool->title=$record->site;
+                // $newSchool->teachers_count=1;
+                // $newSchool->save();
+                // $school=$newSchool;
+            }
+
            // ----------STORE NEW STAFF------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
@@ -157,20 +181,6 @@ class SyncUsers extends Command
                     'updated_at' => now(),
                 ]);
                 //-----------SAVE STAFF----------------
-                // $school=School::where('title',$record->site)->first();
-                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
-                if($school){
-                    $school->teachers_count=$school->teachers_count + 1;
-                    $school->save();
-                }else{
-                    $organization=Organization::where('name','Education Training Collective')->first();
-                    $newSchool=new School();
-                    $newSchool->organization_id=$organization->id;
-                    $newSchool->title=$record->site;
-                    $newSchool->teachers_count=1;
-                    $newSchool->save();
-                    $school=$newSchool;
-                }
                 $staff=new Staff();
                 $staff->user_id = $userId;
                 if($school){
@@ -227,6 +237,25 @@ class SyncUsers extends Command
         }
     }
 
+    // any account that currently exists in the XEPos data, 
+    // but not in the synchronisation data, should be deemed as no-longer active
+    public function archiveUsers()
+    {
+        $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
+        $users = DB::table('users')->get();
+        $tableEmails = $tables->pluck('eMail')->toArray();
+        $userEmails = $users->pluck('email')->toArray();
+        // Identify emails that are in $users but not in $tables
+        $newEmails = array_diff($userEmails,$tableEmails);
+        // Fetch the records corresponding to the new emails
+        $newRecords = $users->whereIn('email', $newEmails);
+        foreach ($newRecords as $record) {
+            $user=User::where('email',$record->email)->first();
+            $user->status='deleted';
+            $user->save();
+        }
+    }
+
     public function sendEmailToETC()
     {
         $total_students=Student::count();
@@ -238,30 +267,13 @@ class SyncUsers extends Command
         $data['today_students']=$today_students;
         $data['total_staff']=$total_staff;
         $data['today_staff']=$today_staff;
+        $data['new_schools']=$this->newSchools;
         //----------SEND ETC MAIL--------------
         Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
         Mail::to('abeer.waseem@xepos.co.uk')->send(new ETCEmail($data));
         Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
         Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
         Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
-    }
-
-    public function checkIfStaffExist(){
-        $user=User::where('role','staff')->delete();
-        return;
-        if($user){
-            $student=Staff::where('user_id',$user->id)->first();
-            if($student){
-                // do nothing
-                return false;
-            }else{
-                $user->delete();
-                return true;
-            }
-        }else{
-            return true;
-        }
-        
     }
 
     public function checkIfStudentExist($record){

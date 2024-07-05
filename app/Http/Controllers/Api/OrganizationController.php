@@ -31,6 +31,7 @@ class OrganizationController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
+        $school=null;
         if($request->role=='student'){
             $student=Student::where('user_id',$request->user_id)->first();
             $school=School::where('id',$student->school_id)->first();
@@ -52,6 +53,9 @@ class OrganizationController extends Controller
             return response()->json($response, 200);
         }
         $response["organization_name"]=$organization->name;
+        $response["primary_color"]=$school ? $school->primary_color : null;
+        $response["secondary_color"]=$school ? $school->secondary_color : null;
+        $response["logo"]=$school ? $school->logo : null;
         return response()->json($response, 200);
     }
     //-------------GET ALL ORGANIZATIONS------------

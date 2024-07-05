@@ -265,9 +265,6 @@ class StudentsController extends Controller
 
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
-        // $tables = DB::connection('remote_mysql')
-        // ->select('SHOW TABLES');
-
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         foreach ($tables as $record) {
             // try{
@@ -314,66 +311,6 @@ class StudentsController extends Controller
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
-            // try{
-                // $userId=DB::table('users')->insertGetId([
-                //     'first_name' => $record->firstName,
-                //     'last_name' => $record->surname,
-                //     'email' => $record->eMail,
-                //     'password' => bcrypt($randomPassword),
-                //     'role' => 'student',
-                //     'created_at' => now(),
-                //     'updated_at' => now(),
-                // ]);
-                // //-----------SAVE STUDENT----------------
-                // // $school=School::where('title',$record->site)->first();
-                // $school = School::where('title', 'like', '%' . $record->site . '%')->first();
-                // if($school){
-                // $school->students_count=$school->students_count + 1;
-                // $school->save();
-                // }
-                // $student=new Student();
-                // $student->user_id = $userId;
-                // if($school){
-                //     $student->school_id = $school->id;
-                // }
-                // $student->student_id = $record->loginID;
-                // $student->upn = $record->UPN;
-                // $student->mifare_id = $record->miFareID;
-                // $student->fsm_amount = $record->fsmAmount;
-                // $student->purse_type = $record->purseType;
-                // $student->site = $record->site;
-                // $student->save();
-                // //------------SEND WELCOME MAIL------------
-                // $mailData = [
-                //     'title' => 'Congratulations you have successfully created your StudentPay account!',
-                //     'body' => $randomPassword,
-                //     'user_name'=> $studentName,
-                // ];
-                // // Mail::to($record->eMail)->send(new WelcomeEmail($mailData));
-                // //----------CREATE STRIPE CUSTOMER------------
-                // $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
-                // $customer=$stripe->customers->create([
-                // 'name' => $studentName,
-                // 'email' => $record->eMail,
-                // ]);
-                // $user=User::where('id',$userId)->first();
-                // $user->stripe_id=$customer->id;
-                // $user->created_at=now();
-                // $user->updated_at=now();
-                // $user->save();
-                // //----------CREATE STUDENT WALLET-------------
-                // $userWallet=new Wallet();
-                // $userWallet->user_id=$userId;
-                // $userWallet->save();
-                // $res="Email is sent successfully.";
-                // return response()->json($res);
-                // return response()->json($customer, 200);
-            //     } catch (\Exception $e) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => $e->getMessage()
-            //     ], 500);
-            // }
     
         }
         $res="No New Students Found.";
@@ -473,19 +410,88 @@ class StudentsController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         if($request->role=='super_admin'){
-            $students=Student::with('user.balance','school')->paginate(60);
+            $students=Student::with('user.balance','school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })->orderBy('created_at', 'desc')->paginate(60);
         }else if($request->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')->paginate(60);
+            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })->orderBy('created_at', 'desc')->paginate(60);
         }else if($request->role=='staff'){
             $user=Staff::where('user_id',$request->user_id)->first();
-            $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')->paginate(60);
+            $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })->orderBy('created_at', 'desc')->paginate(60);
         }else if($request->role=='parent'){
             $studentIds=Parents::where('parent_id',$request->user_id)->pluck('student_id')->toArray();
-            $students = Student::where('id', $studentIds)->with('user.balance', 'school')->get();
+            $students = Student::where('id', $studentIds)->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })->orderBy('created_at', 'desc')->get();
         }
         return response()->json($students, 200);
+    }
+    //-------------GET ALL STUDENTS-------------
+    public function archivedStudents(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id' => ['required',Rule::exists('users', 'id')],
+            'role' =>'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        if($request->role=='super_admin'){
+            // $students=Student::with('user.balance','school')->orderBy('created_at', 'desc')->paginate(60);
+            $students = Student::with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'deleted');
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(60);
+        }else if($request->role=='organization_admin'){
+            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'deleted');
+            })->orderBy('created_at', 'desc')->paginate(60);
+        }else if($request->role=='staff'){
+            $user=Staff::where('user_id',$request->user_id)->first();
+            $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'deleted');
+            })->orderBy('created_at', 'desc')->paginate(60);
+        }else if($request->role=='parent'){
+            $studentIds=Parents::where('parent_id',$request->user_id)->pluck('student_id')->toArray();
+            $students = Student::where('id', $studentIds)->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'deleted');
+            })->orderBy('created_at', 'desc')->get();
+        }
+        return response()->json($students, 200);
+    }
+    //-------------BULK DELETE STUDENTS--------
+    public function bulkDeleteStudents(Request $request)
+    {
+        $ids = $request->all();
+        User::whereIn('id', $ids)->delete();
+        return response()->json(['message' => 'Students deleted successfully'], 200);
+    }
+    public function bulkRestoreStudents(Request $request)
+    {
+        $ids = $request->all();
+        foreach ($ids as $record) {
+            $user=User::where('id',$record)->first();
+            $user->status='active';
+            $user->save();
+        }
+        return response()->json(['message' => 'Students restored successfully'], 200);
     }
     //-------------CREATE STUDENT--------------
     public function create(Request $request){
@@ -498,19 +504,8 @@ class StudentsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'phone' => 'nullable|string|unique:users',
-            'password' => 'nullable|string|min:6|confirmed',
+            // 'password' => 'nullable|string|min:6|confirmed',
             'date_of_birth' => 'nullable|date|before_or_equal:today',
-            'enrollment_date' => 'nullable|date|before_or_equal:today',
-            'stage' => 'nullable|string|max:255',
-            'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|max:255',
-            'allergies' => 'nullable|string|max:255',
-            'medical_conditions' => 'nullable|string|max:255',
-            'address'=>'nullable|string|max:255',
-            'country'=>'nullable|string|max:255',
-            'city'=>'nullable|string|max:255',
-            'zip'=>'nullable|string|max:255',
             'status'=>'required|string|max:255',
             'fsm'=>'required|boolean',
             'balance'=>'nullable|numeric'
@@ -525,13 +520,9 @@ class StudentsController extends Controller
             $user->first_name=$request->first_name;
             $user->last_name=$request->last_name;
             $user->email=$request->email;
-            $user->phone=$request->phone;
-            $user->password=Hash::make($request['password']);
+            $randomPassword = Str::random(10);
+            $user->password=Hash::make($randomPassword);
             $user->role='student';
-            $user->address=$request->address;
-            $user->country=$request->country;
-            $user->city=$request->city;
-            $user->zip=$request->zip;
             $user->status = $request->status;
             $user->save();
 
@@ -542,13 +533,7 @@ class StudentsController extends Controller
             $student->school_id = $request->school_id;
             $student->attribute_id = $request->attribute_id;
             $student->attributes =$request["attributes"];
-            $student->stage = $request->stage;
             $student->dob = $request->date_of_birth;
-            $student->emergency_contact_name = $request->emergency_contact_name;
-            $student->emergency_contact_phone = $request->emergency_contact_phone;
-            $student->allergies = $request->allergies;
-            $student->medical_conditions = $request->medical_conditions;
-            $student->enrollment_date = $request->enrollment_date;
             $student->fsm_amount= $request->fsm ? 0:null;
             $student->save();
 
@@ -565,7 +550,7 @@ class StudentsController extends Controller
             $studentName = $request->first_name . ' ' . $request->last_name;
             $mailData = [
             'title' => 'Congratulations you have successfully created your StudentPay account!',
-            'body' => $request['password'],
+            'body' => $randomPassword,
             'user_name'=> $studentName,
             ];
             Mail::to($request->email)->send(new WelcomeEmail($mailData));
@@ -600,18 +585,7 @@ class StudentsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$student->user->id,
-            'phone' => 'nullable|string|unique:users,phone,'.$student->user->id,
             'date_of_birth' => 'nullable|date|before_or_equal:today',
-            'enrollment_date' => 'nullable|date|before_or_equal:today',
-            'stage' => 'nullable|string|max:255',
-            'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|max:255',
-            'allergies' => 'nullable|string|max:255',
-            'medical_conditions' => 'nullable|string|max:255',
-            'address'=>'nullable|string|max:255',
-            'country'=>'nullable|string|max:255',
-            'city'=>'nullable|string|max:255',
-            'zip'=>'nullable|string|max:255',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
             'fsm'=>'required|boolean',
@@ -629,23 +603,12 @@ class StudentsController extends Controller
             $student->mifare_id = $request->mifare_id;
             $student->attribute_id = $request->attribute_id;
             $student->attributes =$request["attributes"];
-            $student->stage = $request->stage;
             $student->dob = $request->date_of_birth;
-            $student->emergency_contact_name = $request->emergency_contact_name;
-            $student->emergency_contact_phone = $request->emergency_contact_phone;
-            $student->allergies = $request->allergies;
-            $student->medical_conditions = $request->medical_conditions;
-            $student->enrollment_date = $request->enrollment_date;
             $student->fsm_activated = $request->fsm;
             $updateData = [
-                'phone' => $request->phone,
                 'email' => $request->email,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
-                'address' => $request->address,
-                'country' => $request->country,
-                'city' => $request->city,
-                'zip' => $request->zip,
                 'status' => $request->status,
             ];
             if ($request->password) {
@@ -681,8 +644,10 @@ class StudentsController extends Controller
     public function delete($id){
         try {
             DB::beginTransaction();
-            $student =Student::findOrFail($id);
-            $student->delete();
+            $student =User::find($id);
+            $student->status ='deleted';
+            // $student->delete();
+            $student->save();
             DB::commit();
             $response = ['Successfully deleted Student'];
             return response()->json($response, 200);

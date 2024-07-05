@@ -30,16 +30,6 @@ return new class extends Migration
             $table->string('purse_type')->nullable();
             $table->string('site')->nullable();
             $table->date('dob')->nullable();
-            $table->date('enrollment_date')->nullable();
-            $table->string('stage')->nullable();
-            $table->string('about_me')->nullable();
-            $table->string('emergency_contact_name')->nullable();
-            $table->string('emergency_contact_phone')->nullable();
-            $table->string('allergies')->nullable();
-            $table->string('medical_conditions')->nullable();
-            $table->string('photo_url')->nullable();
-            $table->enum('transportation_mode',['bus','car','walking','bicycle','public_transport','parent_pick_drop','other'])->nullable();
-            $table->string('bus_route')->nullable();
             $table->timestamps();
         });
     }

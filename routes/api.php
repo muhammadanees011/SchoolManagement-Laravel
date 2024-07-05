@@ -32,6 +32,30 @@ use App\Http\Controllers\Api\PermissionsController;
 |
 */
 
+// routes/web.php
+
+Route::get('login/microsoft', [AuthController::class,'redirectToMicrosoft']);
+Route::get('login/microsoft/callback', [AuthController::class,'handleMicrosoftCallback']);
+
+
+
+// Route::get('/msgraph', function(){
+
+//     if (! MsGraph::isConnected()) {
+//         return redirect()->route('msgraph.connect');
+//     } else {
+//         //display your details
+//         return MsGraph::get('me');
+//     }
+
+// });
+
+// Route::get('msgraph/connect', function(){
+//     return MsGraph::connect();
+// })->name('msgraph.connect');
+
+
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -85,16 +109,23 @@ Route::group(['middleware' => 'auth:api'], function () {
     //-------------Schools-----------------
     Route::post('/createSchool/{admin_id?}',[SchoolsController::class,'create']);
     Route::get('/getAllSchools/{admin_id?}',[SchoolsController::class,'index']);
+    Route::get('/archivedSchools/{admin_id?}',[SchoolsController::class,'archivedSchools']);
     Route::get('/editSchool/{id}',[SchoolsController::class,'edit']);
     Route::put('/updateSchool/{id}/{admin_id?}',[SchoolsController::class,'update']);
     Route::delete('/deleteSchool/{id}',[SchoolsController::class,'delete']);
     Route::get('/totalSchools',[SchoolsController::class,'totalSchools']);
+    Route::post('/storebranding',[SchoolsController::class,'storeBrandingSettings']);
+    Route::post('/getSettings',[SchoolsController::class,'getSettings']);
+    Route::post('/bulkRestoreSchools',[SchoolsController::class,'bulkRestoreSchools']);
     //-------------Students-----------------
     Route::post('/createStudent',[StudentsController::class,'create']);
     Route::post('/getAllStudents',[StudentsController::class,'index']);
+    Route::post('/archivedStudents',[StudentsController::class,'archivedStudents']);
     Route::get('/editStudent/{id}',[StudentsController::class,'edit']);
     Route::put('/updateStudent/{id}',[StudentsController::class,'update']);
     Route::delete('/deleteStudent/{id}',[StudentsController::class,'delete']);
+    Route::post('/bulkDeleteStudents',[StudentsController::class,'bulkDeleteStudents']);
+    Route::post('/bulkRestoreStudents',[StudentsController::class,'bulkRestoreStudents']);
     Route::get('/getTotalStudents',[StudentsController::class,'getTotalStudents']);
     Route::post('/filterStudent',[StudentsController::class,'filterStudent']);
     Route::get('/getAmountFSM/{student_id}',[StudentsController::class,'getAmountFSM']);
@@ -117,6 +148,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/getAllStaff',[StaffController::class,'getAllStaff']);
     Route::get('/editStaff/{id}',[StaffController::class,'editStaff']);
     Route::post('/searchStaff',[StaffController::class,'searchStaff']);
+    Route::post('/archivedStaff',[StaffController::class,'archivedStaff']);
+    Route::post('/bulkDeleteStaff',[StaffController::class,'bulkDeleteStaff']);
+    Route::post('/bulkRestoreStaff',[StaffController::class,'bulkRestoreStaff']);
     Route::delete('/deleteStaff/{id}',[StaffController::class,'deleteStaff']);
     //------------Parents---------------------
     Route::post('/createParent',[ParentController::class,'createParent']);
