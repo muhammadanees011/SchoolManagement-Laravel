@@ -270,10 +270,10 @@ class SyncUsers extends Command
         $data['new_schools']=$this->newSchools;
         //----------SEND ETC MAIL--------------
         Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
-        Mail::to('abeer.waseem@xepos.co.uk')->send(new ETCEmail($data));
-        Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
-        Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
-        Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
+        // Mail::to('abeer.waseem@xepos.co.uk')->send(new ETCEmail($data));
+        // Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
+        // Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
+        // Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
     }
 
     public function checkIfStudentExist($record){
