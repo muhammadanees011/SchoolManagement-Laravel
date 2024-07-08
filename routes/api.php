@@ -203,6 +203,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getWallet/{id}', [PaymentsController::class, 'getWallet']);
     Route::post('payment/initiate', [PaymentsController::class, 'initiatePayment']);
     Route::post('/adminTopUp',[PaymentsController::class,'adminTopUp']);
+    Route::post('/bulkTopUp',[PaymentsController::class,'bulkTopUp']);
     //------------Trips---------------------
     Route::post('/createTrip',[TripsController::class,'createTrip']);
     Route::get('/findTrip/{id?}',[TripsController::class,'findTrip']);

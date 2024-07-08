@@ -161,9 +161,9 @@ class PaymentsController extends Controller
         $wallet=Wallet::with('user')->where('user_id',$id)->first();
         return response()->json($wallet, 200);
     }
-     //--------------ADMIN TOPUP-------------
-     public function adminTopUp(Request $request)
-     {
+    //--------------ADMIN TOPUP-------------
+    public function adminTopUp(Request $request)
+    {
         $user=Auth::user();
          try {
             if($user->role=='super_admin' || $user->role=='organization_admin'|| $user->role=='staff')
@@ -188,7 +188,39 @@ class PaymentsController extends Controller
              // Handle other errors
              return response()->json(['error' => $e->getMessage()], 500);
          }
+    }
+
+    //--------------BULK TOPUP-------------
+    public function bulkTopUp(Request $request)
+    {
+        $user=Auth::user();
+        try {
+            if($user->role=='super_admin' || $user->role=='organization_admin'|| $user->role=='staff')
+            {
+                foreach($request->students as $student){
+                    $wallet=Wallet::where('user_id',$student)->first();
+                    $wallet->ballance=$wallet->ballance + $request->topup_amount;
+                    $wallet->save();
+
+                    $history=new TransactionHistory();
+                    $history->user_id=$student;
+                    $history->amount=$request->topup_amount;
+                    $history->type='top_up';
+                    $history->save();
+                }
+
+            // TOPUP was successful
+            $response['message']="TopUp Successfull";
+            return response()->json($response, 200);
+            }else{
+                $response['message']="TopUp Failed";
+                return response()->json($response, 422);
+            }
+        }catch (Exception $e) {
+            // Handle other errors
+            return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
     //--------------MAKET A PAYMENT-------------
     public function initiatePayment(Request $request)
     {
