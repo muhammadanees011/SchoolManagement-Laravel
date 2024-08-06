@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transaction_history', function (Blueprint $table) {
+        Schema::create('refunds', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('acct_id')->nullable();
-            $table->double('amount')->nullable();
-            $table->enum('type', ['trip_funds', 'meal_funds', 'health_care', 'school_shop_funds', 'top_up','pos_transaction','school_shop_refund','pos_refund'])->nullable();
-            $table->enum('status',['successful','failed','pending','deleted'])->default('successful');
+            $table->bigInteger('purchase_id')->unsigned()->nullable();
+            $table->foreign('purchase_id')->references('id')->on('my_purchases')->onDelete('cascade');
+            $table->enum('refund_status',['refunded','refund_rejected','not_refunded','refund_requested','deleted'])->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transcation_history');
+        Schema::dropIfExists('refunds');
     }
 };

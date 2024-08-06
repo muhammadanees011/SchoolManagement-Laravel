@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\MicrosoftController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('auth/redirect', [MicrosoftController::class, 'redirectToProvider']);
+Route::get('auth/callback', [MicrosoftController::class, 'handleProviderCallback']);

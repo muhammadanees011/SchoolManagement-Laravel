@@ -24,8 +24,6 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->string('zip')->nullable();
             $table->string('state')->nullable();
-            $table->string('latitude')->nullable();
-            $table->string('longitude')->nullable();
             $table->integer('teachers_count')->nullable()->default(0);
             $table->integer('students_count')->nullable()->default(0);
             $table->string('stages')->nullable();
@@ -34,6 +32,7 @@ return new class extends Migration
             $table->string('primary_color')->nullable();
             $table->string('secondary_color')->nullable();
             $table->string('logo')->nullable();
+            $table->string('finance_coordinator_email')->nullable();
             $table->enum('status',['active','inactive','pending','blocked','deleted'])->default('active');
             $table->timestamps();
         });

@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\OrganizationShopsController;
 use App\Http\Controllers\Api\MenusController;
 use App\Http\Controllers\Api\MenuItemsController;
 use App\Http\Controllers\Api\UserCartController;
+use App\Http\Controllers\Api\MyPurchaseController;
+use App\Http\Controllers\Api\SupportController;
 use App\Http\Controllers\Api\OrganizationAdminsController;
 use App\Http\Controllers\Api\TransactionHistoryController;
 use App\Http\Controllers\Api\StaffController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\Api\TripsController;
 use App\Http\Controllers\Api\LegacyPermissionsController;
 use App\Http\Controllers\Api\RolesController;
 use App\Http\Controllers\Api\PermissionsController;
+use App\Http\Controllers\Api\MicrosoftController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,8 +37,9 @@ use App\Http\Controllers\Api\PermissionsController;
 
 // routes/web.php
 
-Route::get('login/microsoft', [AuthController::class,'redirectToMicrosoft']);
-Route::get('login/microsoft/callback', [AuthController::class,'handleMicrosoftCallback']);
+
+// Route::get('login/microsoft', [AuthController::class,'redirectToMicrosoft']);
+// Route::get('login/microsoft/callback', [AuthController::class,'handleMicrosoftCallback']);
 
 
 
@@ -117,6 +121,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/storebranding',[SchoolsController::class,'storeBrandingSettings']);
     Route::post('/getSettings',[SchoolsController::class,'getSettings']);
     Route::post('/bulkRestoreSchools',[SchoolsController::class,'bulkRestoreSchools']);
+    Route::post('/updateFinanceCoordiantorEmail',[SchoolsController::class,'updateFinanceCoordiantorEmail']);
     //-------------Students-----------------
     Route::post('/createStudent',[StudentsController::class,'create']);
     Route::post('/getAllStudents',[StudentsController::class,'index']);
@@ -155,9 +160,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     //------------Parents---------------------
     Route::post('/createParent',[ParentController::class,'createParent']);
     Route::put('/updateParent/{id}',[ParentController::class,'updateParent']);
-    Route::get('/getAllParents/{admin_id?}',[ParentController::class,'getAllParents']);
+    Route::post('/getAllParents/{admin_id?}',[ParentController::class,'getAllParents']);
     Route::get('/editParent/{id}',[ParentController::class,'editParent']);
     Route::delete('/deleteParent/{id}',[ParentController::class,'deleteParent']);
+    Route::post('/addStudentToParent',[ParentController::class,'addChildrenToParent']);
+    Route::get('/getChildrensOfParent/{id}',[ParentController::class,'getChildrensOfParent']);
+    Route::get('/deleteChildren/{id}',[ParentController::class,'deleteChildren']);
+    Route::post('/selectChildren',[ParentController::class,'selectChildren']);
     //-------------Payments-------------------
     Route::post('/addPaymentCard',[PaymentsController::class,'addPaymentCard']);
     Route::get('/getUserCards/{id}',[PaymentsController::class,'getUserCards']);
@@ -166,11 +175,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     //------------School Shop-----------------
     Route::get('/getAllSchoolShop',[OrganizationShopsController::class,'getAllSchoolShop']);
     Route::post('/addItem',[OrganizationShopsController::class,'addItem']);
-    Route::get('/getShopItems',[OrganizationShopsController::class,'getShopItems']);
+    Route::post('/getShopItems',[OrganizationShopsController::class,'getShopItems']);
     Route::get('/editShopItem/{id}',[OrganizationShopsController::class,'editShopItem']);
     Route::put('/updateShopItem/{id}',[OrganizationShopsController::class,'updateShopItem']);
     Route::delete('/deleteShopItem/{id}',[OrganizationShopsController::class,'deleteShopItem']);
     Route::get('/findShopItem/{id}',[OrganizationShopsController::class,'findShopItem']);
+    Route::get('/getAllSchoolsCourses',[OrganizationShopsController::class,'getAllSchoolsCourses']);
+    Route::post('/getArchivedItems',[OrganizationShopsController::class,'getArchivedItems']);
+    Route::post('/bulkDeleteItems',[OrganizationShopsController::class,'bulkDeleteItems']);
+    Route::post('/bulkRestoreItems',[OrganizationShopsController::class,'bulkRestoreItems']);
     //------------Menus-------------------
     Route::post('/addMenu',[MenusController::class,'addMenu']);
     Route::get('/editMenu/{id}',[MenusController::class,'editMenu']);
@@ -189,6 +202,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/removeItemFromCart', [UserCartController::class, 'removeItemFromCart']);
     Route::get('/getUserCartItems', [UserCartController::class, 'getUserCartItems']);
     Route::post('/checkout', [UserCartController::class, 'checkout']);
+    Route::post('/getMyInstallments', [UserCartController::class, 'getMyInstallments']);
+    Route::post('/payInstallment', [UserCartController::class, 'payInstallment']);
+    //----------My Purchases------------------
+    Route::post('/getMyPurchases', [MyPurchaseController::class, 'getMyPurchases']);
+    Route::post('/refundRequest', [MyPurchaseController::class, 'refundRequest']);
+    Route::post('/refundStatus', [MyPurchaseController::class, 'refundStatus']);
+    Route::post('/getRefundRequest', [MyPurchaseController::class, 'getRefundRequest']);
     //----------Transaction History----------
     Route::post('/getTransactionHistory', [TransactionHistoryController::class, 'getTransactionHistory']);
     Route::delete('/deleteTransactionHistory/{id}', [TransactionHistoryController::class, 'deleteTransactionHistory']);
@@ -233,4 +253,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/findPermission/{id?}',[PermissionsController::class,'findPermission']);
     Route::put('/updatePermission/{id?}',[PermissionsController::class,'updatePermission']);
     Route::delete('/deletePermission/{id?}',[PermissionsController::class,'deletePermission']);
+
+    //----------SEND SUPPORT EMAIL------------------
+    Route::post('/sendSupportEmail',[SupportController::class,'sendSupportEmail']);
 });

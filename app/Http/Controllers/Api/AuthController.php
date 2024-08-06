@@ -93,8 +93,7 @@ class AuthController extends Controller
                 $school=School::where('id',$staff->school_id)->first();
             }elseif($user->role=='parent'){
                 $parent=Parents::where('parent_id',$user->id)->first();
-                $student=Student::where('id',$parent->student_id)->first();
-                $school=School::where('id',$student->school_id)->first();
+                $school=School::where('id',$parent->school_id)->first();
             }
 
             $data["primary_color"]=$school!=null ? $school->primary_color : '#424246';

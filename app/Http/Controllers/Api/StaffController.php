@@ -19,7 +19,7 @@ use App\Models\School;
 use App\Mail\WelcomeEmail;
 use App\Http\Resources\StaffResource;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Carbon;
 
 class StaffController extends Controller
 {
@@ -109,6 +109,10 @@ class StaffController extends Controller
             'user_name'=> $studentName,
             ];
             Mail::to($request->email)->send(new WelcomeEmail($mailData));
+            $newUser['user_id']=$user->id;
+            $newUser['name']=$user->first_name.' '.$user->last_name;
+            $newUser['email']=$user->email;
+            $this->createCustomer($newUser);
             $response['message'] = ['Successfully created the Staff'];
             $response['user']=$user;
             return response()->json($response, 200);
@@ -311,7 +315,6 @@ class StaffController extends Controller
 
         return response()->json($response, 200);
     }
-    
 
     //-------------GET ARCHIVED STAFF-------------
     public function archivedStaff(Request $request){
@@ -362,6 +365,29 @@ class StaffController extends Controller
             $user->save();
         }
         return response()->json(['message' => 'Staff restored successfully'], 200);
+    }
+
+    //-------------CREATE STRIPE CUSTOMER--------
+    public function createCustomer($data)
+    {
+        try{
+            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $customer=$stripe->customers->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            ]);
+            $user=User::where('id',$data['user_id'])->first();
+            $user->stripe_id=$customer->id;
+            $now = Carbon::now();
+            $user->created_at = $now;
+            $user->updated_at = $now;
+            $user->save();
+            } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
 }

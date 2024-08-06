@@ -10,6 +10,9 @@ class ShopItem extends Model
     use HasFactory;
     protected $casts = [
         'attributes' => 'json',
+        'limit_colleges' => 'json',
+        'limit_courses' => 'json',
+        'visibility_options' => 'json',
     ];
 
     public function schoolShop()
@@ -20,5 +23,10 @@ class ShopItem extends Model
     public function Attribute()
     {
         return $this->hasOne(Attribute::class,'id','attribute_id');
+    }
+
+    public function payment()
+    {
+        return  $this->hasOne(PaymentPlan::class,'shop_item_id','id');
     }
 }

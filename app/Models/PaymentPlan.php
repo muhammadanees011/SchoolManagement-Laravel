@@ -11,5 +11,6 @@ class PaymentPlan extends Model
 
     protected $casts = [
         'other_installments_deadline_installments' => 'json',
+        'other_installments_deadline_installments' => 'json'
     ];
 }

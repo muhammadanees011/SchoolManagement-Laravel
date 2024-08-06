@@ -21,9 +21,17 @@ return new class extends Migration
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->json('attributes')->nullable();
             $table->string('name');
+            $table->string('image')->nullable();
             $table->string('detail')->nullable();
             $table->double('price');
             $table->integer('quantity')->nullable();
+            $table->date('valid_from')->nullable();
+            $table->date('valid_to')->nullable();
+            $table->json('limit_colleges')->nullable();
+            $table->json('limit_courses')->nullable();
+            $table->json('visibility_options')->nullable();
+            $table->enum('product_type',['Trip ','Resources','Uniforms','Print Credit','Exams','Bus Passes'])->nullable();
+            $table->enum('payment_plan',['full_payment','installments','installments_and_deposit'])->default('full_payment');
             $table->enum('status',['available','not_available','deleted'])->default('available');
             $table->timestamps();
         });

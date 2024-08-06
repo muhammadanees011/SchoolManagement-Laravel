@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\UserCart;
+use App\Models\ShopItem;
+use App\Models\MyPurchase;
+use App\Models\MyInstallments;
 use App\Models\Wallet;
 use App\Models\User;
 use Illuminate\Support\Str;
 use App\Models\TransactionHistory;
+use App\Http\Resources\MyInstallmentsRescource;
 use App\Models\TripParticipant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -75,7 +79,7 @@ class UserCartController extends Controller
     public function getUserCartItems(){
         try {
             $user=Auth::user();
-            $cartItems=UserCart::with('ShopItem','Trip')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
+            $cartItems=UserCart::with('ShopItem.payment','Trip')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
             return response()->json($cartItems, 200);
         } catch (\Exception $exception) {
             DB::rollback();
@@ -107,46 +111,82 @@ class UserCartController extends Controller
     //-----------------CHECKOUT----------------
     public function checkout(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'payment_method' =>'required',
+            'type' =>'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+
         try {
             $user=Auth::user();
-            $cartItems=UserCart::with('ShopItem','Trip')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
+            $cartItems=UserCart::with('ShopItem.payment','Trip')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
             if($cartItems->isEmpty()){
                 $response = ['Cart is empty'];
                 return response()->json($response, 422);
             }
             $totalAmount=0;
+
             foreach ($cartItems as $cartItem) {
                 if ($cartItem->ShopItem) {
-                    $totalAmount += $cartItem->ShopItem->price;
-                }
-                if ($cartItem->Trip) {
-                    $totalAmount += $cartItem->Trip->budget;
+                    if($cartItem->ShopItem->payment_plan=='installments'){
+                      $totalAmount += $cartItem->ShopItem->payment->amount_per_installment;
+                    }else if($cartItem->ShopItem->payment_plan=='installments_and_deposit'){
+                        $totalAmount += $cartItem->ShopItem->payment->initial_deposit_installments;
+                    }else if($cartItem->ShopItem->payment_plan=='full_payment'){
+                        $totalAmount += $cartItem->ShopItem->price;
+                    }                      
+
+                    // $totalAmount += $cartItem->ShopItem->price;
+                    $item=ShopItem::find($cartItem->ShopItem->id);
+                    $item->quantity= $item->quantity > 0 ? $item->quantity -1 : 0;
+                    if($item->quantity == 0){
+                        $item->status= "not_available";
+                    }
+                    $item->save();
                 }
             }
-                foreach ($cartItems as $cartItem) {
+
+            //--------ITEMS PAYMENT-----------
+            foreach ($cartItems as $cartItem) {
                 if ($cartItem->ShopItem) {
                     $type='school_shop_funds';
-                    $ItemAmount = $cartItem->ShopItem->price;
-                    $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
+                    if($cartItem->ShopItem->payment_plan=='installments'){
+                        $ItemAmount = $cartItem->ShopItem->payment->amount_per_installment;
+                    }else if($cartItem->ShopItem->payment_plan=='installments_and_deposit'){
+                        $ItemAmount = $cartItem->ShopItem->payment->initial_deposit_installments;
+                    }else if($cartItem->ShopItem->payment_plan=='full_payment'){
+                        $ItemAmount = $cartItem->ShopItem->price;
+                    }
+                    // $ItemAmount = $cartItem->ShopItem->price;
+                    if($request->type=='card'){
+                        $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
+                    }else if($request->type=='wallet_and_card'){
+                        $user_wallet=Wallet::where('user_id',$user->id)->first();
+                        if($user_wallet->ballance >  $ItemAmount){
+                            $user_wallet->ballance = $user_wallet->ballance - $ItemAmount;
+                            $user_wallet->save();
+
+                            $history=new TransactionHistory();
+                            $history->user_id=$user->id;
+                            $history->amount=$ItemAmount;
+                            $history->type=$type;
+                            $history->save();
+                        }else{
+                            $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
+                        }
+                    }
+                    $purchase=$this->saveMyPurchases($cartItem->ShopItem,$ItemAmount);
+                    $this->saveMyInstallments($cartItem->ShopItem,$purchase->id);
                 }
-                if ($cartItem->Trip) {
-                    $type='trip_funds';
-                    $ItemAmount = $cartItem->Trip->budget;
-                    $result=$this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
-                    //--------TRIP PARTICIPANT-----------
-                    $trip=new TripParticipant();
-                    $trip->user_id=$user->id;
-                    $trip->trip_id=$cartItem->Trip->id;
-                    $trip->participation_status='aproved';
-                    $trip->transaction_id=$result['transaction_id'];
-                    $trip->payment_status='paid';
-                    $trip->save();
-                }
-                }
-                //--------REMOVE ITEMS FROM CART-----------
-                $deletedRows = UserCart::where('user_id', $user->id)->delete();
-                $status=200;
-                $response = ['Checkout Successful'];
+            }
+
+            //--------REMOVE ITEMS FROM CART-----------
+            $deletedRows = UserCart::where('user_id', $user->id)->delete();
+            $status=200;
+            $response = ['Checkout Successful'];
             return response()->json($response, $status);
         } catch (\Exception $exception) {
             DB::rollback();
@@ -156,6 +196,55 @@ class UserCartController extends Controller
                 return response()->json($exception, 500);
             }
         }
+    }
+
+    //--------------ADD SEBSEQUENT INSTALLMENTS------------
+    public function saveMyInstallments($shopItem,$purchase_id)
+    {
+        $user=Auth::user();
+        if($shopItem->payment_plan=='installments'){
+            $total_installments=$shopItem->payment->total_installments;
+            $amount_per_installment=$shopItem->payment->amount_per_installment;
+            for ($i = 1; $i < $total_installments; $i++) {
+                $myInstallment=new MyInstallments();
+                $myInstallment->shop_item_id=$shopItem->id;
+                $myInstallment->user_id=$user->id;
+                $myInstallment->installment_no=$i+1;
+                $myInstallment->installment_amount=$amount_per_installment;
+                $myInstallment->purchases_id=$purchase_id;
+                $myInstallment->save();
+            }
+        }else if($shopItem->payment_plan=='installments_and_deposit'){
+            $total_installments=$shopItem->payment->total_installments;
+            $amount_per_installment=$shopItem->payment->amount_per_installment;
+            for ($i = 0; $i < $total_installments; $i++) {
+                $myInstallment=new MyInstallments();
+                $myInstallment->shop_item_id=$shopItem->id;
+                $myInstallment->user_id=$user->id;
+                $myInstallment->installment_no=$i+1;
+                $myInstallment->installment_amount=$amount_per_installment;
+                $myInstallment->purchases_id=$purchase_id;
+                $myInstallment->save();
+            }
+        }
+    }
+
+    //--------------ADD TO MY PURCHASES------------
+    public function saveMyPurchases($shopItem,$amountPaid)
+    {
+        $user=Auth::user();
+        $myPurchase = new MyPurchase();
+        $myPurchase->user_id = $user->id;
+        $myPurchase->shop_item_id = $shopItem->id;
+        $myPurchase->total_price = $shopItem->price;
+        $myPurchase->amount_paid = $amountPaid;
+        if($shopItem->price > $amountPaid){
+            $myPurchase->payment_status = "partially_paid";
+        }else if($shopItem->price == $amountPaid){
+            $myPurchase->payment_status = "fully_paid";
+        }
+        $myPurchase->save();
+        return $myPurchase;
     }
 
     //--------------MAKET A PAYMENT-------------
@@ -197,5 +286,77 @@ class UserCartController extends Controller
             'token' => (string) Str::uuid(),
             'client_secret' => $paymentIntent->client_secret,
         ];
+    }
+
+    //--------------GET MY INSTALLMENTS-------------
+    public function getMyInstallments(Request $request)
+    {
+        $user=Auth::user();
+        if($user->role=='super_admin'){
+            $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate(20);  
+        }else if($user->role=='organization_admin'){
+            $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate(20);  
+            // $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+            // $shop=OrganizationShop::where('organization_id',$admin->organization_id)->first();
+            // $myInstallments=MyInstallments::where('user_id',$user->id)->orderBy('created_at','desc')->get();
+        }else{
+            $myInstallments=MyInstallments::where('payment_status','pending')
+            ->where('user_id',$user->id)->orderBy('created_at','desc')->paginate(20);
+        }
+        $myInstallments = MyInstallmentsRescource::collection($myInstallments);
+
+        $pagination = [
+        'current_page' => $myInstallments->currentPage(),
+        'last_page' => $myInstallments->lastPage(),
+        'per_page' => $myInstallments->perPage(),
+        'total' => $myInstallments->total(),
+        ];
+        $response['data']=$myInstallments;
+        $response['pagination']=$pagination;
+        return response()->json($response, 200);
+    }
+
+    //-------------PAY INSTALLMENT--------------
+    public function payInstallment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'payment_method' =>'required',
+            'type' =>'required',
+            'installment_id' =>'required',
+        ]);
+        $user=Auth::user();
+        $installment=MyInstallments::find($request->installment_id);
+
+        $type='school_shop_funds';
+        $ItemAmount = $installment->installment_amount;
+
+        if($request->type=='card'){
+            $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
+        }else if($request->type=='wallet_and_card'){
+            $user_wallet=Wallet::where('user_id',$user->id)->first();
+            if($user_wallet->ballance >  $ItemAmount){
+                $user_wallet->ballance = $user_wallet->ballance - $ItemAmount;
+                $user_wallet->save();
+
+                $history=new TransactionHistory();
+                $history->user_id=$user->id;
+                $history->amount=$ItemAmount;
+                $history->type=$type;
+                $history->save();
+            }else{
+                $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
+            }
+        }
+
+        $installment->payment_status='paid';
+        $installment->save();
+
+        $purchase=MyPurchase::find($installment->purchases_id);
+        $netpayment=$purchase->amount_paid + $ItemAmount;
+        if($netpayment == $purchase->total_price){
+            $purchase->payment_status = "fully_paid"; 
+        }
+        $purchase->amount_paid = $purchase->amount_paid + $ItemAmount;
+        $purchase->save();
     }
 }

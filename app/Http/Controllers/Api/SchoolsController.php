@@ -220,6 +220,14 @@ class SchoolsController extends Controller
         return response()->json($school, 200);
     }
 
+    public function updateFinanceCoordiantorEmail(Request $request)
+    {
+        $school=School::find($request->school_id);
+        $school->finance_coordinator_email=$request->finance_coordinator_email;
+        $school->save();
+        return response()->json(['message' => 'Saved successfully'], 200);
+    }
+
     //-------------GET ARCHIVED SCHOOLS------------
     public function archivedSchools($admin_id=null){
         if($admin_id==null){

@@ -13,28 +13,21 @@ return new class extends Migration
     {
         Schema::create('payment_plans', function (Blueprint $table) {
             $table->id();
+            //--------------IF Product is trip-----------------
             $table->bigInteger('trip_id')->unsigned()->nullable();
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
-            //--------------Installment Plan-----------------
+            //--------------IF Product is shop item-----------------
+            $table->bigInteger('shop_item_id')->unsigned()->nullable();
+            $table->foreign('shop_item_id')->references('id')->on('shop_items')->onDelete('cascade');
+            //--------------IF Product is course-----------------
+            $table->bigInteger('course_id')->unsigned()->nullable();
+            $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
+            //--------------Payment Plan-----------------
             $table->integer('total_installments')->nullable();
             $table->double('amount_per_installment')->nullable();
             $table->double('initial_deposit_installments')->nullable();
             $table->date('initial_deposit_deadline_installments')->nullable();
             $table->json('other_installments_deadline_installments')->nullable();
-            //--------------Deposit Plan------------------
-            $table->integer('total_deposit')->nullable();
-            $table->double('initial_deposit')->nullable();
-            $table->double('final_deposit')->nullable();
-            $table->date('initial_deposit_deadline')->nullable();
-            $table->date('final_deposit_deadline')->nullable();
-            //--------------Manual Payment Plan------------
-            $table->integer('total_amount')->nullable();
-            $table->double('initial_amount')->nullable();
-            $table->double('final_amount')->nullable();
-            $table->date('initial_amount_deadline')->nullable();
-            $table->date('final_amount_deadline')->nullable();
-            $table->string('comments')->nullable();
-            $table->enum('payment_plan',['installments','deposit','manual_payments'])->nullable();
             $table->timestamps();
         });
     }
