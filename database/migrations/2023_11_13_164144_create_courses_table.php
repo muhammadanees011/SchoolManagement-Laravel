@@ -13,24 +13,10 @@ return new class extends Migration
     {
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('school_id')->unsigned()->nullable();
-            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
-            $table->bigInteger('instructor_id')->unsigned()->nullable();
-            $table->foreign('instructor_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('title')->nullable();
-            $table->string('description')->nullable();
-            $table->integer('credit_hrs')->nullable();
-            $table->string('stage')->nullable();
-            $table->integer('total_marks')->nullable();
-            $table->integer('pass_marks')->nullable();
-            $table->integer('assignment_marks_total')->nullable();
-            $table->integer('quizez_marks_total')->nullable();
-            $table->integer('viva_marks_total')->nullable();
-            $table->integer('presentation_marks_total')->nullable();
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
-            $table->date('registration_deadline')->nullable();
-            $table->date('registration_fee')->nullable();
+            $table->string('CourseCode')->nullable();
+            $table->string('CourseLevel')->nullable();
+            $table->string('CourseDescription')->nullable();
+            $table->string('status');
             $table->timestamps();
         });
     }

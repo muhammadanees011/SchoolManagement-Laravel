@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\OrganizationAdminsController;
 use App\Http\Controllers\Api\TransactionHistoryController;
 use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\ParentController;
+use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\AttributesController;
 use App\Http\Controllers\Api\TripsController;
 use App\Http\Controllers\Api\LegacyPermissionsController;
@@ -38,26 +39,7 @@ use App\Http\Controllers\Api\MicrosoftController;
 // routes/web.php
 
 
-// Route::get('login/microsoft', [AuthController::class,'redirectToMicrosoft']);
-// Route::get('login/microsoft/callback', [AuthController::class,'handleMicrosoftCallback']);
-
-
-
-// Route::get('/msgraph', function(){
-
-//     if (! MsGraph::isConnected()) {
-//         return redirect()->route('msgraph.connect');
-//     } else {
-//         //display your details
-//         return MsGraph::get('me');
-//     }
-
-// });
-
-// Route::get('msgraph/connect', function(){
-//     return MsGraph::connect();
-// })->name('msgraph.connect');
-
+Route::post('/auth_callback', [AuthController::class, 'handleProviderCallback']);
 
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -157,6 +139,18 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/bulkDeleteStaff',[StaffController::class,'bulkDeleteStaff']);
     Route::post('/bulkRestoreStaff',[StaffController::class,'bulkRestoreStaff']);
     Route::delete('/deleteStaff/{id}',[StaffController::class,'deleteStaff']);
+
+    //------------Courses---------------------
+    Route::post('/createCourse',[CourseController::class,'createCourse']);
+    Route::put('/updateCourse/{id}',[CourseController::class,'updateCourse']);
+    Route::get('/getAllCourses',[CourseController::class,'getAllCourses']);
+    Route::get('/editCourse/{id}',[CourseController::class,'editCourse']);
+    Route::delete('/deleteCourse/{id}',[CourseController::class,'deleteCourse']);
+    Route::post('/getCourseStudents',[CourseController::class,'getCourseStudents']);
+    Route::post('/enrollStudent',[CourseController::class,'enrollStudent']);
+    Route::post('/removeEnrolledStudent',[CourseController::class,'removeEnrolledStudent']);
+    Route::get('/getCoursesForDropdown',[CourseController::class,'getCoursesForDropdown']);
+
     //------------Parents---------------------
     Route::post('/createParent',[ParentController::class,'createParent']);
     Route::put('/updateParent/{id}',[ParentController::class,'updateParent']);

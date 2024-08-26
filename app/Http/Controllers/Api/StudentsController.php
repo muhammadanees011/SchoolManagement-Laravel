@@ -13,6 +13,8 @@ use App\Models\User;
 use App\Models\School;
 use App\Models\OrganizationAdmin;
 use App\Models\TransactionHistory;
+use App\Models\Course;
+use App\Models\StudentCourse;
 use App\Models\Parents;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -55,26 +57,6 @@ class StudentsController extends Controller
         $student = Student::where('user_id', $student_id)->first();
         return response()->json($student, 200);
     }
-    //-----------TEMP METHODS FRO REMOTE DB--------------
-    public function deleteStudentFromRemoteDB(Request $request){
-        DB::connection('remote_mysql')->table('ebStudent')
-        ->where('ID', $request->student_id)->delete();
-    }
-    public function storeStudentInRemoteDB(Request $request){
-        DB::connection('remote_mysql')->table('ebStudent')->insert([
-            'firstName' => $request->firstName,
-            'surname' => $request->surname,
-            'UPN' =>  $request->UPN,
-            'eMail' =>  $request->eMail,
-            'site' =>  $request->site,
-            'miFareID' =>  $request->miFareID,
-            'purseType' =>  $request->purseType,
-            'fsmAmount' =>  $request->fsmAmount,
-            'created' => now(),
-            'modified' => now(),
-        ]);
-    }//-----------END TEMP METHODS FRO REMOTE DB--------------
-
     //--------------GET STUDENTS/STAFF DATA-----------
     public function getStudentStaff(Request $request){
         $validator = Validator::make($request->all(), [
@@ -265,54 +247,38 @@ class StudentsController extends Controller
 
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
-        $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
-        foreach ($tables as $record) {
-            // try{
-                //-----------UPDATE STUDENT----------------
-                $user=User::where('email',$record->eMail)->first();
-                if($user){
-                    $student=Student::where('user_id',$user->id)->first();
-                    if($student){
-                        $student->upn = $record->UPN ?: null;
-                        $student->mifare_id  = $record->miFareID ?: null;
-                        $student->fsm_amount = $record->fsmAmount;
-                        $student->purse_type = $record->purseType ?: null;
-                        $student->updated_at = now();
-                        $student->save();
-                    }
-                }
-          
-            //     } catch (\Exception $e) {
-            // }
-        }
+        $tables = DB::connection('remote_mysql')->table('ePOS_StudentCourse')->get();
+        $student_course = DB::table('student_course')->get();
 
-        return $tables;
+        // Combine StudentID and CourseCode for incoming and existing courses
+        $incommingCourses = $tables->map(function ($item) {
+            return $item->StudentID . '_' . $item->CourseCode;
+        })->toArray();
 
-        $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
-        // $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
-        $users = User::get();
-        $totalUsers = User::count();
-        $tableEmails = $tables->pluck('eMail')->toArray();
-        $userEmails = $users->pluck('email')->toArray();
+        $existingCourses = $student_course->map(function ($item) {
+            return $item->StudentID . '_' . $item->CourseCode;
+        })->toArray();
 
-        $students=Student::get();
-        $userIds = $users->pluck('id')->toArray();
-        $studentIds = $students->pluck('user_id')->toArray();
-        $newIds = array_diff($userIds, $studentIds);
-        $newUsers=User::whereIn('id',$newIds)->pluck('email')->toArray();
-        $otherUsers=DB::connection('remote_mysql')->table('ebStudent')->whereIn('eMail',$newUsers)->get();
-        // return $otherUsers;
+        // Identify combined keys (StudentID and CourseCode) that are in $tables but not in $student_course
+        $newCourses = array_diff($incommingCourses, $existingCourses);
 
-        // Identify emails that are in $tables but not in $users
-        $newEmails = array_diff($tableEmails, $userEmails);
-        // Fetch the records corresponding to the new emails
-        $newRecords = $tables->whereIn('eMail', $newEmails);
+        // Fetch the records corresponding to the new courses
+        $newRecords = $tables->filter(function ($item) use ($newCourses) {
+            return in_array($item->StudentID . '_' . $item->CourseCode, $newCourses);
+        });
+
         foreach ($newRecords as $record) {
-            //----------STORE NEW STUDENT------------
-            $randomPassword = Str::random(10);
-            $studentName = $record->firstName . ' ' . $record->surname;
+           //----------STORE NEW COURSE------------
+            try{
+                $course=new StudentCourse();
+                $course->StudentID = $record->StudentID;
+                $course->CourseCode = $record->CourseCode;
+                $course->save();
+                } catch (\Exception $e) {
+            }
     
         }
+        
         $res="No New Students Found.";
         return response()->json($res);
     }

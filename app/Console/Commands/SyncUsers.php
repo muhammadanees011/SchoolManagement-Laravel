@@ -15,6 +15,8 @@ use App\Models\User;
 use App\Models\Student;
 use App\Models\School;
 use App\Models\Organization;
+use App\Models\Course;
+use App\Models\StudentCourse;
 use App\Models\Staff;
 
 class SyncUsers extends Command
@@ -41,14 +43,18 @@ class SyncUsers extends Command
     public function handle()
     {
         info("Cron Job running at ". now());
-        $this->storeNewStudent();
-        $this->storeNewStaff();
+        $this->syncStudents();
+        $this->syncStaff();
         $this->updateData();
         $this->archiveUsers();
+        $this->SyncCourses();
+        $this->sync_student_course();
         $this->sendEmailToETC();
+        $this->archiveCourses();
+        $this->archiveStudentCourse();
     }
 
-    private function storeNewStudent(){
+    private function syncStudents(){
         // $tables = DB::connection('remote_mysql')->table('ebStudent')->whereDate('created',today())->get();
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $users = DB::table('users')->get();
@@ -135,7 +141,7 @@ class SyncUsers extends Command
         }
     }
 
-    private function storeNewStaff(){
+    private function syncStaff(){
         // $tables = DB::connection('remote_mysql')->table('ebStaff')->whereDate('created',today())->get();
         $tables = DB::connection('remote_mysql')->table('ebStaff')->get();
         $users = DB::table('users')->get();
@@ -220,6 +226,112 @@ class SyncUsers extends Command
         }
     }
 
+    private function SyncCourses(){
+        $tables = DB::connection('remote_mysql')->table('ePOS_Course')->get();
+        $courses = DB::table('courses')->get();
+        
+        $incommingCourses = $tables->pluck('CourseCode')->toArray();
+        $existingCourses = $courses->pluck('CourseCode')->toArray();
+        // Identify courses that are in $tables but not in $courses
+        $newCourses = array_diff($incommingCourses, $existingCourses);
+        // Fetch the records corresponding to the new courses
+        $newRecords = $tables->whereIn('CourseCode', $newCourses);
+        foreach ($newRecords as $record) {
+           //----------STORE NEW COURSE------------
+            try{
+                $course=new Course();
+                $course->CourseCode = $record->CourseCode;
+                $course->CourseLevel = $record->CourseLevel;
+                $course->CourseDescription = $record->CourseDescription;
+                $course->status = $record->Status;
+                $course->save();
+                } catch (\Exception $e) {
+            }
+    
+        }
+    }
+
+    private function sync_student_course(){
+        $tables = DB::connection('remote_mysql')->table('ePOS_StudentCourse')->get();
+        $student_course = DB::table('student_course')->get();
+
+        // Combine StudentID and CourseCode for incoming and existing courses
+        $incommingCourses = $tables->map(function ($item) {
+            return $item->StudentID . '_' . $item->CourseCode;
+        })->toArray();
+
+        $existingCourses = $student_course->map(function ($item) {
+            return $item->StudentID . '_' . $item->CourseCode;
+        })->toArray();
+
+        // Identify combined keys (StudentID and CourseCode) that are in $tables but not in $student_course
+        $newCourses = array_diff($incommingCourses, $existingCourses);
+
+        // Fetch the records corresponding to the new courses
+        $newRecords = $tables->filter(function ($item) use ($newCourses) {
+            return in_array($item->StudentID . '_' . $item->CourseCode, $newCourses);
+        });
+
+        foreach ($newRecords as $record) {
+           //----------STORE NEW COURSE------------
+            try{
+                $course=new StudentCourse();
+                $course->StudentID = $record->StudentID;
+                $course->CourseCode = $record->CourseCode;
+                $course->save();
+                } catch (\Exception $e) {
+            }
+    
+        }
+    }
+
+    private function archiveCourses(){
+        $tables = DB::connection('remote_mysql')->table('ePOS_Course')->get();
+        $courses = DB::table('courses')->get();
+        
+        // Get the list of CourseCode from both incoming and existing courses
+        $incommingCourses = $tables->pluck('CourseCode')->toArray();
+        $existingCourses = $courses->pluck('CourseCode')->toArray();
+        
+        // Identify existing courses that are not in incoming courses (to be archived)
+        $oldCourses = array_diff($existingCourses, $incommingCourses);
+        
+        // Update the status of old courses to 'archived'
+        DB::table('courses')
+            ->whereIn('CourseCode', $oldCourses)
+            ->update(['status' => 'archived']);
+        
+    }
+
+    private function archiveStudentCourse() {
+        $tables = DB::connection('remote_mysql')->table('ePOS_StudentCourse')->get();
+        $student_course = DB::table('student_course')->get();
+    
+        // Combine StudentID and CourseCode for incoming and existing courses
+        $incommingCourses = $tables->map(function ($item) {
+            return $item->StudentID . '_' . $item->CourseCode;
+        })->toArray();
+    
+        $existingCourses = $student_course->map(function ($item) {
+            return $item->StudentID . '_' . $item->CourseCode;
+        })->toArray();
+    
+        // Identify existing courses that are not in incoming courses (to be archived)
+        $oldCourses = array_diff($existingCourses, $incommingCourses);
+    
+        // Update the status of old courses to 'archived' instead of deleting them
+        DB::table('student_course')->where(function($query) use ($oldCourses) {
+            foreach ($oldCourses as $oldCourse) {
+                [$studentID, $courseCode] = explode('_', $oldCourse);
+                $query->orWhere([
+                    ['StudentID', '=', $studentID],
+                    ['CourseCode', '=', $courseCode]
+                ]);
+            }
+        })->update(['status' => 'archived']);
+    }
+    
+
     public function updateData(){
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         foreach ($tables as $record) {
@@ -239,7 +351,7 @@ class SyncUsers extends Command
         }
     }
 
-    // any account that currently exists in the XEPos data, 
+    // any account that currently exists in our database, 
     // but not in the synchronisation data, should be deemed as no-longer active
     public function archiveUsers()
     {
@@ -276,56 +388,5 @@ class SyncUsers extends Command
         Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
         Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
         Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
-    }
-
-    public function checkIfStudentExist($record){
-        $user=User::where('email',$record->eMail)->first();
-        if($user){
-            $student=Student::where('user_id',$user->id)->first();
-            if($student){
-                // do nothing
-                return false;
-            }else{
-                $user->delete();
-                return true;
-            }
-        }else{
-            return true;
-        }
-        
-    }
-
-    public function checkIfStudentHasSchool($record){
-        $user=User::where('email',$record->eMail)->first();
-        if($user){
-            $student=Student::where('user_id',$user->id)->first();
-            if($student && $student->school_id){
-                // do nothing
-                return false;
-            }else if($student && $student->school_id==null){
-                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
-                $organization=Organization::where('name','Education Training Collective')->first();
-                if($school){
-                }else{
-                    $school=new School();
-                    $school->organization_id=$organization->id;
-                    $school->title=$record->site;
-                    $school->save();
-                }
-                $student->school_id=$school->id;
-                $student->save();
-                return true;
-            }
-        }else{
-            return true;
-        }
-        
-    }
-
-    public function removeSchools(){
-        School::whereNotNull('id')->delete();
-    }
-    public function removeAllStudents(){
-        User::where('role','student')->delete();
     }
 }
