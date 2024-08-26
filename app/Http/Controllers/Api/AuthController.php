@@ -55,14 +55,14 @@ class AuthController extends Controller
         try {
             // Step 1: Set up Guzzle HTTP client to make the POST request to Azure AD
             $client = new Client();
-
-            $response = $client->post('https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token', [
+            $tenant_id=env('MICROSOFT_TENANT_ID');
+            $response = $client->post('https://login.microsoftonline.com/'.$tenant_id.'/oauth2/v2.0/token', [
                 'form_params' => [
-                    'client_id' => env('AZURE_CLIENT_ID'),
-                    'client_secret' => env('AZURE_CLIENT_SECRET'),
+                    'client_id' => env('MICROSOFT_CLIENT_ID'),
+                    'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
                     'code' => $code,
                     'grant_type' => 'authorization_code',
-                    'redirect_uri' => env('AZURE_REDIRECT_URI'), // This must match the redirect URI in your Azure app
+                    'redirect_uri' => env('MICROSOFT_REDIRECT_URI'), // This must match the redirect URI in your Azure app
                 ],
             ]);
 
@@ -79,7 +79,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
         }
-        
+
         $microsoftUser = Socialite::driver('microsoft')->stateless()->user();
         $user = $this->findOrCreateUser($microsoftUser);
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
