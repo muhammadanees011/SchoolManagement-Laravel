@@ -68,6 +68,7 @@ class AuthController extends Controller
 
             // Step 2: Parse the token response from Azure AD
             $tokenData = json_decode($response->getBody(), true);
+            return response()->json(($tokenData));
 
             // Step 3: Return the token data to the front-end (Vue.js)
             return response()->json([
