@@ -72,9 +72,9 @@ class AuthController extends Controller
             // Step 3: Return the token data to the front-end (Vue.js)
             return response()->json([
                 'access_token' => $tokenData['access_token'],
-                'id_token' => $tokenData['id_token'],
-                'refresh_token' => $tokenData['refresh_token'],
-                'expires_in' => $tokenData['expires_in']
+                'id_token' => $tokenData['id_token'] ?? null,
+                'refresh_token' => $tokenData['refresh_token'] ?? null,
+                'expires_in' => $tokenData['expires_in'] ?? null
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
