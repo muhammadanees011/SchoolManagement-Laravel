@@ -19,6 +19,7 @@ use App\Mail\ForgotPasswordEmail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Socialite;
+use GuzzleHttp\Client;
 
 
 class AuthController extends Controller
@@ -45,6 +46,40 @@ class AuthController extends Controller
 
     public function handleProviderCallback(Request $request)
     {
+        $code = $request->input('code'); // Get the code from the front-end
+
+        if (!$code) {
+            return response()->json(['error' => 'Authorization code is missing'], 400);
+        }
+
+        try {
+            // Step 1: Set up Guzzle HTTP client to make the POST request to Azure AD
+            $client = new Client();
+
+            $response = $client->post('https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token', [
+                'form_params' => [
+                    'client_id' => env('AZURE_CLIENT_ID'),
+                    'client_secret' => env('AZURE_CLIENT_SECRET'),
+                    'code' => $code,
+                    'grant_type' => 'authorization_code',
+                    'redirect_uri' => env('AZURE_REDIRECT_URI'), // This must match the redirect URI in your Azure app
+                ],
+            ]);
+
+            // Step 2: Parse the token response from Azure AD
+            $tokenData = json_decode($response->getBody(), true);
+
+            // Step 3: Return the token data to the front-end (Vue.js)
+            return response()->json([
+                'access_token' => $tokenData['access_token'],
+                'id_token' => $tokenData['id_token'],
+                'refresh_token' => $tokenData['refresh_token'],
+                'expires_in' => $tokenData['expires_in']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
+        }
+        
         $microsoftUser = Socialite::driver('microsoft')->stateless()->user();
         $user = $this->findOrCreateUser($microsoftUser);
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
