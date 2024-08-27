@@ -96,6 +96,10 @@ class AuthController extends Controller
         if(!$user){
             session()->forget('access_token');
             session()->flush();
+            $tenant_id = env('MICROSOFT_TENANT_ID');
+            // Microsoft logout URL
+            $logoutUrl = 'https://login.microsoftonline.com/' . $tenant_id . '/oauth2/v2.0/logout';
+            return redirect($logoutUrl);
             return response()->json(['error' => 'The Provided User was not found in the studentpay portal'], 500);
         }
 
