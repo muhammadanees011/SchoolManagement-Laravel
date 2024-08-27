@@ -114,7 +114,7 @@ class AuthController extends Controller
             $school=School::where('id',$parent->school_id)->first();
         }
 
-        $data["primary_color"]=$school!=null ? $school->primary_color : '#424246';
+        $data["primary_color"]=$school!=null ? $school->primary_color : '#010A21';
         $data["secondary_color"]=$school!=null ? $school->secondary_color : '#424246';
         $data["logo"]=$school ? $school->logo : null;
 
@@ -163,7 +163,7 @@ class AuthController extends Controller
                 $school=School::where('id',$parent->school_id)->first();
             }
 
-            $data["primary_color"]=$school!=null ? $school->primary_color : '#424246';
+            $data["primary_color"]=$school!=null ? $school->primary_color : '#010A21';
             $data["secondary_color"]=$school!=null ? $school->secondary_color : '#424246';
             $data["logo"]=$school ? $school->logo : null;
 
