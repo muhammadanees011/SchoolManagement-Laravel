@@ -94,18 +94,19 @@ class AuthController extends Controller
 
         $user = $this->findOrCreateUser($userData);
         if(!$user){
+            
+            $tenant_id = env('MICROSOFT_TENANT_ID');
+            // Step 1: Microsoft logout URL
+            $logoutUrl = 'https://login.microsoftonline.com/' . $tenant_id . '/oauth2/v2.0/logout';
+            // Step 2: Optionally add a redirect URI after logout
+            $postLogoutRedirectUri = urlencode(route('auth_callback')); // e.g., go to homepage after logout
+            // Full logout URL
+            $fullLogoutUrl = $logoutUrl . '?post_logout_redirect_uri=' . $postLogoutRedirectUri;
+            // Step 3: Perform a full browser redirect
+            return redirect($fullLogoutUrl);
+            
             session()->forget('access_token');
             session()->flush();
-            
-            // $tenant_id = env('MICROSOFT_TENANT_ID');
-            // // Step 1: Microsoft logout URL
-            // $logoutUrl = 'https://login.microsoftonline.com/' . $tenant_id . '/oauth2/v2.0/logout';
-            // // Step 2: Optionally add a redirect URI after logout
-            // $postLogoutRedirectUri = urlencode(route('auth_callback')); // e.g., go to homepage after logout
-            // // Full logout URL
-            // $fullLogoutUrl = $logoutUrl . '?post_logout_redirect_uri=' . $postLogoutRedirectUri;
-            // // Step 3: Perform a full browser redirect
-            // return redirect($fullLogoutUrl);
             return response()->json(['error' => 'The Provided User was not found in the studentpay portal'], 500);
         }
 
