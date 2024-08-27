@@ -87,13 +87,7 @@ class AuthController extends Controller
 
             // Step 6: Parse and return user data
             $userData = json_decode($userResponse->getBody(), true);
-
-            // return response()->json([
-            //     'access_token' => $tokenData['access_token'],
-            //     'id_token' => $tokenData['id_token'] ?? null,
-            //     'refresh_token' => $tokenData['refresh_token'] ?? null,
-            //     'expires_in' => $tokenData['expires_in'] ?? null
-            // ]);
+            
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
         }
@@ -103,7 +97,6 @@ class AuthController extends Controller
             return response()->json(['error' => 'The Provided User was not found in the studentpay portal'], 500);
         }
 
-        return response()->json($user);
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
         $token = $tokenResult;
         $data['access_token'] = $token;
@@ -126,7 +119,6 @@ class AuthController extends Controller
         $data["logo"]=$school ? $school->logo : null;
 
         return response()->json($data);
-        // return response()->json(['token' => $token]);
     }
 
     public function findOrCreateUser($microsoftUser)
