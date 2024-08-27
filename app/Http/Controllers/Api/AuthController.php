@@ -128,6 +128,7 @@ class AuthController extends Controller
 
     public function findOrCreateUser($microsoftUser)
     {
+        return response()->json($microsoftUser);
         $user = User::where('email', $microsoftUser->userPrincipalName)->first();
         if (!$user) {
             return response()->json(['error' => 'The Provided User was not found in the studentpay portal'], 500);
