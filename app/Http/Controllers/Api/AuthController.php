@@ -100,6 +100,7 @@ class AuthController extends Controller
 
         $user = $this->findOrCreateUser($userData);
         return response()->json($user);
+        return response()->json(['error' => 'The Provided User was not found in the studentpay portal'], 500);
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
         $token = $tokenResult;
         $data['access_token'] = $token;
@@ -128,14 +129,13 @@ class AuthController extends Controller
     public function findOrCreateUser($microsoftUser)
     {
         $user = User::where('email', $microsoftUser['userPrincipalName'])->first();
-        if (!$user) {
-            return response()->json(['error' => 'The Provided User was not found in the studentpay portal'], 500);
-            // $user = User::create([
-            //     'name' => $microsoftUser->name,
-            //     'email' => $microsoftUser->email,
-            //     'password' => bcrypt(str_random(16)),
-            // ]);
-        }
+        // if (!$user) {
+        //     $user = User::create([
+        //         'name' => $microsoftUser->name,
+        //         'email' => $microsoftUser->email,
+        //         'password' => bcrypt(str_random(16)),
+        //     ]);
+        // }
         return $user;
     }
 
