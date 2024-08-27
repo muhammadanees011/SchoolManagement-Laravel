@@ -87,7 +87,7 @@ class AuthController extends Controller
 
             // Step 6: Parse and return user data
             $userData = json_decode($userResponse->getBody(), true);
-            return response()->json($userData);
+            return response()->json($userData['userPrincipalName']);
 
             // return response()->json([
             //     'access_token' => $tokenData['access_token'],
