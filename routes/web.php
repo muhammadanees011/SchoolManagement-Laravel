@@ -19,4 +19,3 @@ Route::get('/', function () {
 });
 
 Route::get('auth/redirect', [MicrosoftController::class, 'redirectToProvider']);
-Route::get('auth/callback', [MicrosoftController::class, 'handleProviderCallback']);
