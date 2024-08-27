@@ -68,15 +68,33 @@ class AuthController extends Controller
 
             // Step 2: Parse the token response from Azure AD
             $tokenData = json_decode($response->getBody(), true);
-            return response()->json(($tokenData));
 
-            // Step 3: Return the token data to the front-end (Vue.js)
-            return response()->json([
-                'access_token' => $tokenData['access_token'],
-                'id_token' => $tokenData['id_token'] ?? null,
-                'refresh_token' => $tokenData['refresh_token'] ?? null,
-                'expires_in' => $tokenData['expires_in'] ?? null
+            // Check if token data exists
+            if (!isset($tokenData['access_token'])) {
+                return response()->json(['error' => 'Failed to retrieve access token'], 400);
+            }
+
+            // Step 4: Use the access token to fetch user data from Microsoft Graph API
+            $accessToken = $tokenData['access_token'];
+
+            // Step 5: Make a GET request to Microsoft Graph to fetch the user profile
+            $userResponse = $client->get('https://graph.microsoft.com/v1.0/me', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Accept' => 'application/json',
+                ],
             ]);
+
+            // Step 6: Parse and return user data
+            $userData = json_decode($userResponse->getBody(), true);
+            return response()->json($userData);
+
+            // return response()->json([
+            //     'access_token' => $tokenData['access_token'],
+            //     'id_token' => $tokenData['id_token'] ?? null,
+            //     'refresh_token' => $tokenData['refresh_token'] ?? null,
+            //     'expires_in' => $tokenData['expires_in'] ?? null
+            // ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
         }
