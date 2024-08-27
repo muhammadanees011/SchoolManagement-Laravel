@@ -87,7 +87,6 @@ class AuthController extends Controller
 
             // Step 6: Parse and return user data
             $userData = json_decode($userResponse->getBody(), true);
-            // return response()->json($userData['userPrincipalName']);
 
             // return response()->json([
             //     'access_token' => $tokenData['access_token'],
@@ -99,8 +98,8 @@ class AuthController extends Controller
             return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
         }
 
-        // $microsoftUser = Socialite::driver('microsoft')->stateless()->user();
         $user = $this->findOrCreateUser($userData);
+        return response()->json($user);
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
         $token = $tokenResult;
         $data['access_token'] = $token;
