@@ -87,7 +87,7 @@ class AuthController extends Controller
 
             // Step 6: Parse and return user data
             $userData = json_decode($userResponse->getBody(), true);
-            
+
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
         }
@@ -123,7 +123,7 @@ class AuthController extends Controller
 
     public function findOrCreateUser($microsoftUser)
     {
-        $user = User::where('email', $microsoftUser['userPrincipalName'])->first();
+        $user = User::where('email', $microsoftUser['userPrincipalName'])->where('status','active')->first();
         // if (!$user) {
         //     $user = User::create([
         //         'name' => $microsoftUser->name,
