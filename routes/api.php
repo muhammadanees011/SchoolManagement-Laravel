@@ -39,7 +39,7 @@ use App\Http\Controllers\Api\MicrosoftController;
 // routes/web.php
 
 
-Route::post('/auth_callback', [AuthController::class, 'handleProviderCallback']);
+Route::post('/auth_callback', [AuthController::class, 'handleProviderCallback'])->name('auth_callback');
 
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
