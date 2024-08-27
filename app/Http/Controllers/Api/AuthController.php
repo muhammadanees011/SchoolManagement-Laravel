@@ -94,6 +94,8 @@ class AuthController extends Controller
 
         $user = $this->findOrCreateUser($userData);
         if(!$user){
+            session()->forget('access_token');
+            session()->flush();
             return response()->json(['error' => 'The Provided User was not found in the studentpay portal'], 500);
         }
 
