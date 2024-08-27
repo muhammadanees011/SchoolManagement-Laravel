@@ -87,7 +87,7 @@ class AuthController extends Controller
 
             // Step 6: Parse and return user data
             $userData = json_decode($userResponse->getBody(), true);
-            return response()->json($userData);
+            // return response()->json($userData);
 
             // return response()->json([
             //     'access_token' => $tokenData['access_token'],
@@ -99,8 +99,8 @@ class AuthController extends Controller
             return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
         }
 
-        $microsoftUser = Socialite::driver('microsoft')->stateless()->user();
-        $user = $this->findOrCreateUser($microsoftUser);
+        // $microsoftUser = Socialite::driver('microsoft')->stateless()->user();
+        $user = $this->findOrCreateUser($userData);
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
         $token = $tokenResult;
         $data['access_token'] = $token;
@@ -124,6 +124,20 @@ class AuthController extends Controller
 
         return response()->json($data);
         // return response()->json(['token' => $token]);
+    }
+
+    public function findOrCreateUser($microsoftUser)
+    {
+        $user = User::where('email', $microsoftUser->userPrincipalName)->first();
+        if (!$user) {
+            return response()->json(['error' => 'The Provided User was not found in the studentpay portal'], 500);
+            // $user = User::create([
+            //     'name' => $microsoftUser->name,
+            //     'email' => $microsoftUser->email,
+            //     'password' => bcrypt(str_random(16)),
+            // ]);
+        }
+        return $user;
     }
 
     //------------LOGIN USER--------------
