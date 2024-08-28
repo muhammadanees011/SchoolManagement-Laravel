@@ -8,6 +8,7 @@ use App\Models\OrganizationShop;
 use App\Models\ShopItem;
 use App\Models\PaymentPlan;
 use App\Models\Student;
+use App\Models\StudentCourse;
 use App\Models\Staff;
 use App\Models\OrganizationAdmin;
 use App\Models\User;
@@ -49,17 +50,25 @@ class OrganizationShopsController extends Controller
         $user=Auth::user();
         if($user->role=='super_admin'){
             $shopItems = OrganizationShop::with(['shopItems' => function($query) {
-                $query->where('status', '!=', 'deleted');
+                $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate(20);
         }else if($user->role=='student'){
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
+            $courses=StudentCourse::where('StudentID',$student->student_id)->get();
+            $courseCodes = $courses->pluck('CourseCode')->toArray();
             $schoolName=$school->title;
             $shopItems = OrganizationShop::where('organization_id', $school->organization_id)
-            ->with(['shopItems' => function ($query) use ($schoolName){
+            ->with(['shopItems' => function ($query) use ($schoolName, $courseCodes){
                $query->where('status', '!=', 'deleted')
                ->whereJsonContains('visibility_options', [['name' => 'Available to Students']])
-               ->whereJsonContains('limit_colleges', [['name' => $schoolName]]);
+               ->whereJsonContains('limit_colleges', [['name' => $schoolName]])
+               ->where(function ($q) use ($courseCodes) {
+                    foreach ($courseCodes as $courseCode) {
+                        $q->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
+                    }
+                })
+               ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])
             ->paginate(20);
         }else if($user->role=='staff'){
@@ -69,12 +78,14 @@ class OrganizationShopsController extends Controller
             $shopItems=OrganizationShop::where('organization_id',$school->organization_id)->with(['shopItems' => function($query) use ($schoolName){
                 $query->where('status', '!=', 'deleted')
                 ->whereJsonContains('visibility_options', [['name' => 'Available to Staff']])
-                ->whereJsonContains('limit_colleges', [['name' => $schoolName]]);
+                ->whereJsonContains('limit_colleges', [['name' => $schoolName]])
+                ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate(20);
         }else if($user->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$user->id)->first();
             $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
-                $query->where('status', '!=', 'deleted');
+                $query->where('status', '!=', 'deleted')
+                ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate(20);
         }
 

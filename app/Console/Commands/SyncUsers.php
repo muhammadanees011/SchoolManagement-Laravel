@@ -355,20 +355,22 @@ class SyncUsers extends Command
     // but not in the synchronisation data, should be deemed as no-longer active
     public function archiveUsers()
     {
-        $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
+        $studentTables = DB::connection('remote_mysql')->table('ebStudent')->get();
+        $staffTables = DB::connection('remote_mysql')->table('ebStaff')->get();
         $users = DB::table('users')->get();
-        $tableEmails = $tables->pluck('eMail')->toArray();
+        $studentEmails = $studentTables->pluck('eMail')->toArray();
+        $staffEmails = $staffTables->pluck('eMail')->toArray();
+        $tableEmails = array_merge($studentEmails, $staffEmails);        
         $userEmails = $users->pluck('email')->toArray();
-        // Identify emails that are in $users but not in $tables
-        $newEmails = array_diff($userEmails,$tableEmails);
-        // Fetch the records corresponding to the new emails
+        $newEmails = array_diff($userEmails, $tableEmails);
         $newRecords = $users->whereIn('email', $newEmails);
         foreach ($newRecords as $record) {
-            $user=User::where('email',$record->email)->first();
-            $user->status='deleted';
+            $user = User::where('email', $record->email)->first();
+            $user->status = 'deleted';
             $user->save();
         }
     }
+
 
     public function sendEmailToETC()
     {
