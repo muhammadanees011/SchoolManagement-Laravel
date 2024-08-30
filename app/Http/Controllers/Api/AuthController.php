@@ -87,6 +87,7 @@ class AuthController extends Controller
 
             // Step 6: Parse and return user data
             $userData = json_decode($userResponse->getBody(), true);
+            return response()->json($userData);
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to exchange code for token', 'details' => $e->getMessage()], 500);
