@@ -90,15 +90,28 @@ class SyncUsers extends Command
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
-                $userId=DB::table('users')->insertGetId([
-                    'first_name' => $record->firstName,
-                    'last_name' => $record->surname,
-                    'email' => $record->eMail,
-                    'password' => bcrypt($randomPassword),
-                    'role' => 'student',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                // $userId=DB::table('users')->insertGetId([
+                //     'first_name' => $record->firstName,
+                //     'last_name' => $record->surname,
+                //     'email' => $record->eMail,
+                //     'password' => bcrypt($randomPassword),
+                //     'role' => 'student',
+                //     'created_at' => now(),
+                //     'updated_at' => now(),
+                // ]);
+                $user = new User();
+                $user->first_name = $record->firstName;
+                $user->last_name = $record->surname;
+                $user->email = $record->eMail;
+                $user->password = bcrypt($randomPassword);
+                $user->role = 'student';
+                $user->created_at = now();
+                $user->updated_at = now();
+                $user->save();
+                $userId = $user->id;
+    
+                $role = \Spatie\Permission\Models\Role::where('name', 'student')->where('guard_name', 'api')->first();
+                $user->assignRole($role);
                 //-----------SAVE STUDENT----------------        
                 $student=new Student();
                 $student->user_id = $userId;
@@ -164,28 +177,36 @@ class SyncUsers extends Command
                     $this->newSchools[] = $record->site;
                 }
                 continue;
-                // $organization=Organization::where('name','Education Training Collective')->first();
-                // $newSchool=new School();
-                // $newSchool->organization_id=$organization->id;
-                // $newSchool->title=$record->site;
-                // $newSchool->teachers_count=1;
-                // $newSchool->save();
-                // $school=$newSchool;
             }
 
            // ----------STORE NEW STAFF------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
-                $userId=DB::table('users')->insertGetId([
-                    'first_name' => $record->firstName,
-                    'last_name' => $record->surname,
-                    'email' => $record->eMail,
-                    'password' => bcrypt($randomPassword),
-                    'role' => 'staff',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                // $userId=DB::table('users')->insertGetId([
+                //     'first_name' => $record->firstName,
+                //     'last_name' => $record->surname,
+                //     'email' => $record->eMail,
+                //     'password' => bcrypt($randomPassword),
+                //     'role' => 'staff',
+                //     'created_at' => now(),
+                //     'updated_at' => now(),
+                // ]);
+
+                $user = new User();
+                $user->first_name = $record->firstName;
+                $user->last_name = $record->surname;
+                $user->email = $record->eMail;
+                $user->password = bcrypt($randomPassword);
+                $user->role = 'staff';
+                $user->created_at = now();
+                $user->updated_at = now();
+                $user->save();
+                $userId = $user->id;
+    
+                $role = \Spatie\Permission\Models\Role::where('name', 'staff')->where('guard_name', 'api')->first();
+                $user->assignRole($role);
+
                 //-----------SAVE STAFF----------------
                 $staff=new Staff();
                 $staff->user_id = $userId;
