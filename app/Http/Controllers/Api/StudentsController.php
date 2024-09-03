@@ -269,7 +269,6 @@ class StudentsController extends Controller
         // ----------STORE NEW STAFF------------
         $randomPassword = Str::random(10);
         $studentName = $record->firstName . ' ' . $record->surname;
-        try{
             $userId=DB::table('users')->insertGetId([
                 'first_name' => $record->firstName,
                 'last_name' => $record->surname,
@@ -308,7 +307,6 @@ class StudentsController extends Controller
             $userWallet->save();
             $res="New Staff Created.";
             return response()->json($res);
-        } catch (\Exception $e) {}
         
         return;
 
