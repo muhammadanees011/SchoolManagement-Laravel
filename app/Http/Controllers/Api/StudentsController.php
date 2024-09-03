@@ -278,6 +278,21 @@ class StudentsController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            $user = new User();
+            $user->first_name = $record->firstName;
+            $user->last_name = $record->surname;
+            $user->email = $record->eMail;
+            $user->password = bcrypt($randomPassword);
+            $user->role = 'staff';
+            $user->created_at = now();
+            $user->updated_at = now();
+            $user->save();
+            $userId = $user->id;
+
+            $role = \Spatie\Permission\Models\Role::where('name', $record->role)->where('guard_name', 'api')->first();
+            $user->assignRole($role);
+
             //-----------SAVE STAFF----------------
             $staff=new Staff();
             $staff->user_id = $userId;
