@@ -256,6 +256,7 @@ class StudentsController extends Controller
         $record->loginID = '3827138';
         $record->UPN = 'test.staff';
         $record->miFareID = '2387487';
+
         $school = School::where('title', 'like', '%' . $record->site . '%')->first();
         if($school){
             $school->teachers_count=$school->teachers_count + 1;
@@ -290,7 +291,7 @@ class StudentsController extends Controller
             $user->save();
             $userId = $user->id;
 
-            $role = \Spatie\Permission\Models\Role::where('name', $record->role)->where('guard_name', 'api')->first();
+            $role = \Spatie\Permission\Models\Role::where('name', $user->role)->where('guard_name', 'api')->first();
             $user->assignRole($role);
 
             //-----------SAVE STAFF----------------
