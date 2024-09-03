@@ -248,16 +248,14 @@ class StudentsController extends Controller
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
 
-        $record=[
-            'site'=>'rcc',
-            'firstName'=>'test',
-            'surname'=>'staff',
-            'eMail'=>'test.staff@stockton.ac.uk',
-            'loginID'=>'3827138',
-            'UPN'=>'test.staff',
-            'miFareID'=>'2387487'
-
-        ];
+        $record = new stdClass();
+        $record->site = 'rcc';
+        $record->firstName = 'test';
+        $record->surname = 'staff';
+        $record->eMail = 'test.staff@stockton.ac.uk';
+        $record->loginID = '3827138';
+        $record->UPN = 'test.staff';
+        $record->miFareID = '2387487';
         $school = School::where('title', 'like', '%' . $record->site . '%')->first();
         if($school){
             $school->teachers_count=$school->teachers_count + 1;
