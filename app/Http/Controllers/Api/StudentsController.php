@@ -248,7 +248,7 @@ class StudentsController extends Controller
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
 
-        $record = new stdClass();
+        $record = new \stdClass();
         $record->site = 'rcc';
         $record->firstName = 'test';
         $record->surname = 'staff';
