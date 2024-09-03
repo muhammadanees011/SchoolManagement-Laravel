@@ -269,15 +269,15 @@ class StudentsController extends Controller
         // ----------STORE NEW STAFF------------
         $randomPassword = Str::random(10);
         $studentName = $record->firstName . ' ' . $record->surname;
-            $userId=DB::table('users')->insertGetId([
-                'first_name' => $record->firstName,
-                'last_name' => $record->surname,
-                'email' => $record->eMail,
-                'password' => bcrypt($randomPassword),
-                'role' => 'staff',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // $userId=DB::table('users')->insertGetId([
+            //     'first_name' => $record->firstName,
+            //     'last_name' => $record->surname,
+            //     'email' => $record->eMail,
+            //     'password' => bcrypt($randomPassword),
+            //     'role' => 'staff',
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ]);
 
             $user = new User();
             $user->first_name = $record->firstName;
