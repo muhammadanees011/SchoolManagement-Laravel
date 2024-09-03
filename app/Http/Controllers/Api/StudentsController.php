@@ -247,6 +247,74 @@ class StudentsController extends Controller
 
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
+
+        $record=[
+            'site'=>'rcc',
+            'firstName'=>'test',
+            'surname'=>'staff',
+            'eMail'=>'test.staff@stockton.ac.uk',
+            'loginID'=>'3827138',
+            'UPN'=>'test.staff',
+            'miFareID'=>'2387487'
+
+        ];
+        $school = School::where('title', 'like', '%' . $record->site . '%')->first();
+        if($school){
+            $school->teachers_count=$school->teachers_count + 1;
+            $school->save();
+        }else{
+            if (!in_array($record->site, $this->newSchools)) {
+                $this->newSchools[] = $record->site;
+            }
+        }
+
+        // ----------STORE NEW STAFF------------
+        $randomPassword = Str::random(10);
+        $studentName = $record->firstName . ' ' . $record->surname;
+        try{
+            $userId=DB::table('users')->insertGetId([
+                'first_name' => $record->firstName,
+                'last_name' => $record->surname,
+                'email' => $record->eMail,
+                'password' => bcrypt($randomPassword),
+                'role' => 'staff',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            //-----------SAVE STAFF----------------
+            $staff=new Staff();
+            $staff->user_id = $userId;
+            if($school){
+                $staff->school_id = $school->id;
+            }
+            $staff->staff_id = $record->loginID;
+            $staff->upn = $record->UPN;
+            $staff->mifare_id = $record->miFareID;
+            $staff->site = $record->site;
+            $staff->save();
+            //----------CREATE STRIPE CUSTOMER------------
+            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $customer=$stripe->customers->create([
+            'name' => $studentName,
+            'email' => $record->eMail,
+            ]);
+            $user=User::where('id',$userId)->first();
+            $user->stripe_id=$customer->id;
+            $user->created_at=now();
+            $user->updated_at=now();
+            $user->save();
+            //----------CREATE STUDENT WALLET-------------
+            $userWallet=new Wallet();
+            $userWallet->user_id=$userId;
+            $userWallet->ballance= 0;
+            $userWallet->save();
+            $res="New Staff Created.";
+            return response()->json($res);
+        } catch (\Exception $e) {}
+        
+        return;
+
+        //----------------------------------------------------------------------------
         $tables = DB::connection('remote_mysql')->table('ePOS_StudentCourse')->get();
         $student_course = DB::table('student_course')->get();
 
