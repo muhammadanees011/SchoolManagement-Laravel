@@ -45,18 +45,22 @@ class OrganizationShopsController extends Controller
         }
         return response()->json($shops, 200);
     }
+
     //----------GET SHOP ITEMS---------
     public function getShopItems(Request $request){
         $user=Auth::user();
         if($user->role=='super_admin'){
             $shopItems = OrganizationShop::with(['shopItems' => function($query) {
                 $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
-            }, 'shopItems.payment'])->paginate(20);
+            }, 'shopItems.payment'])->paginate($request->entries_per_page);
         }else if($user->role=='student'){
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
             $courses=StudentCourse::where('StudentID',$student->student_id)->get();
-            $courseCodes = $courses->pluck('CourseCode')->toArray();
+            // $courseCodes = $courses->pluck('CourseCode')->toArray();
+            $courseCodes = $courses->map(function ($course) {
+                return $course->CourseCode . '-' . $course->CourseDescription.'';
+            })->toArray();
             $schoolName=$school->title;
             $shopItems = OrganizationShop::where('organization_id', $school->organization_id)
             ->with(['shopItems' => function ($query) use ($schoolName, $courseCodes){
@@ -70,7 +74,7 @@ class OrganizationShopsController extends Controller
                 })
                ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])
-            ->paginate(20);
+            ->paginate($request->entries_per_page);
         }else if($user->role=='staff'){
             $staff=Staff::where('user_id',$user->id)->first();
             $school=School::where('id',$staff->school_id)->first();
@@ -86,7 +90,7 @@ class OrganizationShopsController extends Controller
             $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
                 $query->where('status', '!=', 'deleted')
                 ->orderBy('created_at', 'desc');
-            }, 'shopItems.payment'])->paginate(20);
+            }, 'shopItems.payment'])->paginate($request->entries_per_page);
         }
 
         $pagination = [
@@ -100,6 +104,27 @@ class OrganizationShopsController extends Controller
         return response()->json($response, 200);
     }
 
+    public function filterShopItems(Request $request){
+
+        if($request->type=='Name'){
+            $shopItems = OrganizationShop::with(['shopItems' => function($query) use ($request) {
+                $query->where('status', $request->status)
+                ->where('name', 'like', '%' . $request->value . '%');
+            }, 'shopItems.payment'])->get();
+        }else if($request->type=='Price'){
+            $shopItems = OrganizationShop::with(['shopItems' => function($query) use ($request) {
+                $query->where('status', $request->status)
+                ->where('price', 'like', '%' . $request->value . '%');
+            }, 'shopItems.payment'])->get();
+        }else if($request->type=='Quantity'){
+            $shopItems = OrganizationShop::with(['shopItems' => function($query) use ($request) {
+                $query->where('status', $request->status)
+                ->where('quantity', 'like', '%' . $request->value . '%');
+            }, 'shopItems.payment'])->get();
+        }
+        return response()->json($shopItems, 200);
+    }
+
     //-----------GET ARCHIVED ITEMS---------------
     public function getArchivedItems(Request $request)
     {
@@ -107,18 +132,18 @@ class OrganizationShopsController extends Controller
         if($user->role=='super_admin'){
             $shopItems = OrganizationShop::with(['shopItems' => function($query) {
                 $query->where('status', 'deleted');
-            }, 'shopItems.attribute'])->paginate(20);
+            }, 'shopItems.attribute'])->paginate($request->entries_per_page);
         }else if($user->role=='staff'){
             $staff=Staff::where('user_id',$user->id)->first();
             $school=School::where('id',$staff->school_id)->first();
             $shopItems=OrganizationShop::where('organization_id',$school->organization_id)->with(['shopItems' => function($query) {
                 $query->where('status', 'deleted');
-            }, 'shopItems.attribute'])->paginate(20);
+            }, 'shopItems.attribute'])->paginate($request->entries_per_page);
         }else if($user->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$user->id)->first();
             $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
                 $query->where('status', 'deleted');
-            }, 'shopItems.attribute'])->paginate(20);
+            }, 'shopItems.attribute'])->paginate($request->entries_per_page);
         }
 
         $pagination = [
@@ -138,14 +163,16 @@ class OrganizationShopsController extends Controller
             // 'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'shop_id' =>['nullable',Rule::exists('organization_shops', 'id')],
             // 'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'product_type' => 'required',
             'image' => 'nullable',
-            'detail' => 'required|string',
+            'detail' => 'required|string|max:255',
             'price' => 'required|numeric',
             'quantity'=>'required|numeric',
             'valid_from' => 'required',
             'valid_to' => 'required',
+            'expiration_date' => 'nullable',
+            'quantity_sold' => 'nullable',
             'payment_plan' => 'required',
             'limitColleges'=>'nullable',
             'limitCourses'=>'nullable',
@@ -179,6 +206,8 @@ class OrganizationShopsController extends Controller
             $item->status = $request->quantity > 0 ? 'available' : 'not_available';
             $item->valid_from = $request->valid_from;
             $item->valid_to = $request->valid_to;
+            $item->expiration_date = $request->expiration_date;
+            $item->quantity_sold = $request->quantity_sold;
             $item->payment_plan = $request->payment_plan;
             $item->limit_colleges = json_decode($request->input('limitColleges'), true);
             $item->limit_courses = json_decode($request->input('limitCourses'), true);
@@ -221,37 +250,22 @@ class OrganizationShopsController extends Controller
     //----------Edit SHOP ITEM---------
     public function editShopItem($id){
         $shopItem=ShopItem::with('payment')->find($id);
-
-        // if (isset($shopItem->limit_colleges) && is_array($shopItem->limit_colleges)) {
-        //     // Transform the visibility_options array
-        //     $shopItem->limit_colleges = array_map(function ($option) {
-        //         return ['name' => $option];
-        //     }, $shopItem->limit_colleges);
-        // }
-
-        // if (isset($shopItem->visibility_options) && is_array($shopItem->visibility_options)) {
-        //     // Transform the visibility_options array
-        //     $shopItem->visibility_options = array_map(function ($option) {
-        //         return ['name' => $option];
-        //     }, $shopItem->visibility_options);
-        // }
-
         return response()->json($shopItem, 200);
     }
     //----------UPDATE SHOP ITEM---------
     public function updateShopItem(Request $request,$id){
         $validator = Validator::make($request->all(), [
-            // 'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'shop_id' =>['nullable',Rule::exists('organization_shops', 'id')],
-            // 'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'image' => 'nullable',
             'product_type' => 'required',
-            'detail' => 'required|string',
+            'detail' => 'required|string|max:255',
             'price' => 'required|numeric',
             'quantity'=>'required|numeric',
             'valid_from' => 'required',
             'valid_to' => 'required',
+            'expiration_date' => 'nullable',
+            'quantity_sold' => 'nullable',
             'payment_plan' => 'required',
             'limitColleges'=>'nullable',
             'limitCourses'=>'nullable',
@@ -274,9 +288,7 @@ class OrganizationShopsController extends Controller
                 $shop_id=$shop->id;
             }
             $item =ShopItem::find($id);
-            // $item->attribute_id=$request->attribute_id;
             $item->shop_id=$shop_id;
-            // $item->attributes =$request["attributes"];
             $item->name=$request->name;
             $item->product_type = $request->product_type;
             $item->detail=$request->detail;
@@ -285,6 +297,8 @@ class OrganizationShopsController extends Controller
             $item->status = $request->quantity > 0 ? 'available' : 'not_available';
             $item->valid_from=$request->valid_from;
             $item->valid_to=$request->valid_to;
+            $item->expiration_date = $request->expiration_date;
+            $item->quantity_sold = $request->quantity_sold;
             $item->payment_plan=$request->payment_plan;
             $item->limit_colleges=json_decode($request->input('limitColleges'), true);
             $item->limit_courses=json_decode($request->input('limitCourses'), true);

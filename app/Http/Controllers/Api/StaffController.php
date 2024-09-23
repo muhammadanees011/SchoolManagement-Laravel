@@ -30,7 +30,7 @@ class StaffController extends Controller
         ->whereHas('user', function($query) {
             $query->where('status', 'active');
         })
-        ->orderBy('created_at', 'desc')->paginate(20);
+        ->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         $staff=StaffResource::collection($staff);
         }else{
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
@@ -40,7 +40,7 @@ class StaffController extends Controller
                 ->whereHas('user', function($query) {
                     $query->where('status', 'active');
                 })
-                ->orderBy('created_at', 'desc')->paginate(20)
+                ->orderBy('created_at', 'desc')->paginate($request->entries_per_page)
             );
         }
         $pagination = [
@@ -226,7 +226,9 @@ class StaffController extends Controller
 
     public function searchStaff(Request $request){
         $validator = Validator::make($request->all(), [
-            'searchString' => 'nullable',
+            'type' => 'required',
+            'value' => 'required',
+            'status' => 'required',
         ]);
         if ($validator->fails())
         {
@@ -235,34 +237,34 @@ class StaffController extends Controller
         
         $user=Auth::user();
         if($user->role=='super_admin'){
-            $staff = Staff::with(['user' => function ($query) {
-                $query->with('balance');
-            }, 'school'])
-            ->where(function ($query) use ($request) {
-                $query->whereHas('user', function ($subquery) use ($request) {
-                    $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('mifare_id', 'like', '%' . $request->searchString . '%')
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
-                });
-            })->get();
-            $response= StaffResource::collection($staff);
-        }else{
-            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
 
-            $staff = Staff::with(['user' => function ($query) {
-                $query->with('balance');
-            }, 'school'])
-            ->whereIn('school_id', $schoolIds) // Filter based on school_id
-            ->where(function ($query) use ($request) {
-                $query->whereHas('user', function ($subquery) use ($request) {
-                    $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('staff_id', 'like', '%' . $request->searchString . '%')
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
-                });
-            })->get();
+            if($request->type=='MIFare Id'){
+                $staff=Staff::with('user.balance','school')
+                ->where('mifare_id', 'like', '%' . $request->value . '%')
+                ->whereHas('user', function($query) use ($request) {
+                    $query->where('status', $request->status);
+                })->get();
+            }else if($request->type=='Name'){
+                $staff = Staff::with(['user' => function ($query) {
+                    $query->with('balance');
+                }, 'school'])
+                ->where(function ($query) use ($request) {
+                    $query->whereHas('user', function ($subquery) use ($request) {
+                        $subquery->where('first_name', 'like', '%' . $request->value . '%')
+                        ->orWhere('last_name', 'like', '%' . $request->value . '%')
+                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
+                    });
+                })->get();
+            }else if($request->type=='Email'){
+                $staff = Staff::with(['user' => function ($query) {
+                    $query->with('balance');
+                }, 'school'])
+                ->where(function ($query) use ($request) {
+                    $query->whereHas('user', function ($subquery) use ($request) {
+                        $subquery->where('email', 'like', '%' . $request->value . '%');
+                    });
+                })->get();
+            }
             $response= StaffResource::collection($staff);
         }
 
@@ -323,7 +325,7 @@ class StaffController extends Controller
         ->whereHas('user', function($query) {
             $query->where('status', 'deleted');
         })
-        ->orderBy('created_at', 'desc')->paginate(20);
+        ->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         $staff=StaffResource::collection($staff);
         }else{
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
@@ -333,7 +335,7 @@ class StaffController extends Controller
                 ->whereHas('user', function($query) {
                     $query->where('status', 'deleted');
                 })
-                ->orderBy('created_at', 'desc')->paginate(20)
+                ->orderBy('created_at', 'desc')->paginate($request->entries_per_page)
             );
         }
         $pagination = [
@@ -350,8 +352,23 @@ class StaffController extends Controller
     //-------------BULK DELETE STAFF--------
     public function bulkDeleteStaff(Request $request)
     {
+        // $ids = $request->all();
+        // User::whereIn('id', $ids)->delete();
         $ids = $request->all();
-        User::whereIn('id', $ids)->delete();
+        foreach ($ids as $id) {
+            $user = User::find($id);
+            if ($user) {
+                $staff=Staff::where('user_id',$id)->first();
+                $school = School::where('id', $staff->school_id)->first();
+                
+                if ($school) {
+                    $school->teachers_count = $school->teachers_count - 1;
+                    $school->save();
+                }
+                
+                $user->delete();
+            }
+        }
         return response()->json(['message' => 'Staff deleted successfully'], 200);
     }
 

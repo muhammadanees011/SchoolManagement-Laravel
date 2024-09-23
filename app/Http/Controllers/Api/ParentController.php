@@ -29,13 +29,13 @@ class ParentController extends Controller
     public function getAllParents(Request $request,$admin_id=null){
         // $parents=Parents::with('user')->get();
         if($admin_id==null){
-            $parents=User::where('role','parent')->paginate(20);
+            $parents=User::where('role','parent')->paginate($request->entries_per_page);
             // $parents=Parents::with('user')->get();
         }else{
             $admin=OrganizationAdmin::where('user_id',$admin_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
             $studentIds=Student::where('school_id',$schoolIds)->pluck('id')->toArray();
-            $parents=Parents::whereIn('student_id', $studentIds)->with('user')->paginate(20);
+            $parents=Parents::whereIn('student_id', $studentIds)->with('user')->paginate($request->entries_per_page);
         }
 
         $pagination = [

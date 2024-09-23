@@ -112,7 +112,7 @@ class UserCartController extends Controller
     public function checkout(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'payment_method' =>'required',
+            'payment_method' =>'nullable',
             'type' =>'required',
         ]);
         if ($validator->fails())
@@ -163,7 +163,7 @@ class UserCartController extends Controller
                     // $ItemAmount = $cartItem->ShopItem->price;
                     if($request->type=='card'){
                         $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
-                    }else if($request->type=='wallet_and_card'){
+                    }else if($request->type=='wallet'){
                         $user_wallet=Wallet::where('user_id',$user->id)->first();
                         if($user_wallet->ballance >  $ItemAmount){
                             $user_wallet->ballance = $user_wallet->ballance - $ItemAmount;
@@ -175,10 +175,26 @@ class UserCartController extends Controller
                             $history->type=$type;
                             $history->save();
                         }else{
-                            $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
+                            $response = ['Not enough balance'];
+                            return response()->json($response, 500);
                         }
                     }
-                    $purchase=$this->saveMyPurchases($cartItem->ShopItem,$ItemAmount);
+                    // else if($request->type=='wallet_and_card'){
+                    //     $user_wallet=Wallet::where('user_id',$user->id)->first();
+                    //     if($user_wallet->ballance >  $ItemAmount){
+                    //         $user_wallet->ballance = $user_wallet->ballance - $ItemAmount;
+                    //         $user_wallet->save();
+
+                    //         $history=new TransactionHistory();
+                    //         $history->user_id=$user->id;
+                    //         $history->amount=$ItemAmount;
+                    //         $history->type=$type;
+                    //         $history->save();
+                    //     }else{
+                    //         $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
+                    //     }
+                    // }
+                    $purchase=$this->saveMyPurchases($cartItem->ShopItem,$ItemAmount,$request->payment_method);
                     $this->saveMyInstallments($cartItem->ShopItem,$purchase->id);
                 }
             }
@@ -230,7 +246,7 @@ class UserCartController extends Controller
     }
 
     //--------------ADD TO MY PURCHASES------------
-    public function saveMyPurchases($shopItem,$amountPaid)
+    public function saveMyPurchases($shopItem,$amountPaid,$payment_method)
     {
         $user=Auth::user();
         $myPurchase = new MyPurchase();
@@ -238,6 +254,7 @@ class UserCartController extends Controller
         $myPurchase->shop_item_id = $shopItem->id;
         $myPurchase->total_price = $shopItem->price;
         $myPurchase->amount_paid = $amountPaid;
+        $myPurchase->payment_card = $payment_method;
         if($shopItem->price > $amountPaid){
             $myPurchase->payment_status = "partially_paid";
         }else if($shopItem->price == $amountPaid){
@@ -293,15 +310,15 @@ class UserCartController extends Controller
     {
         $user=Auth::user();
         if($user->role=='super_admin'){
-            $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate(20);  
+            $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate($request->entries_per_page);  
         }else if($user->role=='organization_admin'){
-            $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate(20);  
+            $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate($request->entries_per_page);  
             // $admin=OrganizationAdmin::where('user_id',$user->id)->first();
             // $shop=OrganizationShop::where('organization_id',$admin->organization_id)->first();
             // $myInstallments=MyInstallments::where('user_id',$user->id)->orderBy('created_at','desc')->get();
         }else{
             $myInstallments=MyInstallments::where('payment_status','pending')
-            ->where('user_id',$user->id)->orderBy('created_at','desc')->paginate(20);
+            ->where('user_id',$user->id)->orderBy('created_at','desc')->paginate($request->entries_per_page);
         }
         $myInstallments = MyInstallmentsRescource::collection($myInstallments);
 
@@ -314,6 +331,23 @@ class UserCartController extends Controller
         $response['data']=$myInstallments;
         $response['pagination']=$pagination;
         return response()->json($response, 200);
+    }
+
+    public function filterInstallments(Request $request){
+        if($request->type=='Item Name'){
+            $purchases=MyInstallments::with('shopItems')
+            ->whereHas('shopItems', function($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->value . '%');
+            })->get();
+        }else if($request->type=='Buyer'){
+            $purchases=MyInstallments::with('user')
+            ->whereHas('user', function($query) use ($request) {
+                $query->where('first_name', 'like', '%' . $request->value . '%')
+                ->orWhere('last_name', 'like', '%' . $request->value . '%')
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
+            })->get();
+        }
+        return response()->json($purchases, 200);
     }
 
     //-------------PAY INSTALLMENT--------------

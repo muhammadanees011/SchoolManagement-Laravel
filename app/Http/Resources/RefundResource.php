@@ -24,6 +24,7 @@ class RefundResource extends JsonResource
             'price' => $this->purchase->shopItems->price,
             'total_price' => $this->purchase->total_price,
             'amount_paid' => $this->purchase->amount_paid,
+            'payment_card' => $this->purchase->payment_card,
             'payment_plan' => $this->purchase->shopItems->payment_plan,
             'refund_status' => $this->purchase->refund_status,
             'payment_status' => $this->purchase->payment_status,

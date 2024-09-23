@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 use App\Mail\SupportEmail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use App\Models\School;
+use App\Models\Staff;
+use App\Models\Student;
 
 class SupportController extends Controller
 {
@@ -28,8 +32,29 @@ class SupportController extends Controller
         $data['email']=$request->email;
         $data['subject']=$request->subject;
         $data['message']=$request->message;
-        //----------SEND SUPPORT MAIL--------------
-        Mail::to('itsanees011@gmail.com')->send(new SupportEmail($data));
+
+        $user=Auth::user();
+        $recipient_mail;
+        if($user->role=='student'){
+            $student=Student::where('user_id',$user->id)->first();
+            if($student){
+                $school=School::find($student->school_id);
+            }
+        }else if($user->role=='staff'){
+            $staff=Staff::where('user_id',$user->id)->first();
+            if($staff){
+                $school=School::find($staff->school_id);
+            }
+        }else{
+            return response()->json(['errors'=>['you can not send the mail']], 422);
+        }
+        if($school && $school->finance_coordinator_email){
+            $recipient_mail=$school->finance_coordinator_email;
+            //----------SEND SUPPORT MAIL--------------
+            Mail::to($recipient_mail)->send(new SupportEmail($data));
+        }else{
+            return response()->json(['errors'=>['Recipient Email Not Found']], 422); 
+        }
     }
     
 }

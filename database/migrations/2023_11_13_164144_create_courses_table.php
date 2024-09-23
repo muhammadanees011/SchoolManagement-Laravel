@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('CourseCode')->nullable();
             $table->string('CourseLevel')->nullable();
             $table->string('CourseDescription')->nullable();
+            $table->integer('total_enrollments')->default(0);
             $table->string('status');
             $table->timestamps();
         });

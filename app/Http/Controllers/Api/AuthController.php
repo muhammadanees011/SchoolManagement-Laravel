@@ -147,6 +147,9 @@ class AuthController extends Controller
         }
         if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){ 
             $user = Auth::user(); 
+            if($user->status !='active'){
+                return response()->json('Unauthorized.',401);
+            }
             $tokenResult = $user->createToken('Personal Access Token')->accessToken;
             $token = $tokenResult;
             $data['access_token'] = $token;

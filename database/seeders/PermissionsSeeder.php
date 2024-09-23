@@ -20,10 +20,10 @@ class PermissionsSeeder extends Seeder
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_admin']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_admin']);
         //-----------------------SCHOOLS---------------------
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'create_school']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_school']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_school']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_school']);
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'create_site']);
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_site']);
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_site']);
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_site']);
         //-----------------------STUDENTS---------------------
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'create_student']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_student']);
@@ -34,23 +34,22 @@ class PermissionsSeeder extends Seeder
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_staff']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_staff']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_staff']);
-        //-----------------------TRIPS---------------------
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'create_trip']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_trip']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_trip']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_trip']);
-        //-----------------------ATTRIBUTES---------------------
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'create_attribute']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_attribute']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_attribute']);
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_attribute']);
         //-----------------------SHOPS---------------------
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'create_shop']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_shop']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_shop']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_shop']);
-        //-----------------------SUPPORT---------------------
-        Permission::firstOrCreate(['guard_name' => 'api','name' => 'support']);
+        //----------------------COURSES---------------------
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'create_course']);
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_course']);
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_course']);
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_course']);
+        //----------------------PURCHASE HISTORY---------------------
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'purchase_history']);
+        //----------------------PENDING INSTALLMENTS---------------------
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'pending_installments']);
+        //----------------------REFUNDS---------------------
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'refunds']);
         //-----------------------TRANSACTION HISTORY---------------------
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'transaction_history']);
         //-----------------------ROLES---------------------

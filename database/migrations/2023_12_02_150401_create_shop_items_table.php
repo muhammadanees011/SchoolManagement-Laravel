@@ -27,10 +27,12 @@ return new class extends Migration
             $table->integer('quantity')->nullable();
             $table->date('valid_from')->nullable();
             $table->date('valid_to')->nullable();
+            $table->date('expiration_date')->nullable();
+            $table->integer('quantity_sold')->nullable();
             $table->json('limit_colleges')->nullable();
             $table->json('limit_courses')->nullable();
             $table->json('visibility_options')->nullable();
-            $table->enum('product_type',['Trip ','Resources','Uniforms','Print Credit','Exams','Bus Passes'])->nullable();
+            $table->enum('product_type',['Trip ','Resources','Uniforms','Print Credit','Exams','Bus Passes','Additional'])->nullable();
             $table->enum('payment_plan',['full_payment','installments','installments_and_deposit'])->default('full_payment');
             $table->enum('status',['available','not_available','deleted'])->default('available');
             $table->timestamps();

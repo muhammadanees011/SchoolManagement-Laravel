@@ -18,6 +18,7 @@ use App\Models\Organization;
 use App\Models\Course;
 use App\Models\StudentCourse;
 use App\Models\Staff;
+use Illuminate\Support\Facades\Log;
 
 class SyncUsers extends Command
 {
@@ -45,7 +46,8 @@ class SyncUsers extends Command
         info("Cron Job running at ". now());
         $this->syncStudents();
         $this->syncStaff();
-        $this->updateData();
+        $this->updateStudents();
+        $this->updateStaff();
         $this->archiveUsers();
         $this->SyncCourses();
         $this->sync_student_course();
@@ -118,7 +120,13 @@ class SyncUsers extends Command
                 if($school){
                     $student->school_id = $school->id;
                 }
-                $student->student_id = $record->loginID ?: null;
+                $loginId=$record->loginID ?: null;
+                if($loginId){
+                    $modifiedLoginID = substr_replace($loginId, 'B', 0, 1); // Replace first character with 'B'
+                    $student->student_id = $modifiedLoginID;
+                }else{
+                    $student->student_id = $loginId;
+                }
                 $student->upn = $record->UPN ?: null;
                 $student->mifare_id  = $record->miFareID ?: null;
                 $student->fsm_amount = $record->fsmAmount;
@@ -152,6 +160,7 @@ class SyncUsers extends Command
             }
     
         }
+        Log::info('Student Sync completed successfully');
     }
 
     private function syncStaff(){
@@ -245,6 +254,7 @@ class SyncUsers extends Command
             }
     
         }
+        Log::info('Staff Sync completed successfully');
     }
 
     private function SyncCourses(){
@@ -270,6 +280,7 @@ class SyncUsers extends Command
             }
     
         }
+        Log::info('Courses Sync completed successfully');
     }
 
     private function sync_student_course(){
@@ -296,14 +307,22 @@ class SyncUsers extends Command
         foreach ($newRecords as $record) {
            //----------STORE NEW COURSE------------
             try{
-                $course=new StudentCourse();
-                $course->StudentID = $record->StudentID;
-                $course->CourseCode = $record->CourseCode;
+                $course=Course::where('CourseCode',$record->CourseCode)->first();
+                $course->total_enrollments=$course->total_enrollments + 1;
+
+                $studentCourse=new StudentCourse();
+                $studentCourse->StudentID = $record->StudentID;
+                $studentCourse->CourseCode = $record->CourseCode;
+                $studentCourse->CourseDescription = $course->CourseDescription;
+                $studentCourse->save();
                 $course->save();
+
                 } catch (\Exception $e) {
             }
     
         }
+
+        Log::info('Student_Course Sync completed successfully');
     }
 
     private function archiveCourses(){
@@ -319,9 +338,10 @@ class SyncUsers extends Command
         
         // Update the status of old courses to 'archived'
         DB::table('courses')
-            ->whereIn('CourseCode', $oldCourses)
-            ->update(['status' => 'archived']);
-        
+        ->whereIn('CourseCode', $oldCourses)
+        ->update(['status' => 'archived']);
+
+        Log::info('Archive Course completed successfully');
     }
 
     private function archiveStudentCourse() {
@@ -350,26 +370,79 @@ class SyncUsers extends Command
                 ]);
             }
         })->update(['status' => 'archived']);
-    }
-    
 
-    public function updateData(){
+        Log::info('Archive Student_Course completed successfully');
+    }
+
+    public function updateStudents(){
+        //  update student data
         $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         foreach ($tables as $record) {
             try{
+                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
                 //-----------UPDATE STUDENT----------------
                 $user=User::where('email',$record->eMail)->first();
                 $student=Student::where('user_id',$user->id)->first();
                 if($student){
+                    if($student->site==$school->title){
+
+                    }else{
+                        // if site updated update the count
+                        $school->students_count=$school->students_count + 1;
+                        $school->save();
+
+                        // and also update the count of site we are moving from
+                        $school = School::where('title', 'like', '%' . $student->site . '%')->first();
+                        $school->students_count=$school->students_count - 1;
+                        $school->save();
+                    }
                 $student->upn = $record->UPN ?: null;
                 $student->mifare_id  = $record->miFareID ?: null;
                 $student->fsm_amount = $record->fsmAmount;
                 $student->purse_type = $record->purseType ?: null;
+                $student->site = $record->site ?: null;
                 $student->save();
                 }
                 } catch (\Exception $e) {
             }
         }
+
+        Log::info('Student Update completed successfully');
+    }
+
+    public function updateStaff(){
+        //  update staff data
+        $tables = DB::connection('remote_mysql')->table('ebStaff')->get();
+        foreach ($tables as $record) {
+            try{
+                $school = School::where('title', 'like', '%' . $record->site . '%')->first();
+                //-----------UPDATE STUDENT----------------
+                $user=User::where('email',$record->eMail)->first();
+                $staff=Staff::where('user_id',$user->id)->first();
+                if($staff){
+                    if($staff->site==$school->title){
+
+                    }else{
+                        // if site updated update the count
+                        $school->teachers_count=$school->teachers_count + 1;
+                        $school->save();
+
+                        // and also update the count of site we are moving from
+                        $school = School::where('title', 'like', '%' . $staff->site . '%')->first();
+                        $school->teachers_count=$school->teachers_count - 1;
+                        $school->save();
+                    }
+                $staff->staff_id = $record->loginID ?: null;
+                $staff->upn = $record->UPN ?: null;
+                $staff->mifare_id  = $record->miFareID ?: null;
+                $staff->site = $record->site ?: null;
+                $staff->save();
+                }
+                } catch (\Exception $e) {
+            }
+        }
+
+        Log::info('Staff Update completed successfully');
     }
 
     // any account that currently exists in our database, 
@@ -390,6 +463,7 @@ class SyncUsers extends Command
             $user->status = 'deleted';
             $user->save();
         }
+        Log::info('Archive Users completed successfully');
     }
 
 
@@ -411,5 +485,7 @@ class SyncUsers extends Command
         Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
         Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
         Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
+
+        Log::info('Sending Email completed successfully');
     }
 }

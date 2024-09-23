@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UserCard;
 use App\Models\Student;
+use App\Models\School;
 use App\Models\Staff;
 use App\Models\User;
 use App\Models\TransactionHistory;
@@ -64,6 +65,7 @@ class PaymentsController extends Controller
         }
     }
 
+    //--------------CREATE STUDENT/STAFF PAYMENT CARD---------------
     public function createCard(Request $request)
     {    
         $validator = Validator::make($request->all(), [
@@ -101,16 +103,70 @@ class PaymentsController extends Controller
         }
     }
 
-    public function getCustomerPaymentMethods(Request $request){
+    //--------------CREATE SCHOOL PAYMENT CARD---------------
+    public function createSchoolCard(Request $request)
+    {    
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
+            'school_id' => 'required',
+            'card_token' => 'required|string',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         try{
-            $user=User::find($request->user_id);
+            $school=School::find($request->school_id);
+            if($school){
+                $card=UserCard::where('school_id',$school->id)->first();
+                if($card){
+                    return response()->json('Already have the card', 422);  
+                }
+            }
+            if($school && $school->stripe_id){
+                $customer_id=$school->stripe_id;
+            }else{
+                return response()->json('customer id not found', 422);
+            }
+            $card_token=$request->card_token;
+            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $card=$stripe->customers->createSource(
+            $customer_id,
+            ['source' => $card_token]
+            );
+            $userCard=new UserCard();
+            $userCard->school_id=$school->id;
+            $userCard->card_id=$card->id;
+            $userCard->customer_id=$card->customer;
+            $userCard->brand=$card->brand;
+            $userCard->last_4=$card->last4;
+            $userCard->card_expiry_month=$card->exp_month;
+            $userCard->card_expiry_year=$card->exp_year;
+            $userCard->save();
+            return response()->json($card, 200);
+                } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getCustomerPaymentMethods(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
+            'type' => 'nullable'
+
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        try{
+            if($request->type=='school'){
+                $user=School::find($request->user_id);
+            }else{
+                $user=User::find($request->user_id);
+            }
             Stripe::setApiKey(env('STRIPE_SECRET'));
             // Replace 'cus_12345678901234567890' with the actual customer ID
             $customerId = $user->stripe_id;
@@ -146,7 +202,11 @@ class PaymentsController extends Controller
             $customerId = $user->stripe_id;
             $cardId = $request->payment_method;
             $paymentMethod = PaymentMethod::retrieve($cardId);
-            $paymentMethod->detach();      
+            $paymentMethod->detach(); 
+            
+            $card=UserCard::where('card_id',$cardId)->first();
+            $card->delete();
+
             $response=["Payment method removed successfully"];
             return response()->json($response, 200);
              } catch (\Exception $e) {

@@ -28,6 +28,7 @@ class MyPurchasesResource extends JsonResource
             'total_price' => $this->total_price,
             'amount_paid' => $this->amount_paid,
             'payment_plan' => $this->shopItems->payment_plan,
+            'payment_card' => $this->payment_card,
             'refund_status' => $this->refund_status,
             'payment_status' => $this->payment_status,
             'created_at' => $this->created_at,

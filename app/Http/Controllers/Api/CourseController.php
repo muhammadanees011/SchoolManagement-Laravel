@@ -14,8 +14,8 @@ use App\Http\Resources\StudentCourseResource;
 class CourseController extends Controller
 {
     //-------------GET ALL Courses-------------
-    public function getAllCourses(){
-        $courses=Course::paginate(20);
+    public function getAllCourses(Request $request){
+        $courses=Course::paginate($request->entries_per_page);
 
         $pagination = [
             'current_page' => $courses->currentPage(),
@@ -127,7 +127,7 @@ class CourseController extends Controller
                 $query->where('status', 'active');
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(60);
+            ->paginate($request->entries_per_page);
         $res=StudentCourseResource::collection($students);
         $pagination = [
             'current_page' => $students->currentPage(),
@@ -176,16 +176,69 @@ class CourseController extends Controller
 
         $student=new StudentCourse();
         $student->CourseCode=$request->CourseCode;
+        $student->CourseDescription=$validCourse->CourseDescription;
         $student->StudentID=$request->StudentID;
         $student->save();
         $response['message']='Successfully Enrolled the student';
         return response()->json($response, 200);
     }
 
+    public function filterCourseStudents(Request $request){
+        $validator = Validator::make($request->all(), [
+            'type' => 'required',
+            'value' => 'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        if($request->type=='Student Id'){
+            $courses=StudentCourse::where('StudentID', 'like', '%' . $request->value . '%')->get();
+
+        }else if($request->type=='Name'){
+
+            $courses = StudentCourse::whereHas('student.user', function ($query) use ($request) {
+                $query->where('first_name', 'like', '%' . $request->value . '%')
+                ->orWhere('last_name', 'like', '%' . $request->value . '%')
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']); 
+            })->get();
+
+        }else if($request->type=='Email'){
+
+            $courses = StudentCourse::whereHas('student.user', function ($query) use ($request) {
+                $query->where('email', 'like', '%' . $request->value . '%'); 
+            })->get();
+        }
+        return response()->json($courses, 200);
+    }
+
+    public function filterCourses(Request $request){
+        $validator = Validator::make($request->all(), [
+            'type' => 'required',
+            'value' => 'required',
+            'status' => 'required',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        if($request->type=='Course Code'){
+            $courses=Course::where('CourseCode', 'like', '%' . $request->value . '%')
+            ->where('status',$request->status)->get();
+        }else if($request->type=='Course Name'){
+            $courses=Course::where('CourseDescription', 'like', '%' . $request->value . '%')
+            ->where('status',$request->status)->get();
+        }else if($request->type=='Course Level'){
+            $courses=Course::where('CourseLevel', 'like', '%' . $request->value . '%')
+            ->where('status',$request->status)->get();
+        }
+        return response()->json($courses, 200);
+    }
+
     public function getCoursesForDropdown(){
         $courses = Course::get()->map(function($course) {
             return [
-                'name' => $course->CourseCode,
+                'name' => $course->CourseCode.'-'.$course->CourseDescription.'',
             ];
         });
         return response()->json($courses, 200);

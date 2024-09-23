@@ -51,23 +51,23 @@ class TransactionHistoryController extends Controller
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         if($request->user_id){
-            $history=TransactionHistory::where('user_id',$request->user_id)->orderBy('created_at', 'desc')->paginate(20);
+            $history=TransactionHistory::where('user_id',$request->user_id)->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }else{
             if($request->admin_id==null){
-                $history=TransactionHistory::with('user')->orderBy('created_at', 'desc')->paginate(20);
+                $history=TransactionHistory::with('user')->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
             }else if($request->role=='organization_admin' && $request->admin_id!=null){
                 $admin=OrganizationAdmin::where('user_id',$request->admin_id)->first();
                 $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
                 $studentIds = Student::whereIn('school_id', $schoolIds)->pluck('user_id')->toArray();
-                $history=TransactionHistory::whereIn('user_id',$studentIds)->with('user')->orderBy('created_at', 'desc')->paginate(20);  
+                $history=TransactionHistory::whereIn('user_id',$studentIds)->with('user')->orderBy('created_at', 'desc')->paginate($request->entries_per_page);  
             }else if($request->role=='staff' && $request->admin_id!=null){
                 $user=Staff::where('user_id',$request->admin_id)->first();
                 $studentIds = Student::where('school_id', $user->school_id)->pluck('user_id')->toArray();
                 $history=TransactionHistory::whereIn('user_id',$studentIds)
                 ->orWhere('user_id', $request->admin_id)
-                ->with('user')->orderBy('created_at', 'desc')->paginate(20); 
+                ->with('user')->orderBy('created_at', 'desc')->paginate($request->entries_per_page); 
             }else if($request->role=='parent' && $request->admin_id!=null){
-                $history=TransactionHistory::where('user_id',$request->admin_id)->with('user')->orderBy('created_at', 'desc')->paginate(20); 
+                $history=TransactionHistory::where('user_id',$request->admin_id)->with('user')->orderBy('created_at', 'desc')->paginate($request->entries_per_page); 
             }
         }
         $pagination = [
@@ -84,7 +84,6 @@ class TransactionHistoryController extends Controller
     //-----------FILTER TRANSACTION HISTORY-----------
     public function filterTransactionHistory(Request $request){
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
             'type' => 'required',
             'value' => 'required',
         ]);
@@ -92,18 +91,43 @@ class TransactionHistoryController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
+
+        $user=Auth::user();
+        if($user->role=='student' || $user->role=='staff' || $user->role=='parent'){
+            $user_id=$user->id;
+        }else{
+            $user_id=null;
+        }
+
         $history='';
+        if($request->type=='User'){
+            $history=TransactionHistory::with('user')->whereHas('user', function($query) use ($request) {
+                $query->where('first_name', 'like', '%' . $request->value . '%')
+                ->orWhere('last_name', 'like', '%' . $request->value . '%')
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
+            })
+            ->when($user_id, function ($query) use ($user_id) {
+                return $query->where('user_id', $user_id);
+            })
+            ->get();
+        }
         if($request->type=='Amount'){
-            $history=TransactionHistory::where('user_id',$request->user_id)->where('amount',$request->value)->get();
+            $history=TransactionHistory::with('user')->where('amount',$request->value)
+            ->when($user_id, function ($query) use ($user_id) {
+                return $query->where('user_id', $user_id);
+            })->get();
         }
         if($request->type=='Type'){
-            $history=TransactionHistory::where('user_id',$request->user_id)->where('type',$request->value)->get();
+            $history=TransactionHistory::with('user')->where('type',$request->value)
+            ->when($user_id, function ($query) use ($user_id) {
+                return $query->where('user_id', $user_id);
+            })->get();
         }
         if($request->type=='Date'){
-            $history=TransactionHistory::where('user_id',$request->user_id)->whereDate('created_at','=', Carbon::parse($request->value)->toDateString())->get();
-        }
-        if($request->type=='Clear'){
-            $history=TransactionHistory::where('user_id',$request->user_id)->get();
+            $history=TransactionHistory::with('user')->whereDate('created_at','=', Carbon::parse($request->value)->toDateString())
+            ->when($user_id, function ($query) use ($user_id) {
+                return $query->where('user_id', $user_id);
+            })->get();
         }
         return response()->json($history, 200);
     }

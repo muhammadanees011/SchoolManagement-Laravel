@@ -26,12 +26,11 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->integer('teachers_count')->nullable()->default(0);
             $table->integer('students_count')->nullable()->default(0);
-            $table->string('stages')->nullable();
-            $table->string('tagline')->nullable();
             $table->string('description')->nullable();
             $table->string('primary_color')->nullable();
             $table->string('secondary_color')->nullable();
             $table->string('logo')->nullable();
+            $table->string('stripe_id')->nullable();
             $table->string('finance_coordinator_email')->nullable();
             $table->enum('status',['active','inactive','pending','blocked','deleted'])->default('active');
             $table->timestamps();

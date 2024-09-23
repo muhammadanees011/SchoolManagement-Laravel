@@ -163,14 +163,24 @@ class StudentsController extends Controller
         $validator = Validator::make($request->all(), [
             'type' => 'required',
             'value' => 'required',
+            'status' => 'required',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        if($request->type=='Student Id'){
+        if($request->type=='MIFare Id'){
             $students=Student::with('user.balance','school')
-            ->where('mifare_id', 'like', '%' . $request->value . '%')->paginate(60);
+            ->where('mifare_id', 'like', '%' . $request->value . '%')
+            ->whereHas('user', function($query) use ($request) {
+                $query->where('status', $request->status);
+            })->paginate(60);
+        }else if($request->type=='Student Id'){
+            $students=Student::with('user.balance','school')
+            ->where('student_id', 'like', '%' . $request->value . '%')
+            ->whereHas('user', function($query) use ($request) {
+                $query->where('status', $request->status);
+            })->paginate(60);
         }else if($request->type=='Name'){
             $students = Student::with(['user' => function ($query) {
                 $query->with('balance');
@@ -182,13 +192,16 @@ class StudentsController extends Controller
                     ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
                 });
             })
-            ->paginate(60);
+            ->whereHas('user', function($query) use ($request) {
+                $query->where('status', $request->status);
+            })->paginate(60);
         }else if($request->type=='Email'){
             $students = Student::with(['user' => function ($query) {
                 $query->with('balance');
             }, 'school'])
             ->whereHas('user', function ($subquery) use ($request) {
-                $subquery->where('email', 'like', '%' . $request->value . '%');
+                $subquery->where('email', 'like', '%' . $request->value . '%')
+                ->where('status',$request->status);
             })->paginate(60);
         }
         return response()->json($students, 200);
@@ -247,75 +260,9 @@ class StudentsController extends Controller
 
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
-
-        $record = new \stdClass();
-        $record->site = 'rcc';
-        $record->firstName = 'test';
-        $record->surname = 'staff';
-        $record->eMail = 'test.staff@stockton.ac.uk';
-        $record->loginID = '3827138';
-        $record->UPN = 'test.staff';
-        $record->miFareID = '2387487';
-
-        $school = School::where('title', 'like', '%' . $record->site . '%')->first();
-        if($school){
-            $school->teachers_count=$school->teachers_count + 1;
-            $school->save();
-        }else{
-            if (!in_array($record->site, $this->newSchools)) {
-                $this->newSchools[] = $record->site;
-            }
-        }
-
-        // ----------STORE NEW STAFF------------
-        $randomPassword = Str::random(10);
-        $studentName = $record->firstName . ' ' . $record->surname;
-        
-            $user = new User();
-            $user->first_name = $record->firstName;
-            $user->last_name = $record->surname;
-            $user->email = $record->eMail;
-            $user->password = bcrypt($randomPassword);
-            $user->role = 'staff';
-            $user->created_at = now();
-            $user->updated_at = now();
-            $user->save();
-            $userId = $user->id;
-
-            $role = \Spatie\Permission\Models\Role::where('name', $user->role)->where('guard_name', 'api')->first();
-            $user->assignRole($role);
-
-            //-----------SAVE STAFF----------------
-            $staff=new Staff();
-            $staff->user_id = $userId;
-            if($school){
-                $staff->school_id = $school->id;
-            }
-            $staff->staff_id = $record->loginID;
-            $staff->upn = $record->UPN;
-            $staff->mifare_id = $record->miFareID;
-            $staff->site = $record->site;
-            $staff->save();
-            //----------CREATE STRIPE CUSTOMER------------
-            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
-            $customer=$stripe->customers->create([
-            'name' => $studentName,
-            'email' => $record->eMail,
-            ]);
-            $user=User::where('id',$userId)->first();
-            $user->stripe_id=$customer->id;
-            $user->created_at=now();
-            $user->updated_at=now();
-            $user->save();
-            //----------CREATE STUDENT WALLET-------------
-            $userWallet=new Wallet();
-            $userWallet->user_id=$userId;
-            $userWallet->ballance= 0;
-            $userWallet->save();
-            $res="New Staff Created.";
-            return response()->json($res);
-        
-        return;
+        // $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
+        $tables = DB::connection('remote_mysql')->table('ePOS_StudentCourse')->get();
+        return response()->json($tables);
 
         //----------------------------------------------------------------------------
         $tables = DB::connection('remote_mysql')->table('ePOS_StudentCourse')->get();
@@ -341,10 +288,16 @@ class StudentsController extends Controller
         foreach ($newRecords as $record) {
            //----------STORE NEW COURSE------------
             try{
-                $course=new StudentCourse();
-                $course->StudentID = $record->StudentID;
-                $course->CourseCode = $record->CourseCode;
+                $course=Course::where('CourseCode',$record->CourseCode)->first();
+                $course->total_enrollments=$course->total_enrollments + 1;
+
+                $studentCourse=new StudentCourse();
+                $studentCourse->StudentID = $record->StudentID;
+                $studentCourse->CourseCode = $record->CourseCode;
+                $studentCourse->CourseDescription = $course->CourseDescription;
+                $studentCourse->save();
                 $course->save();
+
                 } catch (\Exception $e) {
             }
     
@@ -441,6 +394,7 @@ class StudentsController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => ['required',Rule::exists('users', 'id')],
             'role' =>'required',
+            'entries_per_page'=>'required',
         ]);
         if ($validator->fails())
         {
@@ -450,20 +404,20 @@ class StudentsController extends Controller
             $students=Student::with('user.balance','school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
-            })->orderBy('created_at', 'desc')->paginate(60);
+            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }else if($request->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
             $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
-            })->orderBy('created_at', 'desc')->paginate(60);
+            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }else if($request->role=='staff'){
             $user=Staff::where('user_id',$request->user_id)->first();
             $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
-            })->orderBy('created_at', 'desc')->paginate(60);
+            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }else if($request->role=='parent'){
             $studentIds=Parents::where('parent_id',$request->user_id)->pluck('student_id')->toArray();
             $students = Student::where('id', $studentIds)->with('user.balance', 'school')
@@ -478,6 +432,7 @@ class StudentsController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => ['required',Rule::exists('users', 'id')],
             'role' =>'required',
+            'entries_per_page'=>'required',
         ]);
         if ($validator->fails())
         {
@@ -490,20 +445,20 @@ class StudentsController extends Controller
                 $query->where('status', 'deleted');
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(60);
+            ->paginate($request->entries_per_page);
         }else if($request->role=='organization_admin'){
             $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
             $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
             $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'deleted');
-            })->orderBy('created_at', 'desc')->paginate(60);
+            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }else if($request->role=='staff'){
             $user=Staff::where('user_id',$request->user_id)->first();
             $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'deleted');
-            })->orderBy('created_at', 'desc')->paginate(60);
+            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }else if($request->role=='parent'){
             $studentIds=Parents::where('parent_id',$request->user_id)->pluck('student_id')->toArray();
             $students = Student::where('id', $studentIds)->with('user.balance', 'school')
@@ -516,8 +471,22 @@ class StudentsController extends Controller
     //-------------BULK DELETE STUDENTS--------
     public function bulkDeleteStudents(Request $request)
     {
+        // $ids = $request->all();
+        // User::whereIn('id', $ids)->delete();
         $ids = $request->all();
-        User::whereIn('id', $ids)->delete();
+        foreach ($ids as $id) {
+            $user = User::find($id);
+            if ($user) {
+                $student=Student::where('user_id',$id)->first();
+                $school = School::where('id', $student->school_id)->first();
+                
+                if ($school) {
+                    $school->teachers_count = $school->teachers_count - 1;
+                    $school->save();
+                }
+                $user->delete();
+            }
+        }
         return response()->json(['message' => 'Students deleted successfully'], 200);
     }
     public function bulkRestoreStudents(Request $request)

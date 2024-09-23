@@ -61,10 +61,8 @@ class SchoolsController extends Controller
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'tagline'=>'required|string|max:255',
-            'teachers_count'=>'required|numeric',
-            'students_count'=>'required|numeric',
-            'stages'=>'required|string|max:255',
+            'teachers_count'=>'nullable|numeric',
+            'students_count'=>'nullable|numeric',
             'status'=>'required|string|max:255'
         ]);
         if ($validator->fails())
@@ -92,10 +90,14 @@ class SchoolsController extends Controller
             $school->zip = $request->zip;
             $school->stages = $request->stages;
             $school->status = $request->status;
-            $school->teachers_count = $request->teachers_count;
-            $school->students_count = $request->students_count;
+            $school->teachers_count = 0;
+            $school->students_count = 0;
             $school->save();
             DB::commit();
+            $data['school_id']=$school->id;
+            $data['name']=$school->title.' Site';
+            $data['email']=$school->email;
+            $this->createCustomer($data);
             $response = ['Successfully created the School'];
             return response()->json($user, 200);
         } catch (\Exception $exception) {
@@ -125,11 +127,9 @@ class SchoolsController extends Controller
             'country'=>'required|string|max:255',
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
-            'tagline'=>'required|string|max:255',
             'country'=>'required|string|max:255',
-            'teachers_count'=>'required|numeric',
-            'students_count'=>'required|numeric',
-            'stages'=>'required|string|max:255',
+            'teachers_count'=>'nullable|numeric',
+            'students_count'=>'nullable|numeric',
             'status'=>'required|string|max:255'
         ]);
         if ($validator->fails())
@@ -248,5 +248,25 @@ class SchoolsController extends Controller
             $school->save();
         }
         return response()->json(['message' => 'Schools restored successfully'], 200);
+    }
+
+    //-------------CREATE STRIPE CUSTOMER--------
+    public function createCustomer($data)
+    {
+        try{
+            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $customer=$stripe->customers->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            ]);
+            $school=School::where('id',$data['school_id'])->first();
+            $school->stripe_id=$customer->id;
+            $school->save();
+            } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
