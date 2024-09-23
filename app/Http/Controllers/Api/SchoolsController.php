@@ -69,8 +69,8 @@ class SchoolsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        try {
-            DB::beginTransaction();
+        // try {
+        //     DB::beginTransaction();
             if($admin_id==null){
                 $organizationID=$request->organization_id;
             }else{
@@ -82,13 +82,11 @@ class SchoolsController extends Controller
             $school->title = $request->title;
             $school->email = $request->email;
             $school->phone = $request->phone;
-            $school->tagline = $request->tagline;
             $school->address = $request->address;
             $school->country = $request->country;
             $school->website = $request->website;
             $school->city = $request->city;
             $school->zip = $request->zip;
-            $school->stages = $request->stages;
             $school->status = $request->status;
             $school->teachers_count = 0;
             $school->students_count = 0;
@@ -97,17 +95,17 @@ class SchoolsController extends Controller
             $data['school_id']=$school->id;
             $data['name']=$school->title.' Site';
             $data['email']=$school->email;
-            $this->createCustomer($data);
+            $res=$this->createCustomer($data);
             $response = ['Successfully created the School'];
-            return response()->json($user, 200);
-        } catch (\Exception $exception) {
-            DB::rollback();
-            if (('APP_ENV') == 'local') {
-                dd($exception);
-            } else {
-            return response()->json('Something went wrong', 200);
-            }
-        }
+            return response()->json($res, 200);
+        // } catch (\Exception $exception) {
+        //     DB::rollback();
+        //     if (('APP_ENV') == 'local') {
+        //         dd($exception);
+        //     } else {
+        //     return response()->json('Something went wrong', 200);
+        //     }
+        // }
     }
     //-------------EDIT SCHOOL------------
     public function edit($id){
@@ -146,12 +144,10 @@ class SchoolsController extends Controller
             $school->title = $request->title;
             $school->email = $request->email;
             $school->phone = $request->phone;
-            $school->tagline = $request->tagline;
             $school->address = $request->address;
             $school->country = $request->country;
             $school->city = $request->city;
             $school->zip = $request->zip;
-            $school->stages = $request->stages;
             $school->status = $request->status;
             $school->teachers_count = $request->teachers_count;
             $school->students_count = $request->students_count;
