@@ -424,6 +424,13 @@ class StudentsController extends Controller
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
             })->orderBy('created_at', 'desc')->get();
+        }else{
+            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }
         return response()->json($students, 200);
     }
@@ -464,7 +471,14 @@ class StudentsController extends Controller
             $students = Student::where('id', $studentIds)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'deleted');
-            })->orderBy('created_at', 'desc')->get();
+            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
+        }else{
+            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
+            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'deleted');
+            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }
         return response()->json($students, 200);
     }

@@ -19,7 +19,8 @@ return new class extends Migration
             $table->string('gender')->nullable();
             $table->string('email')->unique();
             $table->integer('otp')->nullable();
-            $table->enum('role', ['super_admin', 'organization_admin','staff','student','parent'])->nullable();
+            // $table->enum('role', ['super_admin', 'organization_admin','staff','student','parent'])->nullable();
+            $table->string('role')->nullable();
             $table->enum('status',['active','disabled','inactive','pending','blocked','deleted'])->default('active');
             $table->enum('sub_status',['active','expire','free','none'])->default('none')->nullable();
             $table->timestamp('email_verified_at')->nullable();

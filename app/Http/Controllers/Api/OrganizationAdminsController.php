@@ -22,21 +22,23 @@ class OrganizationAdminsController extends Controller
 {
     //-------------GET ALL ORGANIZATION ADMINS--------------
     public function getAllOrganizationAdmins(){
-        $user=Auth::user();
-        if($user->role=='organization_admin'){
-            $organizationAdmin=OrganizationAdmin::where('user_id',$user->id)->first();
-            if ($organizationAdmin) {
-                $organizationId = $organizationAdmin->organization_id;
-                $admins = User::with('OrganizationAdmin.organization','UserRole.Role')
-                ->whereHas('OrganizationAdmin', function ($query) use ($organizationId) {
-                    $query->where('organization_id', $organizationId);
-                })
-                ->where('role', 'organization_admin')
-                ->get();
-            }
-        }else if($user->role=='super_admin'){
-            $admins=User::with('OrganizationAdmin.organization','UserRole.Role')->where('role','organization_admin')->get();
-        }
+        // $user=Auth::user();
+        // if($user->role=='organization_admin'){
+        //     $organizationAdmin=OrganizationAdmin::where('user_id',$user->id)->first();
+        //     if ($organizationAdmin) {
+        //         $organizationId = $organizationAdmin->organization_id;
+        //         $admins = User::with('OrganizationAdmin.organization','UserRole.Role')
+        //         ->whereHas('OrganizationAdmin', function ($query) use ($organizationId) {
+        //             $query->where('organization_id', $organizationId);
+        //         })
+        //         ->where('role', 'organization_admin')
+        //         ->get();
+        //     }
+        // }else if($user->role=='super_admin'){
+            $admins=User::with('OrganizationAdmin.organization','UserRole.Role')
+            ->whereNotIn('role', ['student', 'staff', 'parent','super_admin'])
+            ->get();
+        // }
         return response()->json($admins, 200);
     }
 
@@ -68,7 +70,8 @@ class OrganizationAdminsController extends Controller
             $user->last_name=$request->last_name;
             $user->email=$request->email;
             $user->password=Hash::make($request['password']);
-            $user->role='organization_admin';
+            // $user->role='organization_admin';
+            $user->role=$request->role;
             $user->status = $request->status;
             $user->save();
             $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
@@ -132,6 +135,7 @@ class OrganizationAdminsController extends Controller
             $user->last_name=$request->last_name;
             $user->email=$request->email;
             $user->status = $request->status;
+            $user->role=$request->role;
             if($request->password){
                 $user->password=Hash::make($request->password);
             }

@@ -226,7 +226,7 @@ class PaymentsController extends Controller
     {
         $user=Auth::user();
          try {
-            if($user->role=='super_admin' || $user->role=='organization_admin'|| $user->role=='staff')
+            if($user->role!=='student' && $user->role!=='staff')
             {
              $wallet=Wallet::where('user_id',$request->user_id)->first();
              $wallet->ballance=$wallet->ballance + $request->amount;
@@ -255,7 +255,7 @@ class PaymentsController extends Controller
     {
         $user=Auth::user();
         try {
-            if($user->role=='super_admin' || $user->role=='organization_admin'|| $user->role=='staff')
+            if($user->role!=='student' && $user->role!=='staff')
             {
                 foreach($request->students as $student){
                     $wallet=Wallet::where('user_id',$student)->first();

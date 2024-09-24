@@ -31,10 +31,12 @@ class RoleSeeder extends Seeder
         'create_shop','delete_shop','view_shop','edit_shop',
         'transaction_history','topup','wallet'];
 
-        $staffPermissions = ['create_site'
-        ,'delete_site','view_site','edit_site','create_student','delete_student','view_student',
-        'edit_student','create_shop','delete_shop','view_shop',
-        'edit_shop','transaction_history','topup','wallet'];
+        // $staffPermissions = ['create_site'
+        // ,'delete_site','view_site','edit_site','create_student','delete_student','view_student',
+        // 'edit_student','create_shop','delete_shop','view_shop',
+        // 'edit_shop','transaction_history','topup','wallet'];
+
+        $staffPermissions = ['transaction_history','topup','wallet'];
 
         foreach ($adminPermissions as $permissionName) {
             $adminRole->givePermissionTo($permissionName);
