@@ -122,7 +122,7 @@ class UserCartController extends Controller
 
         try {
             $user=Auth::user();
-            $cartItems=UserCart::with('ShopItem.payment','Trip')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
+            $cartItems=UserCart::with('ShopItem.payment')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
             if($cartItems->isEmpty()){
                 $response = ['Cart is empty'];
                 return response()->json($response, 422);
@@ -140,7 +140,7 @@ class UserCartController extends Controller
                     }                      
 
                     // $totalAmount += $cartItem->ShopItem->price;
-                    $item=ShopItem::find($cartItem->ShopItem->id);
+                    $item=ShopItem::find($cartItem->shop_item_id);
                     $item->quantity= $item->quantity > 0 ? $item->quantity -1 : 0;
                     if($item->quantity == 0){
                         $item->status= "not_available";
