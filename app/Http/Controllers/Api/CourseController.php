@@ -187,29 +187,29 @@ class CourseController extends Controller
         $validator = Validator::make($request->all(), [
             'type' => 'required',
             'value' => 'required',
+            'course_code' => 'required',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         if($request->type=='Student Id'){
-            $courses=StudentCourse::where('StudentID', 'like', '%' . $request->value . '%')->get();
 
-        }else if($request->type=='Name'){
+            $studentIDs=StudentCourse::where('CourseCode',$request->course_code)
+            ->where('StudentID',$request->value)
+            ->pluck('StudentID')
+            ->toArray();
+            
+            $students = Student::whereIn('student_id', $studentIDs)
+            ->with('user.balance', 'school')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })
+            ->orderBy('created_at', 'desc')->get();
+            $res=StudentCourseResource::collection($students);
+            return response()->json($res, 200);
 
-            $courses = StudentCourse::whereHas('student.user', function ($query) use ($request) {
-                $query->where('first_name', 'like', '%' . $request->value . '%')
-                ->orWhere('last_name', 'like', '%' . $request->value . '%')
-                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']); 
-            })->get();
-
-        }else if($request->type=='Email'){
-
-            $courses = StudentCourse::whereHas('student.user', function ($query) use ($request) {
-                $query->where('email', 'like', '%' . $request->value . '%'); 
-            })->get();
         }
-        return response()->json($courses, 200);
     }
 
     public function filterCourses(Request $request){

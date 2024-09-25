@@ -117,12 +117,7 @@ class StaffController extends Controller
             $response['user']=$user;
             return response()->json($response, 200);
         } catch (\Exception $exception) {
-            DB::rollback();
-            if (('APP_ENV') == 'local') {
-                dd($exception);
-            } else {
             return response()->json($exception, 500);
-            }
         }
     }
 
