@@ -142,6 +142,7 @@ class UserCartController extends Controller
                     // $totalAmount += $cartItem->ShopItem->price;
                     $item=ShopItem::find($cartItem->shop_item_id);
                     $item->quantity= $item->quantity > 0 ? $item->quantity -1 : 0;
+                    $item->quantity= $item->quantity_sold >= 0 ? $item->quantity_sold +1 : 1;
                     if($item->quantity == 0){
                         $item->status= "not_available";
                     }
