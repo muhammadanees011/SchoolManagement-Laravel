@@ -49,7 +49,7 @@ class OrganizationShopsController extends Controller
     //----------GET SHOP ITEMS---------
     public function getShopItems(Request $request){
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='staff' && $user->role!=='student'){
             $shopItems = OrganizationShop::with(['shopItems' => function($query) {
                 $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate($request->entries_per_page);
@@ -85,13 +85,14 @@ class OrganizationShopsController extends Controller
                 ->whereJsonContains('limit_colleges', [['name' => $schoolName]])
                 ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate(20);
-        }else if($user->role=='organization_admin'){
-            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
-                $query->where('status', '!=', 'deleted')
-                ->orderBy('created_at', 'desc');
-            }, 'shopItems.payment'])->paginate($request->entries_per_page);
         }
+        // else if($user->role=='organization_admin'){
+        //     $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+        //     $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
+        //         $query->where('status', '!=', 'deleted')
+        //         ->orderBy('created_at', 'desc');
+        //     }, 'shopItems.payment'])->paginate($request->entries_per_page);
+        // }
 
         $pagination = [
             'current_page' => $shopItems->currentPage(),
@@ -129,7 +130,7 @@ class OrganizationShopsController extends Controller
     public function getArchivedItems(Request $request)
     {
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='staff' && $user->role!=='student'){
             $shopItems = OrganizationShop::with(['shopItems' => function($query) {
                 $query->where('status', 'deleted');
             }, 'shopItems.attribute'])->paginate($request->entries_per_page);
@@ -139,12 +140,13 @@ class OrganizationShopsController extends Controller
             $shopItems=OrganizationShop::where('organization_id',$school->organization_id)->with(['shopItems' => function($query) {
                 $query->where('status', 'deleted');
             }, 'shopItems.attribute'])->paginate($request->entries_per_page);
-        }else if($user->role=='organization_admin'){
-            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
-                $query->where('status', 'deleted');
-            }, 'shopItems.attribute'])->paginate($request->entries_per_page);
         }
+        // else if($user->role=='organization_admin'){
+        //     $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+        //     $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
+        //         $query->where('status', 'deleted');
+        //     }, 'shopItems.attribute'])->paginate($request->entries_per_page);
+        // }
 
         $pagination = [
         'current_page' => $shopItems->currentPage(),
