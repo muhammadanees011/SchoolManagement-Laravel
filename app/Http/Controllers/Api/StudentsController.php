@@ -34,13 +34,15 @@ class StudentsController extends Controller
     //-------------GET TOTAL STUDENTS--------------
     public function getTotalStudents(){
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='staff' && $user->role!=='student'){
             $student = Student::count();
-        }else if($user->role=='organization_admin'){
-            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $student = Student::whereIn('school_id',$schoolIds)->count();
-        }else if($user->role=='staff'){
+        }
+        // else if($user->role=='organization_admin'){
+        //     $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+        //     $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+        //     $student = Student::whereIn('school_id',$schoolIds)->count();
+        // }
+        else if($user->role=='staff'){
             $staff=Staff::with('school')->where('user_id',$user->id)->first();
             $schoolIds=School::where('organization_id',$staff->school->organization_id)->pluck('id')->toArray();
             $student = Student::whereIn('school_id',$schoolIds)->count();

@@ -23,12 +23,14 @@ class SchoolsController extends Controller
     //-------------GET TOTAL SCHOOLS------------
     public function totalSchools(){
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='staff' && $user->role!=='student'){
             $schools=School::count();
-        }else if($user->role=='organization_admin'){
-            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $schools=School::where('organization_id',$admin->organization_id)->count();
-        }else if($user->role=='staff'){
+        }
+        // else if($user->role=='organization_admin'){
+        //     $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+        //     $schools=School::where('organization_id',$admin->organization_id)->count();
+        // }
+        else if($user->role=='staff'){
             $staff=Staff::with('school')->where('user_id',$user->id)->first();
             $schools=School::where('organization_id',$staff->school->organization_id)->count();
         }else if($user->role=='student'){

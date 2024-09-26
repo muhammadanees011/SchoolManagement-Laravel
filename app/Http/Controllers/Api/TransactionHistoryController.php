@@ -20,14 +20,16 @@ class TransactionHistoryController extends Controller
     //-------------GET TOTAL Transactions--------------
     public function getTotalTransactions(){
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='staff' && $user->role!=='student'){
             $transactions = TransactionHistory::sum('amount');
-        }else if($user->role=='organization_admin'){
-            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $studentIds = Student::where('school_id',$schoolIds)->pluck('user_id')->toArray();
-            $transactions = TransactionHistory::whereIn('user_id',$studentIds)->sum('amount');
-        }else if($user->role=='staff'){
+        }
+        // else if($user->role=='organization_admin'){
+        //     $admin=OrganizationAdmin::where('user_id',$user->id)->first();
+        //     $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
+        //     $studentIds = Student::where('school_id',$schoolIds)->pluck('user_id')->toArray();
+        //     $transactions = TransactionHistory::whereIn('user_id',$studentIds)->sum('amount');
+        // }
+        else if($user->role=='staff'){
             $staff=Staff::with('school')->where('user_id',$user->id)->first();
             $schoolIds=School::where('organization_id',$staff->school->organization_id)->pluck('id')->toArray();
             $studentIds = Student::where('school_id',$schoolIds)->pluck('user_id')->toArray();
