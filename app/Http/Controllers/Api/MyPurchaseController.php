@@ -26,19 +26,13 @@ class MyPurchaseController extends Controller
     public function getMyPurchases(Request $request)
     {  
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='student' && $user->role!=='staff'){
             $myPurchases = MyPurchasesResource::collection(
                 MyPurchase::with('shopItems.payment')
                 ->orderBy('created_at', 'desc')
                 ->paginate($request->entries_per_page)
             );
 
-        }else if($user->role=='organization_admin'){
-            $myPurchases = MyPurchasesResource::collection(
-                MyPurchase::with('shopItems.payment')
-                ->orderBy('created_at', 'desc')
-                ->paginate($request->entries_per_page)
-            );
         }else if($user->role=='student' || $user->role=='staff'){
             $myPurchases = MyPurchasesResource::collection(
                 MyPurchase::with('shopItems.payment')->where('user_id',$user->id)
