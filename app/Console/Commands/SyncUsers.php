@@ -48,12 +48,12 @@ class SyncUsers extends Command
         $this->syncStaff();
         $this->updateStudents();
         $this->updateStaff();
-        $this->archiveUsers();
+        // $this->archiveUsers();
         $this->SyncCourses();
         $this->sync_student_course();
         $this->sendEmailToETC();
-        $this->archiveCourses();
-        $this->archiveStudentCourse();
+        // $this->archiveCourses();
+        // $this->archiveStudentCourse();
     }
 
     private function syncStudents(){
@@ -451,7 +451,7 @@ class SyncUsers extends Command
     {
         $studentTables = DB::connection('remote_mysql')->table('ebStudent')->get();
         $staffTables = DB::connection('remote_mysql')->table('ebStaff')->get();
-        $users = DB::table('users')->get();
+        $users = DB::table('users')->whereIn('role', ['student', 'staff'])->get();
         $studentEmails = $studentTables->pluck('eMail')->toArray();
         $staffEmails = $staffTables->pluck('eMail')->toArray();
         $tableEmails = array_merge($studentEmails, $staffEmails);        
