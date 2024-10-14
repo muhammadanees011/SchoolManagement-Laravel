@@ -21,6 +21,11 @@ use Stripe\Stripe as StripeGateway;
 use Stripe\PaymentIntent;
 use Stripe\Exception\CardException;
 use Illuminate\Support\Facades\Validator;
+use PDF;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Mail\Mailable;
+
+ 
 
 class UserCartController extends Controller
 {
@@ -119,7 +124,6 @@ class UserCartController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-
         try {
             $user=Auth::user();
             $cartItems=UserCart::with('ShopItem.payment')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
@@ -128,15 +132,19 @@ class UserCartController extends Controller
                 return response()->json($response, 422);
             }
             $totalAmount=0;
+            $items=[];
 
             foreach ($cartItems as $cartItem) {
                 if ($cartItem->ShopItem) {
                     if($cartItem->ShopItem->payment_plan=='installments'){
                       $totalAmount += $cartItem->ShopItem->payment->amount_per_installment;
+                      $price = $cartItem->ShopItem->payment->amount_per_installment;
                     }else if($cartItem->ShopItem->payment_plan=='installments_and_deposit'){
                         $totalAmount += $cartItem->ShopItem->payment->initial_deposit_installments;
+                        $price = $cartItem->ShopItem->payment->initial_deposit_installments;
                     }else if($cartItem->ShopItem->payment_plan=='full_payment'){
                         $totalAmount += $cartItem->ShopItem->price;
+                        $price = $cartItem->ShopItem->price;
                     }                      
 
                     // $totalAmount += $cartItem->ShopItem->price;
@@ -147,6 +155,13 @@ class UserCartController extends Controller
                         $item->status= "not_available";
                     }
                     $item->save();
+
+                    $items[] = [
+                        'quantity' => 1,
+                        'description' => $cartItem->ShopItem->name,
+                        'price' =>  number_format($price, 2, '.', ''), 
+                    ];
+            
                 }
             }
 
@@ -163,7 +178,8 @@ class UserCartController extends Controller
                     }
                     // $ItemAmount = $cartItem->ShopItem->price;
                     if($request->type=='card'){
-                        $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
+                        $res=$this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
+                        $latest_charge=$res->latest_charge;
                     }else if($request->type=='wallet'){
                         $user_wallet=Wallet::where('user_id',$user->id)->first();
                         if($user_wallet->ballance >  $ItemAmount){
@@ -195,13 +211,19 @@ class UserCartController extends Controller
                     //         $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
                     //     }
                     // }
-                    $purchase=$this->saveMyPurchases($cartItem->ShopItem,$ItemAmount,$request->payment_method);
+                    $purchase=$this->saveMyPurchases($cartItem->ShopItem,$ItemAmount,$request->payment_method,$latest_charge);
                     $this->saveMyInstallments($cartItem->ShopItem,$purchase->id);
                 }
             }
-
             //--------REMOVE ITEMS FROM CART-----------
             $deletedRows = UserCart::where('user_id', $user->id)->delete();
+            $customer=Auth::user();
+            $data['items']=$items;
+            $data['customer_name']=$customer->first_name.' '.$customer->last_name;
+            $data['customer_mifare']=null;
+            $data['total']= number_format($totalAmount, 2, '.', '');
+            $data['invoice_id'] = mt_rand(100000000, 999999999);
+            $this->sendReceipt($data);
             $status=200;
             $response = ['Checkout Successful'];
             return response()->json($response, $status);
@@ -213,6 +235,16 @@ class UserCartController extends Controller
                 return response()->json($exception, 500);
             }
         }
+    }
+
+    public function sendReceipt($data){
+        $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
+        Mail::send('emails.message', $data, function($message) use ($data, $pdf) {
+            $message->from('studentpay@xepos.co.uk');
+            $message->to('itsanees011@gmail.com');
+            $message->subject('Your Receipt From Education Training Collective (ETC)');
+            $message->attachData($pdf->output(), 'Receipt.pdf');
+        });
     }
 
     //--------------ADD SEBSEQUENT INSTALLMENTS------------
@@ -247,7 +279,7 @@ class UserCartController extends Controller
     }
 
     //--------------ADD TO MY PURCHASES------------
-    public function saveMyPurchases($shopItem,$amountPaid,$payment_method)
+    public function saveMyPurchases($shopItem,$amountPaid,$payment_method, $latest_charge)
     {
         $user=Auth::user();
         $myPurchase = new MyPurchase();
@@ -256,6 +288,7 @@ class UserCartController extends Controller
         $myPurchase->total_price = $shopItem->price;
         $myPurchase->amount_paid = $amountPaid;
         $myPurchase->payment_card = $payment_method;
+        $myPurchase->latest_charge = $latest_charge;
         if($shopItem->price > $amountPaid){
             $myPurchase->payment_status = "partially_paid";
         }else if($shopItem->price == $amountPaid){
@@ -291,6 +324,8 @@ class UserCartController extends Controller
             $history->type=$type;
             $history->save();
 
+            return $paymentIntent;
+
         } catch (CardException $e) {
             // Handle card errors, such as insufficient funds
             return response()->json(['error' => $e->getMessage()], 400);
@@ -310,13 +345,8 @@ class UserCartController extends Controller
     public function getMyInstallments(Request $request)
     {
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
             $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate($request->entries_per_page);  
-        }else if($user->role=='organization_admin'){
-            $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate($request->entries_per_page);  
-            // $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            // $shop=OrganizationShop::where('organization_id',$admin->organization_id)->first();
-            // $myInstallments=MyInstallments::where('user_id',$user->id)->orderBy('created_at','desc')->get();
         }else{
             $myInstallments=MyInstallments::where('payment_status','pending')
             ->where('user_id',$user->id)->orderBy('created_at','desc')->paginate($request->entries_per_page);

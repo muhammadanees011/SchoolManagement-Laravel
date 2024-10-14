@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\MyPurchasesResource;
 use App\Http\Resources\RefundResource;
 use Stripe\Stripe as StripeGateway;
+use Stripe\Refund as StripeRefund;
 use Stripe\PaymentIntent;
 use App\Models\UserCard;
 use App\Models\School;
@@ -118,79 +119,70 @@ class MyPurchaseController extends Controller
     }
     
     //---------------REQUEST FOR REFUNDS-------------
-    public function refundRequest(Request $request)
-    {
-        $myPurchases=MyPurchase::find($request->purchase_id);
-        if($myPurchases->refund_status=='refunded' || $myPurchases->refund_status=='refund_requested'){
-            $response['message'] ='already refunded/requested';
-            return response()->json($response, 200);
-        }else{
-        $user=Auth::user();
-        $refund=new Refund();
-        $refund->user_id=$user->id;
-        $refund->purchase_id=$request->purchase_id;
-        $refund->refund_status='refund_requested';
-        $refund->save();
-        $myPurchases=MyPurchase::find($request->purchase_id);
-        $myPurchases->refund_status='refund_requested';
-        $myPurchases->save();
-        $response['message'] ='refund requested successfully';
-        return response()->json($response, 200);
-        }
-    }
-
-    //---------------REQUEST FOR REFUNDS-------------
     public function refundStatus(Request $request)
     {
-        $refund=Refund::with('purchase')->find($request->refund_id);
-
-        if($refund->refund_status=='refund_requested' && $request->refund_status=='refunded'){
-
-        $purchase=MyPurchase::find($refund->purchase->id);
+        $purchase=MyPurchase::find($request->purchase_id);
         $purchase->refund_status='refunded';
 
-        $refund_recipient_id=$refund->purchase->user_id;
+        $refund_recipient_id=$purchase->user_id;
         if($purchase->payment_card==null){
         $refund_recipient_wallet=Wallet::where('user_id',$refund_recipient_id)->first();
-        $refund_recipient_wallet->ballance = $refund_recipient_wallet->ballance + $refund->purchase->amount_paid;
+        $refund_recipient_wallet->ballance = $refund_recipient_wallet->ballance + $purchase->amount_paid;
         $refund_recipient_wallet->save();
         }else if($purchase->payment_card!=null){
             $user_id=$purchase->user_id;
-            $amount=$refund->purchase->amount_paid;
+            $amount=$purchase->amount_paid;
             $payment_card=$purchase->payment_card;
-            $res=$this->initiatePayment($user_id,$amount,$payment_card);
+            $res=$this->makeRefund($purchase->latest_charge,$amount);
             if($res==false){
-                return response()->json(['error' => ['Something went wrong']], 500);
+                $response = ['Something Went Wrong!'];
+                return response()->json($response, 500);
             }
         }
+
+        $user=Auth::user();
+        $refund=new Refund();
+        $refund->user_id=$purchase->user_id;
+        $refund->purchase_id=$purchase->id;
+        $refund->refund_status='refunded';
+        $refund->save();
         
         $purchase->save();
 
         //-----------Refund Transaction History-----------
         $history=new TransactionHistory();
         $history->user_id=$refund_recipient_id;
-        $history->amount=$refund->purchase->amount_paid;
+        $history->amount=$purchase->amount_paid;
         $history->type='school_shop_refund';
         $history->save();
         $refund->refund_status='refunded';
         $refund->save();
         $response = ['Refund Successfull'];
-        }else if($refund->refund_status=='refund_requested' && $request->refund_status=='refund_rejected'){
-            $purchase=MyPurchase::find($refund->purchase->id);
-            $purchase->refund_status='not_refunded';
-            $purchase->save();
-
-            $refund->refund_status='refund_rejected';
-            $refund->save();
-            $response = ['Refund Request Declined'];
-        }
-        else{
-            $response = ['Something went wrong'];
-        }
         return response()->json($response, 200);
     }
 
     
+    public function makeRefund($charge_id,$amount){
+        StripeGateway::setApiKey(env('STRIPE_SECRET'));
+        try {
+            // Create a refund for a specific charge
+            $refund = StripeRefund::create([
+                'charge' => $charge_id, // ID of the charge to refund
+                'amount' => $amount * 100, // Optional: refund specific amount in cents
+            ]);
+            return response()->json([
+                'message' => 'Refund successful',
+                'refund' => $refund,
+            ],200);
+        } catch (\Exception $e) {
+            return false;
+            return response()->json([
+                'message' => 'Refund failed',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
     //--------------MAKET A PAYMENT-------------
     public function initiatePayment($user_id,$amount,$recipientStripeAccountId)
     {

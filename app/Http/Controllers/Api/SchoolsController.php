@@ -128,8 +128,6 @@ class SchoolsController extends Controller
             'city'=>'required|string|max:255',
             'zip'=>'required|string|max:255',
             'country'=>'required|string|max:255',
-            'teachers_count'=>'nullable|numeric',
-            'students_count'=>'nullable|numeric',
             'status'=>'required|string|max:255'
         ]);
         if ($validator->fails())
@@ -146,13 +144,12 @@ class SchoolsController extends Controller
             $school->title = $request->title;
             $school->email = $request->email;
             $school->phone = $request->phone;
+            $school->website = $request->website;
             $school->address = $request->address;
             $school->country = $request->country;
             $school->city = $request->city;
             $school->zip = $request->zip;
             $school->status = $request->status;
-            $school->teachers_count = $request->teachers_count;
-            $school->students_count = $request->students_count;
             $school->save();
             DB::commit();
             $response = ['Successfully Updated the School'];

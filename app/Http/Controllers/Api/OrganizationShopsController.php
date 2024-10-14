@@ -18,7 +18,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;  
+use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Mail\Mailable; 
 
 class OrganizationShopsController extends Controller
 {
@@ -37,11 +39,8 @@ class OrganizationShopsController extends Controller
     //----------GET SCHOOL SHOP---------
     public function getAllSchoolShop(){
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
             $shops=OrganizationShop::get();
-        }else if($user->role=='organization_admin'){
-            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $shops=OrganizationShop::where('organization_id',$admin->organization_id)->get();
         }
         return response()->json($shops, 200);
     }
@@ -49,7 +48,7 @@ class OrganizationShopsController extends Controller
     //----------GET SHOP ITEMS---------
     public function getShopItems(Request $request){
         $user=Auth::user();
-        if($user->role!=='staff' && $user->role!=='student'){
+        if($user->role!=='staff' && $user->role!=='student' && $user->role!=='parent'){
             $shopItems = OrganizationShop::with(['shopItems' => function($query) {
                 $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate($request->entries_per_page);
@@ -86,13 +85,6 @@ class OrganizationShopsController extends Controller
                 ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate(20);
         }
-        // else if($user->role=='organization_admin'){
-        //     $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-        //     $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
-        //         $query->where('status', '!=', 'deleted')
-        //         ->orderBy('created_at', 'desc');
-        //     }, 'shopItems.payment'])->paginate($request->entries_per_page);
-        // }
 
         $pagination = [
             'current_page' => $shopItems->currentPage(),
@@ -130,7 +122,7 @@ class OrganizationShopsController extends Controller
     public function getArchivedItems(Request $request)
     {
         $user=Auth::user();
-        if($user->role!=='staff' && $user->role!=='student'){
+        if($user->role!=='staff' && $user->role!=='student' && $user->role!=='parent'){
             $shopItems = OrganizationShop::with(['shopItems' => function($query) {
                 $query->where('status', 'deleted');
             }, 'shopItems.attribute'])->paginate($request->entries_per_page);
@@ -141,12 +133,6 @@ class OrganizationShopsController extends Controller
                 $query->where('status', 'deleted');
             }, 'shopItems.attribute'])->paginate($request->entries_per_page);
         }
-        // else if($user->role=='organization_admin'){
-        //     $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-        //     $shopItems=OrganizationShop::where('organization_id',$admin->organization_id)->with(['shopItems' => function($query) {
-        //         $query->where('status', 'deleted');
-        //     }, 'shopItems.attribute'])->paginate($request->entries_per_page);
-        // }
 
         $pagination = [
         'current_page' => $shopItems->currentPage(),
@@ -162,9 +148,7 @@ class OrganizationShopsController extends Controller
     //-----------ADD ITEM---------------
     public function addItem(Request $request){
         $validator = Validator::make($request->all(), [
-            // 'attribute_id' =>['nullable',Rule::exists('attributes', 'id')],
             'shop_id' =>['nullable',Rule::exists('organization_shops', 'id')],
-            // 'attributes' => ['nullable', 'array', Rule::exists('attributes', 'id')],
             'name' => 'required|string|max:255',
             'product_type' => 'required',
             'image' => 'nullable',
@@ -173,8 +157,6 @@ class OrganizationShopsController extends Controller
             'quantity'=>'required|numeric',
             'valid_from' => 'required',
             'valid_to' => 'required',
-            'expiration_date' => 'nullable',
-            'quantity_sold' => 'nullable',
             'payment_plan' => 'required',
             'limitColleges'=>'nullable',
             'limitCourses'=>'nullable',
@@ -185,31 +167,22 @@ class OrganizationShopsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        try {
-            DB::beginTransaction();
-            $user=Auth::user();
-            if($user->role=="super_admin" || $user->role=="organization_admin"){
-                $shop_id=$request->shop_id;
-            }else if($user->role=="staff"){
-                $staff=Staff::where('user_id',$user->id)->first();
-                $school=School::where('id',$staff->school_id)->first();                
-                $shop=OrganizationShop::where('organization_id',$school->organization_id)->first();
-                $shop_id=$shop->id;
-            }
+        // try {
+        //     DB::beginTransaction();
+            $user=Auth::user();               
+            $shop=OrganizationShop::first();
+            $shop_id=$shop->id;
             $item = new ShopItem();
             $item->shop_id = $shop_id;
-            // $item->attribute_id = $request->attribute_id;
-            // $item->attributes = $request["attributes"];
             $item->name = $request->name;
             $item->product_type = $request->product_type;
             $item->detail = $request->detail;
             $item->price = $request->price;
             $item->quantity = $request->quantity;
+            $item->quantity_sold = 0;
             $item->status = $request->quantity > 0 ? 'available' : 'not_available';
             $item->valid_from = $request->valid_from;
             $item->valid_to = $request->valid_to;
-            $item->expiration_date = $request->expiration_date;
-            $item->quantity_sold = $request->quantity_sold;
             $item->payment_plan = $request->payment_plan;
             $item->limit_colleges = json_decode($request->input('limitColleges'), true);
             $item->limit_courses = json_decode($request->input('limitCourses'), true);
@@ -232,28 +205,43 @@ class OrganizationShopsController extends Controller
                 $paymentPlan->other_installments_deadline_installments = $installmentsAndDeposit['other_installments_due_date'];
                 $paymentPlan->save();
             }
-            DB::commit();
+            // DB::commit();
+            if($shop->product_owner_name!=null && $shop->product_owner_email!=null){
+                $data['owner_name']=$shop->product_owner_name;
+                $data['owner_email']=$shop->product_owner_email;
+                $data['product_name']= $item->name;
+                $data['product_price']= number_format($item->price, 2, '.', '');
+                $data['product_quantity']=$item->quantity;
+                Mail::send('emails.ProductCreated', ['data' => $data], function($message) use ($data) {
+                    $message->from('studentpay@xepos.co.uk');
+                    $message->to($data['owner_email']);
+                    $message->subject('New Product Created – Notification');
+                });
+            }
             $response = ['Successfully Created Item'];
             return response()->json($response, 200);
-        } catch (\Exception $exception) {
-            DB::rollback();
-            if (('APP_ENV') == 'local') {
-                return response()->json($exception, 500);
-            } else {
-                return response()->json($exception, 500);
-            }
-        }
+        // } catch (\Exception $exception) {
+        //     DB::rollback();
+        //     if (('APP_ENV') == 'local') {
+        //         return response()->json($exception, 500);
+        //     } else {
+        //         return response()->json($exception, 500);
+        //     }
+        // }
     }
+    
     //----------FIND SHOP ITEM---------
     public function findShopItem($id){
         $shopItem=ShopItem::find($id);
         return response()->json($shopItem, 200);
     }
+
     //----------Edit SHOP ITEM---------
     public function editShopItem($id){
         $shopItem=ShopItem::with('payment')->find($id);
         return response()->json($shopItem, 200);
     }
+
     //----------UPDATE SHOP ITEM---------
     public function updateShopItem(Request $request,$id){
         $validator = Validator::make($request->all(), [
@@ -266,8 +254,6 @@ class OrganizationShopsController extends Controller
             'quantity'=>'required|numeric',
             'valid_from' => 'required',
             'valid_to' => 'required',
-            'expiration_date' => 'nullable',
-            'quantity_sold' => 'nullable',
             'payment_plan' => 'required',
             'limitColleges'=>'nullable',
             'limitCourses'=>'nullable',
@@ -280,15 +266,9 @@ class OrganizationShopsController extends Controller
         }
         try {
             DB::beginTransaction();
-            $user=Auth::user();
-            if($user->role=="super_admin" || $user->role=="organization_admin"){
-                $shop_id=$request->shop_id;
-            }else if($user->role=="staff"){
-                $staff=Staff::where('user_id',$user->id)->first();
-                $school=School::where('id',$staff->school_id)->first();                
-                $shop=OrganizationShop::where('organization_id',$school->organization_id)->first();
-                $shop_id=$shop->id;
-            }
+            $user=Auth::user();                
+            $shop=OrganizationShop::first();
+            $shop_id=$shop->id;
             $item =ShopItem::find($id);
             $item->shop_id=$shop_id;
             $item->name=$request->name;
@@ -299,8 +279,6 @@ class OrganizationShopsController extends Controller
             $item->status = $request->quantity > 0 ? 'available' : 'not_available';
             $item->valid_from=$request->valid_from;
             $item->valid_to=$request->valid_to;
-            $item->expiration_date = $request->expiration_date;
-            $item->quantity_sold = $request->quantity_sold;
             $item->payment_plan=$request->payment_plan;
             $item->limit_colleges=json_decode($request->input('limitColleges'), true);
             $item->limit_courses=json_decode($request->input('limitCourses'), true);
@@ -343,10 +321,10 @@ class OrganizationShopsController extends Controller
             }
         }
     }
+
     //----------Delete SHOP ITEM---------
     public function deleteShopItem($id){
         $shopItem=ShopItem::find($id);
-        // $shopItem->delete();
         $shopItem->status='deleted';
         $shopItem->save();
         $response = ['Successfully Deleted Item'];
@@ -370,6 +348,24 @@ class OrganizationShopsController extends Controller
             $item->save();
         }
         $response = ['Successfully Restored Items'];
+        return response()->json($response, 200);
+    }
+
+
+    public function productsOwner(Request $request){
+        $validator = Validator::make($request->all(), [
+            'product_owner_name' => 'required|string|max:255',
+            'product_owner_email' => 'required|string|max:255',
+        ]);
+        if ($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()->all()], 422);
+        }
+        $shop=OrganizationShop::first();
+        $shop->product_owner_name=$request->product_owner_name;
+        $shop->product_owner_email=$request->product_owner_email;
+        $shop->save();
+        $response = ['Successfully Saved'];
         return response()->json($response, 200);
     }
 }

@@ -37,11 +37,6 @@ class StudentsController extends Controller
         if($user->role!=='staff' && $user->role!=='student'){
             $student = Student::count();
         }
-        // else if($user->role=='organization_admin'){
-        //     $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-        //     $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-        //     $student = Student::whereIn('school_id',$schoolIds)->count();
-        // }
         else if($user->role=='staff'){
             $staff=Staff::with('school')->where('user_id',$user->id)->first();
             $schoolIds=School::where('organization_id',$staff->school->organization_id)->pluck('id')->toArray();
@@ -402,37 +397,25 @@ class StudentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        if($request->role=='super_admin'){
+        $user=Auth::user();
+
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
             $students=Student::with('user.balance','school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
             })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
-        }else if($request->role=='organization_admin'){
-            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
-            ->whereHas('user', function($query) {
-                $query->where('status', 'active');
-            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
-        }else if($request->role=='staff'){
-            $user=Staff::where('user_id',$request->user_id)->first();
+        }else if($user->role=='staff'){
+            $user=Staff::where('user_id',$user->id)->first();
             $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
             })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
-        }else if($request->role=='parent'){
-            $studentIds=Parents::where('parent_id',$request->user_id)->pluck('student_id')->toArray();
+        }else if($user->role=='parent'){
+            $studentIds=Parents::where('parent_id',$user->id)->pluck('student_id')->toArray();
             $students = Student::where('id', $studentIds)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
             })->orderBy('created_at', 'desc')->get();
-        }else{
-            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
-            ->whereHas('user', function($query) {
-                $query->where('status', 'active');
-            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }
         return response()->json($students, 200);
     }
@@ -447,37 +430,23 @@ class StudentsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        if($request->role=='super_admin'){
-            // $students=Student::with('user.balance','school')->orderBy('created_at', 'desc')->paginate(60);
+        $user=Auth::user();
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
             $students = Student::with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'deleted');
             })
             ->orderBy('created_at', 'desc')
             ->paginate($request->entries_per_page);
-        }else if($request->role=='organization_admin'){
-            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
-            ->whereHas('user', function($query) {
-                $query->where('status', 'deleted');
-            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }else if($request->role=='staff'){
-            $user=Staff::where('user_id',$request->user_id)->first();
+            $user=Staff::where('user_id',$user->id)->first();
             $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'deleted');
             })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }else if($request->role=='parent'){
-            $studentIds=Parents::where('parent_id',$request->user_id)->pluck('student_id')->toArray();
+            $studentIds=Parents::where('parent_id',$user->id)->pluck('student_id')->toArray();
             $students = Student::where('id', $studentIds)->with('user.balance', 'school')
-            ->whereHas('user', function($query) {
-                $query->where('status', 'deleted');
-            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
-        }else{
-            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $students = Student::whereIn('school_id', $schoolIds)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'deleted');
             })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);

@@ -32,7 +32,7 @@ return new class extends Migration
             $table->json('limit_colleges')->nullable();
             $table->json('limit_courses')->nullable();
             $table->json('visibility_options')->nullable();
-            $table->enum('product_type',['Trip ','Resources','Uniforms','Print Credit','Exams','Bus Passes','Additional'])->nullable();
+            $table->enum('product_type',['Trip ','Resources','Uniforms','Print Credit','Exams','Bus Passes','Additional','Other'])->nullable();
             $table->enum('payment_plan',['full_payment','installments','installments_and_deposit'])->default('full_payment');
             $table->enum('status',['available','not_available','deleted'])->default('available');
             $table->timestamps();

@@ -181,6 +181,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/bulkDeleteItems',[OrganizationShopsController::class,'bulkDeleteItems']);
     Route::post('/bulkRestoreItems',[OrganizationShopsController::class,'bulkRestoreItems']);
     Route::post('/filterShopItems',[OrganizationShopsController::class,'filterShopItems']);
+    Route::post('/productsOwner',[OrganizationShopsController::class,'productsOwner']);
     //------------Menus-------------------
     Route::post('/addMenu',[MenusController::class,'addMenu']);
     Route::get('/editMenu/{id}',[MenusController::class,'editMenu']);

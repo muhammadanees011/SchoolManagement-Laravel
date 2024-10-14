@@ -20,6 +20,7 @@ return new class extends Migration
             $table->double('total_price')->nullable();
             $table->double('amount_paid')->nullable();
             $table->string('payment_card')->nullable();
+            $table->string('latest_charge')->nullable();
             $table->enum('payment_status',['fully_paid','partially_paid'])->nullable();
             $table->enum('refund_status',['refunded','not_refunded','refund_requested'])->nullable();
             $table->timestamps();

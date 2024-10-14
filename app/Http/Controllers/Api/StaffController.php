@@ -25,23 +25,16 @@ class StaffController extends Controller
 {
     //-------------GET ALL STAFF-------------
     public function getAllStaff(Request $request){
-        if($request->user_id==null){
-        $staff = Staff::with('user', 'school')
-        ->whereHas('user', function($query) {
-            $query->where('status', 'active');
+        $user=Auth::user();
+
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
+            $staff = Staff::with('user', 'school')
+        ->whereHas('user', function($query) use ($user){
+            $query->where('user_id','!=', $user->id)
+            ->where('status', 'active');
         })
         ->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         $staff=StaffResource::collection($staff);
-        }else{
-            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $staff= StaffResource::collection(
-                Staff::with('user', 'school')->whereIn('school_id', $schoolIds)
-                ->whereHas('user', function($query) {
-                    $query->where('status', 'active');
-                })
-                ->orderBy('created_at', 'desc')->paginate($request->entries_per_page)
-            );
         }
         $pagination = [
         'current_page' => $staff->currentPage(),
@@ -78,7 +71,7 @@ class StaffController extends Controller
             $user->email=$request->email;
             $randomPassword = Str::random(10);
             $user->password=Hash::make($randomPassword);
-            $user->role='staff';
+            $user->role= $request->role;
             $user->status = $request->status;
             $user->save();
 
@@ -167,7 +160,7 @@ class StaffController extends Controller
                 $staff->user->update($updateData);
                 $staff->save();
 
-                $user=User::where('id',$staff->user_id)->update(['status'=>$request->status]);
+                $user=User::where('id',$staff->user_id)->update(['status'=>$request->status,'role' => $request->role]);
 
                 //--------Save Transaction History-----------
                 if($request->add_amount){
@@ -177,9 +170,10 @@ class StaffController extends Controller
                     $history->amount=$request->add_amount;
                     $history->save();
                 }
-                // $user->syncRoles([]);
-                // $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
-                // $user->assignRole($role);
+                $user=User::where('id',$staff->user_id)->first();
+                $user->syncRoles([]);
+                $role = \Spatie\Permission\Models\Role::where('name', $request->role)->where('guard_name', 'api')->first();
+                $user->assignRole($role);
 
             DB::commit();
             $response = ['Successfully Updated the Staff'];
@@ -231,32 +225,36 @@ class StaffController extends Controller
         }
         
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
 
             if($request->type=='MIFare Id'){
                 $staff=Staff::with('user.balance','school')
                 ->where('mifare_id', 'like', '%' . $request->value . '%')
-                ->whereHas('user', function($query) use ($request) {
-                    $query->where('status', $request->status);
+                ->whereHas('user', function($query) use ($request, $user){
+                    $query->where('id','!=', $user->id)
+                    ->where('status', $request->status);
                 })->get();
             }else if($request->type=='Name'){
-                $staff = Staff::with(['user' => function ($query) {
+                $staff = Staff::with(['user' => function ($query) use ($user){
                     $query->with('balance');
                 }, 'school'])
-                ->where(function ($query) use ($request) {
-                    $query->whereHas('user', function ($subquery) use ($request) {
-                        $subquery->where('first_name', 'like', '%' . $request->value . '%')
-                        ->orWhere('last_name', 'like', '%' . $request->value . '%')
-                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
+                ->whereHas('user', function ($subquery) use ($request, $user) {
+                    $subquery->where('id', '!=', $user->id);
+    
+                    $subquery->where(function ($nameQuery) use ($request) {
+                        $nameQuery->where('first_name', 'like', '%' . $request->value . '%')
+                                  ->orWhere('last_name', 'like', '%' . $request->value . '%')
+                                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
                     });
                 })->get();
             }else if($request->type=='Email'){
-                $staff = Staff::with(['user' => function ($query) {
+                $staff = Staff::with(['user' => function ($query) use ($user){
                     $query->with('balance');
                 }, 'school'])
-                ->where(function ($query) use ($request) {
-                    $query->whereHas('user', function ($subquery) use ($request) {
-                        $subquery->where('email', 'like', '%' . $request->value . '%');
+                ->where(function ($query) use ($request,$user) {
+                    $query->whereHas('user', function ($subquery) use ($request, $user) {
+                        $subquery->where('email', 'like', '%' . $request->value . '%')
+                        ->where('id','!=', $user->id);
                     });
                 })->get();
             }
@@ -278,7 +276,7 @@ class StaffController extends Controller
         }
         
         $user=Auth::user();
-        if($user->role=='super_admin'){
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
             $staff = Staff::with(['user' => function ($query) {
                 $query->with('balance');
             }, 'school'])
@@ -291,23 +289,6 @@ class StaffController extends Controller
                 });
             })->get();
             $response= StaffResource::collection($staff);
-        }else{
-            $admin=OrganizationAdmin::where('user_id',$user->id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-
-            $staff = Staff::with(['user' => function ($query) {
-                $query->with('balance');
-            }, 'school'])
-            ->whereIn('school_id', $schoolIds) // Filter based on school_id
-            ->where(function ($query) use ($request) {
-                $query->whereHas('user', function ($subquery) use ($request) {
-                    $subquery->where('first_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('last_name', 'like', '%' . $request->searchString . '%')
-                    ->orWhere('staff_id', 'like', '%' . $request->searchString . '%')
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->searchString . '%']);
-                });
-            })->get();
-            $response= StaffResource::collection($staff);
         }
 
         return response()->json($response, 200);
@@ -315,23 +296,13 @@ class StaffController extends Controller
 
     //-------------GET ARCHIVED STAFF-------------
     public function archivedStaff(Request $request){
-        if($request->user_id==null){
-        $staff = Staff::with('user', 'school')
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
+            $staff = Staff::with('user', 'school')
         ->whereHas('user', function($query) {
             $query->where('status', 'deleted');
         })
         ->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         $staff=StaffResource::collection($staff);
-        }else{
-            $admin=OrganizationAdmin::where('user_id',$request->user_id)->first();
-            $schoolIds=School::where('organization_id',$admin->organization_id)->pluck('id')->toArray();
-            $staff= StaffResource::collection(
-                Staff::with('user', 'school')->whereIn('school_id', $schoolIds)
-                ->whereHas('user', function($query) {
-                    $query->where('status', 'deleted');
-                })
-                ->orderBy('created_at', 'desc')->paginate($request->entries_per_page)
-            );
         }
         $pagination = [
         'current_page' => $staff->currentPage(),

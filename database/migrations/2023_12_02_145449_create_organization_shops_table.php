@@ -17,9 +17,8 @@ return new class extends Migration
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
             $table->string('shop_name')->nullable();
             $table->string('shop_description')->nullable();
-            $table->string('address')->nullable();
-            $table->string('latitude')->nullable();
-            $table->string('longitude')->nullable();
+            $table->string('product_owner_name')->nullable();
+            $table->string('product_owner_email')->nullable();
             $table->enum('status',['open','close'])->default('open');
             $table->timestamps();
         });
