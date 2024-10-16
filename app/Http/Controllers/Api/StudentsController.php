@@ -536,6 +536,18 @@ class StudentsController extends Controller
             $userWallet->ballance=$request->balance ? $request->balance: 0;
             $userWallet->save();
             DB::commit();
+
+            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $customer=$stripe->customers->create([
+            'name' => $user->first_name."".$user->last_name,
+            'email' => $user->email,
+            ]);
+            $user=User::where('id',$user->id)->first();
+            $user->stripe_id=$customer->id;
+            $user->created_at=now();
+            $user->updated_at=now();
+            $user->save();
+
             //------------SEND WELCOME MAIL------------
             $studentName = $request->first_name . ' ' . $request->last_name;
             $mailData = [
