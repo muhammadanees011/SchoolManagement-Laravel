@@ -206,12 +206,13 @@ class MyPurchaseController extends Controller
                 'payment_method' =>$payment_method->card_id, //ID of the specific card
                 'confirm' => true, // Confirm the payment immediately
                 'transfer_data' => [
-                    // 'destination' => $recipientStripeAccountId,
+                    // 'destination' => 'acct_1NlWiGGYrt7SylQr',
                     'destination' => "acct_1NlWiGGYrt7SylQr",
                 ],
                 'return_url' => 'https://your-website.com/thank-you',
-
             ]);
+            // ['stripe_account' => 'acct_1Q8m46PPnkrk4pSx']
+
             return true;
 
         } catch (CardException $e) {

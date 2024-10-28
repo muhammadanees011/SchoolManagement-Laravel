@@ -161,7 +161,8 @@ class OrganizationShopsController extends Controller
             'limitColleges'=>'nullable',
             'limitCourses'=>'nullable',
             'visibility_options'=>'nullable',
-            'installmentsAndDeposit'=>'nullable'
+            'installmentsAndDeposit'=>'nullable',
+            'product_owner_email'=>'nullable'
         ]);
         if ($validator->fails())
         {
@@ -179,6 +180,7 @@ class OrganizationShopsController extends Controller
             $item->detail = $request->detail;
             $item->price = $request->price;
             $item->quantity = $request->quantity;
+            $item->product_owner_email = $request->product_owner_email;
             $item->quantity_sold = 0;
             $item->status = $request->quantity > 0 ? 'available' : 'not_available';
             $item->valid_from = $request->valid_from;
@@ -258,7 +260,8 @@ class OrganizationShopsController extends Controller
             'limitColleges'=>'nullable',
             'limitCourses'=>'nullable',
             'visibility_options'=>'nullable',
-            'installmentsAndDeposit'=>'nullable'
+            'installmentsAndDeposit'=>'nullable',
+            'product_owner_email'=>'nullable'
         ]);
         if ($validator->fails())
         {
@@ -274,6 +277,7 @@ class OrganizationShopsController extends Controller
             $item->name=$request->name;
             $item->product_type = $request->product_type;
             $item->detail=$request->detail;
+            $item->product_owner_email = $request->product_owner_email;
             $item->price=$request->price;
             $item->quantity=$request->quantity;
             $item->status = $request->quantity > 0 ? 'available' : 'not_available';

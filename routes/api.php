@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\LegacyPermissionsController;
 use App\Http\Controllers\Api\RolesController;
 use App\Http\Controllers\Api\PermissionsController;
 use App\Http\Controllers\Api\MicrosoftController;
+use App\Http\Controllers\Api\ProductTypeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -182,6 +183,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/bulkRestoreItems',[OrganizationShopsController::class,'bulkRestoreItems']);
     Route::post('/filterShopItems',[OrganizationShopsController::class,'filterShopItems']);
     Route::post('/productsOwner',[OrganizationShopsController::class,'productsOwner']);
+    //------------Product Type-------------------
+    Route::post('/createProductType',[ProductTypeController::class,'create']);
+    Route::get('/editProductType/{id}',[ProductTypeController::class,'edit']);
+    Route::put('/updateProductType/{id}',[ProductTypeController::class,'update']);
+    Route::delete('/deleteProductType/{id}',[ProductTypeController::class,'delete']);
+    Route::post('/getProductTypes',[ProductTypeController::class,'index']);
+    Route::post('/filterProductTypes',[ProductTypeController::class,'filterProductTypes']);
+    Route::get('/getProductTypesForDropdown',[ProductTypeController::class,'getProductTypesForDropdown']);
     //------------Menus-------------------
     Route::post('/addMenu',[MenusController::class,'addMenu']);
     Route::get('/editMenu/{id}',[MenusController::class,'editMenu']);
@@ -199,6 +208,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/addTripToCart', [UserCartController::class, 'addTripToCart']);
     Route::post('/removeItemFromCart', [UserCartController::class, 'removeItemFromCart']);
     Route::get('/getUserCartItems', [UserCartController::class, 'getUserCartItems']);
+    Route::get('/countUserCartItems', [UserCartController::class, 'countUserCartItems']);
     Route::post('/checkout', [UserCartController::class, 'checkout']);
     Route::post('/getMyInstallments', [UserCartController::class, 'getMyInstallments']);
     Route::post('/payInstallment', [UserCartController::class, 'payInstallment']);

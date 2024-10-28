@@ -70,7 +70,9 @@
                 <td class="w-half">
                     <div><h4>To:</h4></div>
                     <div>{{$data['customer_name']}}</div>
-                    <!-- <div>123 Acme Str.</div> -->
+                    @if($data['student_id'])
+                    <div>Student ID: {{$data['student_id']}}</div>
+                    @endif
                 </td>
                 <td class="w-half">
                     <div><h4>From:</h4></div>

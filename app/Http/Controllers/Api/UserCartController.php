@@ -10,6 +10,8 @@ use App\Models\MyPurchase;
 use App\Models\MyInstallments;
 use App\Models\Wallet;
 use App\Models\User;
+use App\Models\Student;
+use App\Models\UserCard;
 use Illuminate\Support\Str;
 use App\Models\TransactionHistory;
 use App\Http\Resources\MyInstallmentsRescource;
@@ -95,6 +97,21 @@ class UserCartController extends Controller
             }
         }
     }
+    //-------------COUNT CART ITEMS------------------
+    public function countUserCartItems(){
+        try {
+            $user=Auth::user();
+            $cartItems=UserCart::with('ShopItem.payment','Trip')->where('user_id',$user->id)->count();
+            return response()->json($cartItems, 200);
+        } catch (\Exception $exception) {
+            DB::rollback();
+            if (('APP_ENV') == 'local') {
+                dd($exception);
+            } else {
+                return response()->json($exception, 500);
+            }
+        }
+    }
     //------------REMOVE ITEM FROM CART--------------
     public function removeItemFromCart(Request $request)
     {
@@ -133,9 +150,11 @@ class UserCartController extends Controller
             }
             $totalAmount=0;
             $items=[];
+            $latest_charge=null;
+            $product_owners=[];
 
             foreach ($cartItems as $cartItem) {
-                if ($cartItem->ShopItem) {
+                if ($cartItem->ShopItem && $cartItem->ShopItem->quantity) {
                     if($cartItem->ShopItem->payment_plan=='installments'){
                       $totalAmount += $cartItem->ShopItem->payment->amount_per_installment;
                       $price = $cartItem->ShopItem->payment->amount_per_installment;
@@ -161,13 +180,16 @@ class UserCartController extends Controller
                         'description' => $cartItem->ShopItem->name,
                         'price' =>  number_format($price, 2, '.', ''), 
                     ];
+                    if($cartItem->ShopItem->product_owner_email){
+                        $product_owners[]= $cartItem->ShopItem->product_owner_email;
+                    }
             
                 }
             }
 
             //--------ITEMS PAYMENT-----------
             foreach ($cartItems as $cartItem) {
-                if ($cartItem->ShopItem) {
+                if ($cartItem->ShopItem && $cartItem->ShopItem->quantity > 0) {
                     $type='school_shop_funds';
                     if($cartItem->ShopItem->payment_plan=='installments'){
                         $ItemAmount = $cartItem->ShopItem->payment->amount_per_installment;
@@ -176,7 +198,6 @@ class UserCartController extends Controller
                     }else if($cartItem->ShopItem->payment_plan=='full_payment'){
                         $ItemAmount = $cartItem->ShopItem->price;
                     }
-                    // $ItemAmount = $cartItem->ShopItem->price;
                     if($request->type=='card'){
                         $res=$this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
                         $latest_charge=$res->latest_charge;
@@ -192,38 +213,33 @@ class UserCartController extends Controller
                             $history->type=$type;
                             $history->save();
                         }else{
-                            $response = ['Not enough balance'];
+                            $response ='Not enough balance';
                             return response()->json($response, 500);
                         }
                     }
-                    // else if($request->type=='wallet_and_card'){
-                    //     $user_wallet=Wallet::where('user_id',$user->id)->first();
-                    //     if($user_wallet->ballance >  $ItemAmount){
-                    //         $user_wallet->ballance = $user_wallet->ballance - $ItemAmount;
-                    //         $user_wallet->save();
-
-                    //         $history=new TransactionHistory();
-                    //         $history->user_id=$user->id;
-                    //         $history->amount=$ItemAmount;
-                    //         $history->type=$type;
-                    //         $history->save();
-                    //     }else{
-                    //         $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
-                    //     }
-                    // }
                     $purchase=$this->saveMyPurchases($cartItem->ShopItem,$ItemAmount,$request->payment_method,$latest_charge);
                     $this->saveMyInstallments($cartItem->ShopItem,$purchase->id);
                 }
             }
+            
             //--------REMOVE ITEMS FROM CART-----------
             $deletedRows = UserCart::where('user_id', $user->id)->delete();
             $customer=Auth::user();
+            if($customer->role=='student'){
+                $student=Student::where('user_id',$customer->id)->first();
+                $data['student_id']=$student->student_id;
+            }else{
+                $data['student_id']=null;  
+            }
+
+            $data['customer_email']=$customer->email;
             $data['items']=$items;
             $data['customer_name']=$customer->first_name.' '.$customer->last_name;
             $data['customer_mifare']=null;
             $data['total']= number_format($totalAmount, 2, '.', '');
             $data['invoice_id'] = mt_rand(100000000, 999999999);
             $this->sendReceipt($data);
+            $this->sendReceiptForProductOwner($data,$product_owners);
             $status=200;
             $response = ['Checkout Successful'];
             return response()->json($response, $status);
@@ -232,7 +248,7 @@ class UserCartController extends Controller
             if (('APP_ENV') == 'local') {
                 dd($exception);
             } else {
-                return response()->json($exception, 500);
+                return response()->json('Something went wrong', 500);
             }
         }
     }
@@ -241,8 +257,18 @@ class UserCartController extends Controller
         $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
         Mail::send('emails.message', $data, function($message) use ($data, $pdf) {
             $message->from('studentpay@xepos.co.uk');
-            $message->to('itsanees011@gmail.com');
+            $message->to($data['customer_email']);
             $message->subject('Your Receipt From Education Training Collective (ETC)');
+            $message->attachData($pdf->output(), 'Receipt.pdf');
+        });
+    }
+
+    public function sendReceiptForProductOwner($data, $product_owners){
+        $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
+        Mail::send('emails.ProductOwnerMessage', $data, function($message) use ($product_owners, $data, $pdf) {
+            $message->from('studentpay@xepos.co.uk');
+            $message->to($product_owners);
+            $message->subject('Receipt for Product Purchase Education Training Collective (ETC)');
             $message->attachData($pdf->output(), 'Receipt.pdf');
         });
     }
@@ -250,30 +276,38 @@ class UserCartController extends Controller
     //--------------ADD SEBSEQUENT INSTALLMENTS------------
     public function saveMyInstallments($shopItem,$purchase_id)
     {
-        $user=Auth::user();
-        if($shopItem->payment_plan=='installments'){
-            $total_installments=$shopItem->payment->total_installments;
-            $amount_per_installment=$shopItem->payment->amount_per_installment;
-            for ($i = 1; $i < $total_installments; $i++) {
-                $myInstallment=new MyInstallments();
-                $myInstallment->shop_item_id=$shopItem->id;
-                $myInstallment->user_id=$user->id;
-                $myInstallment->installment_no=$i+1;
-                $myInstallment->installment_amount=$amount_per_installment;
-                $myInstallment->purchases_id=$purchase_id;
-                $myInstallment->save();
+        try {
+            $user=Auth::user();
+            if($shopItem->payment_plan=='installments'){
+                $total_installments=$shopItem->payment->total_installments;
+                $amount_per_installment=$shopItem->payment->amount_per_installment;
+                for ($i = 1; $i < $total_installments; $i++) {
+                    $myInstallment=new MyInstallments();
+                    $myInstallment->shop_item_id=$shopItem->id;
+                    $myInstallment->user_id=$user->id;
+                    $myInstallment->installment_no=$i+1;
+                    $myInstallment->installment_amount=$amount_per_installment;
+                    $myInstallment->purchases_id=$purchase_id;
+                    $myInstallment->save();
+                }
+            }else if($shopItem->payment_plan=='installments_and_deposit'){
+                $total_installments=$shopItem->payment->total_installments;
+                $amount_per_installment=$shopItem->payment->amount_per_installment;
+                for ($i = 0; $i < $total_installments; $i++) {
+                    $myInstallment=new MyInstallments();
+                    $myInstallment->shop_item_id=$shopItem->id;
+                    $myInstallment->user_id=$user->id;
+                    $myInstallment->installment_no=$i+1;
+                    $myInstallment->installment_amount=$amount_per_installment;
+                    $myInstallment->purchases_id=$purchase_id;
+                    $myInstallment->save();
+                }
             }
-        }else if($shopItem->payment_plan=='installments_and_deposit'){
-            $total_installments=$shopItem->payment->total_installments;
-            $amount_per_installment=$shopItem->payment->amount_per_installment;
-            for ($i = 0; $i < $total_installments; $i++) {
-                $myInstallment=new MyInstallments();
-                $myInstallment->shop_item_id=$shopItem->id;
-                $myInstallment->user_id=$user->id;
-                $myInstallment->installment_no=$i+1;
-                $myInstallment->installment_amount=$amount_per_installment;
-                $myInstallment->purchases_id=$purchase_id;
-                $myInstallment->save();
+        } catch (\Exception $exception) {
+            if (('APP_ENV') == 'local') {
+                dd($exception);
+            } else {
+                return response()->json($exception, 500);
             }
         }
     }
@@ -281,21 +315,29 @@ class UserCartController extends Controller
     //--------------ADD TO MY PURCHASES------------
     public function saveMyPurchases($shopItem,$amountPaid,$payment_method, $latest_charge)
     {
-        $user=Auth::user();
-        $myPurchase = new MyPurchase();
-        $myPurchase->user_id = $user->id;
-        $myPurchase->shop_item_id = $shopItem->id;
-        $myPurchase->total_price = $shopItem->price;
-        $myPurchase->amount_paid = $amountPaid;
-        $myPurchase->payment_card = $payment_method;
-        $myPurchase->latest_charge = $latest_charge;
-        if($shopItem->price > $amountPaid){
-            $myPurchase->payment_status = "partially_paid";
-        }else if($shopItem->price == $amountPaid){
-            $myPurchase->payment_status = "fully_paid";
+        try {
+            $user=Auth::user();
+            $myPurchase = new MyPurchase();
+            $myPurchase->user_id = $user->id;
+            $myPurchase->shop_item_id = $shopItem->id;
+            $myPurchase->total_price = $shopItem->price;
+            $myPurchase->amount_paid = $amountPaid;
+            $myPurchase->payment_card = $payment_method ? $payment_method : null ;
+            $myPurchase->latest_charge = $latest_charge ? $latest_charge : null ;
+            if($shopItem->price > $amountPaid){
+                $myPurchase->payment_status = "partially_paid";
+            }else if($shopItem->price == $amountPaid){
+                $myPurchase->payment_status = "fully_paid";
+            }
+            $myPurchase->save();
+            return $myPurchase;
+        } catch (\Exception $exception) {
+            if (('APP_ENV') == 'local') {
+                dd($exception);
+            } else {
+                return response()->json($exception, 500);
+            }
         }
-        $myPurchase->save();
-        return $myPurchase;
     }
 
     //--------------MAKET A PAYMENT-------------
@@ -311,34 +353,36 @@ class UserCartController extends Controller
                 'payment_method' =>$payment_method, //ID of the specific card
                 'confirm' => true, // Confirm the payment immediately
                 'transfer_data' => [
-                    // 'destination' => $request->recipientStripeAccountId,
                     'destination' => "acct_1NlWiGGYrt7SylQr",
                 ],
                 'return_url' => 'https://your-website.com/thank-you',
 
             ]);
-
+            // ['stripe_account' => 'acct_1Q8m46PPnkrk4pSx']
+            $user=Auth::user();
+            $user_card=UserCard::where('user_id',$user->id)->first();
             $history=new TransactionHistory();
             $history->user_id=$user_id;
             $history->amount=$amount;
             $history->type=$type;
+            $history->charge_id=$paymentIntent->latest_charge;
+            $history->last_4=$user_card->last_4;
+            $history->card_brand=$user_card->brand;
+            $history->card_holder_name=$user_card->cardholder_name;
             $history->save();
 
             return $paymentIntent;
-
-        } catch (CardException $e) {
-            // Handle card errors, such as insufficient funds
-            return response()->json(['error' => $e->getMessage()], 400);
-        } catch (Exception $e) {
+            
+        } catch (\Exception $e) {
             // Handle other errors
             return response()->json(['error' => $e->getMessage()], 500);
         }
         // Payment was successful
-        return [
-            'transaction_id'=>$history->id,
-            'token' => (string) Str::uuid(),
-            'client_secret' => $paymentIntent->client_secret,
-        ];
+        // return [
+        //     'transaction_id'=>$history->id,
+        //     'token' => (string) Str::uuid(),
+        //     'client_secret' => $paymentIntent->client_secret,
+        // ];
     }
 
     //--------------GET MY INSTALLMENTS-------------

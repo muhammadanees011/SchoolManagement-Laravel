@@ -55,7 +55,10 @@ class TransactionHistoryController extends Controller
         $user=Auth::user();
         if($user->role=='student' || $user->role=='staff' || $user->role=='parent'){
             $history=TransactionHistory::where('user_id',$user->id)->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
-        }else if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
+        }else if($request->user_id!=null && $user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
+            $history=TransactionHistory::where('user_id',$request->user_id)->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
+        }
+        else if($request->user_id==null && $user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
             $history=TransactionHistory::with('user')->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         }
         $pagination = [

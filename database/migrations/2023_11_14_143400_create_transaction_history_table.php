@@ -16,6 +16,10 @@ return new class extends Migration
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('acct_id')->nullable();
+            $table->string('charge_id')->nullable();
+            $table->string('last_4')->nullable();
+            $table->string('card_brand')->nullable();
+            $table->string('card_holder_name')->nullable();
             $table->double('amount')->nullable();
             $table->enum('type', ['trip_funds', 'meal_funds', 'health_care', 'school_shop_funds', 'top_up','pos_transaction','school_shop_refund','pos_refund'])->nullable();
             $table->enum('status',['successful','failed','pending','deleted'])->default('successful');

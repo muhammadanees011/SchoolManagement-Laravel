@@ -257,49 +257,9 @@ class StudentsController extends Controller
 
     //--------------GET STUDENTS DATA------------
     public function getStudentsDataFromRemoteDB(){
-        // $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
-        $tables = DB::connection('remote_mysql')->table('ePOS_StudentCourse')->get();
+        $tables = DB::connection('remote_mysql')->table('ebStudent')->get();
         return response()->json($tables);
 
-        //----------------------------------------------------------------------------
-        $tables = DB::connection('remote_mysql')->table('ePOS_StudentCourse')->get();
-        $student_course = DB::table('student_course')->get();
-
-        // Combine StudentID and CourseCode for incoming and existing courses
-        $incommingCourses = $tables->map(function ($item) {
-            return $item->StudentID . '_' . $item->CourseCode;
-        })->toArray();
-
-        $existingCourses = $student_course->map(function ($item) {
-            return $item->StudentID . '_' . $item->CourseCode;
-        })->toArray();
-
-        // Identify combined keys (StudentID and CourseCode) that are in $tables but not in $student_course
-        $newCourses = array_diff($incommingCourses, $existingCourses);
-
-        // Fetch the records corresponding to the new courses
-        $newRecords = $tables->filter(function ($item) use ($newCourses) {
-            return in_array($item->StudentID . '_' . $item->CourseCode, $newCourses);
-        });
-
-        foreach ($newRecords as $record) {
-           //----------STORE NEW COURSE------------
-            try{
-                $course=Course::where('CourseCode',$record->CourseCode)->first();
-                $course->total_enrollments=$course->total_enrollments + 1;
-
-                $studentCourse=new StudentCourse();
-                $studentCourse->StudentID = $record->StudentID;
-                $studentCourse->CourseCode = $record->CourseCode;
-                $studentCourse->CourseDescription = $course->CourseDescription;
-                $studentCourse->save();
-                $course->save();
-
-                } catch (\Exception $e) {
-            }
-    
-        }
-        
         $res="No New Students Found.";
         return response()->json($res);
     }
@@ -556,6 +516,10 @@ class StudentsController extends Controller
             'user_name'=> $studentName,
             ];
             Mail::to($request->email)->send(new WelcomeEmail($mailData));
+            // Check if email sending failed
+            if (count(Mail::failures()) > 0) {
+                return response()->json(['errors' => ['Failed to send Email']], 500);
+            }
             $response['message'] = ['Successfully created the Student'];
             $response['user']=$user;
             return response()->json($response, 200);
@@ -589,7 +553,7 @@ class StudentsController extends Controller
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
             'fsm'=>'required|boolean',
-            'balance' => 'nullable|numeric',
+            // 'balance' => 'nullable|numeric',
             'add_amount' => 'nullable|numeric',
         ]);
         if ($validator->fails())
@@ -613,7 +577,7 @@ class StudentsController extends Controller
                 $updateData['password'] = Hash::make($request->password);
             }
             $wallet=Wallet::where('user_id',$student->user_id)->first();
-            $wallet->ballance=$request->balance + ($request->add_amount ? $request->add_amount:0 );
+            $wallet->ballance=($wallet->ballance ? $wallet->ballance:0) + ($request->add_amount ? $request->add_amount:0);
             $wallet->save();
             $student->user->update($updateData);
             $student->save();

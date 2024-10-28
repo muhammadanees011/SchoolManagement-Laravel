@@ -129,7 +129,7 @@ class SyncUsers extends Command
                 }
                 $student->upn = $record->UPN ?: null;
                 $student->mifare_id  = $record->miFareID ?: null;
-                $student->fsm_amount = $record->fsmAmount;
+                $student->fsm_amount = $record->fsmAmount ? : null;
                 $student->purse_type = $record->purseType ?: null;
                 $student->site = $record->site ?: null;
                 $student->save();
@@ -222,10 +222,10 @@ class SyncUsers extends Command
                 if($school){
                     $staff->school_id = $school->id;
                 }
-                $staff->staff_id = $record->loginID;
-                $staff->upn = $record->UPN;
-                $staff->mifare_id = $record->miFareID;
-                $staff->site = $record->site;
+                $staff->staff_id = $record->loginID ? : null ;
+                $staff->upn = $record->UPN  ? : null ;
+                $staff->mifare_id = $record->miFareID  ? : null ;
+                $staff->site = $record->site  ? : null ;
                 $staff->save();
                 //----------SEND WELCOME MAIL--------------
                 // $mailData = [

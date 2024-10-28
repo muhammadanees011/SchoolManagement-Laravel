@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->string('student_id')->unique()->nullable();
             $table->string('upn')->nullable();
-            $table->string('mifare_id')->unique()->nullable();
+            $table->string('mifare_id')->nullable();
             $table->boolean('fsm_activated')->default(false);
             $table->double('fsm_amount')->nullable(); 
             $table->string('purse_type')->nullable();
