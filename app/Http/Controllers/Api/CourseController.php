@@ -236,7 +236,7 @@ class CourseController extends Controller
     }
 
     public function getCoursesForDropdown(){
-        $courses = Course::get()->map(function($course) {
+        $courses = Course::where('status','Active')->get()->map(function($course) {
             return [
                 'name' => $course->CourseCode.'-'.$course->CourseDescription.'',
             ];

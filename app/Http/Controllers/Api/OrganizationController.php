@@ -65,7 +65,7 @@ class OrganizationController extends Controller
         if($user->role=='organization_admin'){
             $organizationAdmin=OrganizationAdmin::where('user_id',$user->id)->first();
             $organizations=Organization::with('User')->where('id',$organizationAdmin->id)->get();
-        }else if($user->role=='super_admin'){
+        }else if($user->role!='staff' && $user->role!='student' && $user->role!='parent'){
             $organizations=Organization::with('User')->get();
         }
         return response()->json($organizations, 200);

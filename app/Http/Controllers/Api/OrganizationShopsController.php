@@ -27,7 +27,7 @@ class OrganizationShopsController extends Controller
     //----------GET SCHOOLS AND COURSES---------
     public function getAllSchoolsCourses()
     {
-        $schools=School::select('id', 'title')->get()->map(function ($item) {
+        $schools=School::where('status','active')->select('id', 'title')->get()->map(function ($item) {
             return [
                 'id' => $item->id,
                 'name' => $item->title,

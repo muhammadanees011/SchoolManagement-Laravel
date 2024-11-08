@@ -141,7 +141,7 @@ class UserCartController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        try {
+        // try {
             $user=Auth::user();
             $cartItems=UserCart::with('ShopItem.payment')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
             if($cartItems->isEmpty()){
@@ -243,14 +243,14 @@ class UserCartController extends Controller
             $status=200;
             $response = ['Checkout Successful'];
             return response()->json($response, $status);
-        } catch (\Exception $exception) {
-            DB::rollback();
-            if (('APP_ENV') == 'local') {
-                dd($exception);
-            } else {
-                return response()->json('Something went wrong', 500);
-            }
-        }
+        // } catch (\Exception $exception) {
+        //     DB::rollback();
+        //     if (('APP_ENV') == 'local') {
+        //         dd($exception);
+        //     } else {
+        //         return response()->json('Something went wrong', 500);
+        //     }
+        // }
     }
 
     public function sendReceipt($data){
