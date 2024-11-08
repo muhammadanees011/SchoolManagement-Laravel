@@ -141,7 +141,7 @@ class UserCartController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        // try {
+        try {
             $user=Auth::user();
             $cartItems=UserCart::with('ShopItem.payment')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
             if($cartItems->isEmpty()){
@@ -243,34 +243,52 @@ class UserCartController extends Controller
             $status=200;
             $response = ['Checkout Successful'];
             return response()->json($response, $status);
-        // } catch (\Exception $exception) {
-        //     DB::rollback();
-        //     if (('APP_ENV') == 'local') {
-        //         dd($exception);
-        //     } else {
-        //         return response()->json('Something went wrong', 500);
-        //     }
-        // }
+        } catch (\Exception $exception) {
+            DB::rollback();
+            if (('APP_ENV') == 'local') {
+                dd($exception);
+            } else {
+                return response()->json('Something went wrong', 500);
+            }
+        }
     }
 
     public function sendReceipt($data){
-        $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
-        Mail::send('emails.message', $data, function($message) use ($data, $pdf) {
-            $message->from('studentpay@xepos.co.uk');
-            $message->to($data['customer_email']);
-            $message->subject('Your Receipt From Education Training Collective (ETC)');
-            $message->attachData($pdf->output(), 'Receipt.pdf');
-        });
+        try{
+            $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
+            Mail::send('emails.message', $data, function($message) use ($data, $pdf) {
+                $message->from('studentpay@xepos.co.uk');
+                $message->to($data['customer_email']);
+                $message->subject('Your Receipt From Education Training Collective (ETC)');
+                $message->attachData($pdf->output(), 'Receipt.pdf');
+            });
+        } catch (\Exception $exception) {
+            DB::rollback();
+            if (('APP_ENV') == 'local') {
+                dd($exception);
+            } else {
+                return response()->json('Something went wrong', 500);
+            }
+        }
     }
 
     public function sendReceiptForProductOwner($data, $product_owners){
-        $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
-        Mail::send('emails.ProductOwnerMessage', $data, function($message) use ($product_owners, $data, $pdf) {
-            $message->from('studentpay@xepos.co.uk');
-            $message->to($product_owners);
-            $message->subject('Receipt for Product Purchase Education Training Collective (ETC)');
-            $message->attachData($pdf->output(), 'Receipt.pdf');
-        });
+        try{
+            $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
+            Mail::send('emails.ProductOwnerMessage', $data, function($message) use ($product_owners, $data, $pdf) {
+                $message->from('studentpay@xepos.co.uk');
+                $message->to($product_owners);
+                $message->subject('Receipt for Product Purchase Education Training Collective (ETC)');
+                $message->attachData($pdf->output(), 'Receipt.pdf');
+            });
+        } catch (\Exception $exception) {
+            DB::rollback();
+            if (('APP_ENV') == 'local') {
+                dd($exception);
+            } else {
+                return response()->json('Something went wrong', 500);
+            }
+        }
     }
 
     //--------------ADD SEBSEQUENT INSTALLMENTS------------
