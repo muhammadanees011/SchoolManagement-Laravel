@@ -114,8 +114,10 @@ class TransactionHistoryController extends Controller
                 return $query->where('user_id', $user_id);
             })->get();
         }
-        if($request->type=='Date'){
-            $history=TransactionHistory::with('user')->whereDate('created_at','=', Carbon::parse($request->value)->toDateString())
+        if($request->type=='Date Range'){
+            $fromDate = Carbon::createFromFormat('d/m/Y', $request->value['fromDate'])->startOfDay()->format('Y-m-d 00:00:0');
+            $toDate = Carbon::createFromFormat('d/m/Y', $request->value['toDate'])->endOfDay()->format('Y-m-d 23:59:59');
+            $history = TransactionHistory::with('user')->whereBetween('created_at', [$fromDate, $toDate])
             ->when($user_id, function ($query) use ($user_id) {
                 return $query->where('user_id', $user_id);
             })->get();

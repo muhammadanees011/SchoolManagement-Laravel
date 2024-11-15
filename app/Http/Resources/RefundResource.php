@@ -18,6 +18,7 @@ class RefundResource extends JsonResource
             'id' => $this->id,
             'purchase_id' => $this->purchase->id,
             'name' => $this->purchase->shopItems->name,
+            'buyer_name' => $this->purchase->user->first_name.' '.$this->purchase->user->last_name,
             'product_type' => $this->purchase->shopItems->product_type,
             'image' => $this->purchase->shopItems->image,
             'detail' => $this->purchase->shopItems->detail,

@@ -19,7 +19,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Models\Staff;
 use App\Models\Student;
-
+use Carbon\Carbon;
 
 class MyPurchaseController extends Controller
 {
@@ -83,6 +83,12 @@ class MyPurchaseController extends Controller
                     ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
                 })->get()
             );
+        }else if($request->type=='Date Range'){
+            $fromDate = Carbon::createFromFormat('d/m/Y', $request->value['fromDate'])->startOfDay()->format('Y-m-d 00:00:0');
+            $toDate = Carbon::createFromFormat('d/m/Y', $request->value['toDate'])->endOfDay()->format('Y-m-d 23:59:59');
+            $myPurchases = MyPurchasesResource::collection(
+                MyPurchase::whereBetween('created_at', [$fromDate, $toDate])->get()
+            );
         }
         return response()->json($myPurchases, 200);
     }
@@ -90,14 +96,24 @@ class MyPurchaseController extends Controller
     //---------------FILTER REFUND REQUESTS-------------
     public function filterRefunds(Request $request){
         if($request->type=='Buyer'){
-            $purchases=MyPurchase::with('user')
-            ->whereHas('user', function($query) use ($request) {
-                $query->where('first_name', 'like', '%' . $request->value . '%')
-                ->orWhere('last_name', 'like', '%' . $request->value . '%')
-                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
-            })->get();
+            $refunds = RefundResource::collection(
+                Refund::with('purchase')
+                ->whereHas('purchase.user', function ($query) use ($request) {
+                    $query->where('first_name', 'like', '%' . $request->value . '%')
+                        ->orWhere('last_name', 'like', '%' . $request->value . '%')
+                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get()
+            );
+        }else if($request->type=='Date Range'){
+            $fromDate = Carbon::createFromFormat('d/m/Y', $request->value['fromDate'])->startOfDay()->format('Y-m-d 00:00:0');
+            $toDate = Carbon::createFromFormat('d/m/Y', $request->value['toDate'])->endOfDay()->format('Y-m-d 23:59:59');
+            $refunds = RefundResource::collection(
+                Refund::with('purchase.user')->whereBetween('created_at', [$fromDate, $toDate])->get()
+            );
         }
-        return response()->json($purchases, 200);
+        return response()->json($refunds, 200);
     }
 
     //---------------GET REQUEST FOR REFUNDS-------------

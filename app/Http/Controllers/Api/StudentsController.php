@@ -454,7 +454,7 @@ class StudentsController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
             // 'password' => 'nullable|string|min:6|confirmed',
-            'date_of_birth' => 'nullable|date|before_or_equal:today',
+            // 'date_of_birth' => 'nullable|date|before_or_equal:today',
             'status'=>'required|string|max:255',
             'fsm'=>'required|boolean',
             'balance'=>'nullable|numeric'
@@ -483,7 +483,7 @@ class StudentsController extends Controller
             $student->student_id = $request->student_id;
             $student->mifare_id = $request->mifare_id;
             $student->school_id = $request->school_id;
-            $student->dob = $request->date_of_birth;
+            // $student->dob = $request->date_of_birth;
             $student->fsm_amount= $request->fsm ? 0:null;
             $student->save();
 
@@ -549,7 +549,7 @@ class StudentsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$student->user->id,
-            'date_of_birth' => 'nullable|date|before_or_equal:today',
+            // 'date_of_birth' => 'nullable|date|before_or_equal:today',
             'status'=>'required|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
             'fsm'=>'required|boolean',
@@ -565,7 +565,7 @@ class StudentsController extends Controller
             $student->school_id = $request->school_id;
             $student->student_id = $request->student_id;
             $student->mifare_id = $request->mifare_id;
-            $student->dob = $request->date_of_birth;
+            // $student->dob = $request->date_of_birth;
             $student->fsm_activated = $request->fsm;
             $updateData = [
                 'email' => $request->email,

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Mail\Mailable; 
+use App\Services\MicrosoftGraphService;
 
 class OrganizationShopsController extends Controller
 {
@@ -56,7 +57,9 @@ class OrganizationShopsController extends Controller
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
             $courses=StudentCourse::where('StudentID',$student->student_id)->get();
-            // $courseCodes = $courses->pluck('CourseCode')->toArray();
+            if ($courses->isEmpty()) {
+                return response()->json([]);
+            }
             $courseCodes = $courses->map(function ($course) {
                 return $course->CourseCode . '-' . $course->CourseDescription.'';
             })->toArray();
@@ -66,10 +69,12 @@ class OrganizationShopsController extends Controller
                $query->where('status', '!=', 'deleted')
                ->whereJsonContains('visibility_options', [['name' => 'Available to Students']])
                ->whereJsonContains('limit_colleges', [['name' => $schoolName]])
-               ->where(function ($q) use ($courseCodes) {
-                    foreach ($courseCodes as $courseCode) {
-                        $q->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
-                    }
+                ->where(function ($q) use ($courseCodes) {
+                    $q->where(function ($subQuery) use ($courseCodes) {
+                        foreach ($courseCodes as $courseCode) {
+                            $subQuery->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
+                        }
+                    });
                 })
                ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])
@@ -202,8 +207,8 @@ class OrganizationShopsController extends Controller
                 $installmentsAndDeposit = json_decode($request->input('installmentsAndDeposit'), true);
                 $paymentPlan->total_installments = $installmentsAndDeposit['total_installments'];
                 $paymentPlan->amount_per_installment = $installmentsAndDeposit['amount_per_installment'];
-                $paymentPlan->initial_deposit_installments = $installmentsAndDeposit['initial_deposit'];
-                $paymentPlan->initial_deposit_deadline_installments = $installmentsAndDeposit['initial_deposit_due_date'];
+                $paymentPlan->initial_deposit = $installmentsAndDeposit['initial_deposit'];
+                $paymentPlan->initial_deposit_due_date = $installmentsAndDeposit['initial_deposit_due_date'];
                 $paymentPlan->other_installments_deadline_installments = $installmentsAndDeposit['other_installments_due_date'];
                 $paymentPlan->save();
             }
@@ -302,13 +307,12 @@ class OrganizationShopsController extends Controller
             $item->save();
 
             if($request->payment_plan=='installments' || $request->payment_plan=='installments_and_deposit'){
-                $paymentPlan = new PaymentPlan();
-                $paymentPlan->shop_item_id = $item->id;
+                $paymentPlan = PaymentPlan::where('shop_item_id',$item->id)->first();
                 $installmentsAndDeposit = json_decode($request->input('installmentsAndDeposit'), true);
                 $paymentPlan->total_installments = $installmentsAndDeposit['total_installments'];
                 $paymentPlan->amount_per_installment = $installmentsAndDeposit['amount_per_installment'];
-                $paymentPlan->initial_deposit_installments = $installmentsAndDeposit['initial_deposit'];
-                $paymentPlan->initial_deposit_deadline_installments = $installmentsAndDeposit['initial_deposit_due_date'];
+                $paymentPlan->initial_deposit = $installmentsAndDeposit['initial_deposit'];
+                $paymentPlan->initial_deposit_due_date = $installmentsAndDeposit['initial_deposit_due_date'];
                 $paymentPlan->other_installments_deadline_installments = $installmentsAndDeposit['other_installments_due_date'];
                 $paymentPlan->save();
             }

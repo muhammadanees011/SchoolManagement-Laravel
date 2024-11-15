@@ -26,11 +26,29 @@ use Illuminate\Support\Facades\Validator;
 use PDF;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Mail\Mailable;
-
- 
+use Carbon\Carbon;
+use App\Services\MicrosoftGraphService;
 
 class UserCartController extends Controller
 {
+    protected $graphService;
+
+    public function __construct(MicrosoftGraphService $graphService)
+    {
+        $this->graphService = $graphService;
+    }
+
+    public function sendEmail()
+    {
+        $to = 'recipient@example.com';
+        $subject = 'Test Email from Microsoft Graph';
+        $body = 'This is a test email.';
+
+        $status = $this->graphService->sendEmail($to, $subject, $body);
+
+        return response()->json(['status' => $status == 202 ? 'Email sent successfully!' : 'Failed to send email.']);
+    }
+    
     //-------------ADD ITEM TO CART------------------
     public function addItemToCart(Request $request)
     {
@@ -238,8 +256,8 @@ class UserCartController extends Controller
             $data['customer_mifare']=null;
             $data['total']= number_format($totalAmount, 2, '.', '');
             $data['invoice_id'] = mt_rand(100000000, 999999999);
-            $this->sendReceipt($data);
             $this->sendReceiptForProductOwner($data,$product_owners);
+            $this->sendReceipt($data);
             $status=200;
             $response = ['Checkout Successful'];
             return response()->json($response, $status);
@@ -439,6 +457,13 @@ class UserCartController extends Controller
                 ->orWhere('last_name', 'like', '%' . $request->value . '%')
                 ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
             })->get();
+        }if($request->type=='Date Range'){
+            $fromDate = Carbon::createFromFormat('d/m/Y', $request->value['fromDate'])->startOfDay()->format('Y-m-d 00:00:0');
+            $toDate = Carbon::createFromFormat('d/m/Y', $request->value['toDate'])->endOfDay()->format('Y-m-d 23:59:59');
+            $purchases = 
+            $myInstallments = MyInstallmentsRescource::collection(
+            MyInstallments::whereBetween('created_at', [$fromDate, $toDate])->get()
+            );
         }
         return response()->json($purchases, 200);
     }

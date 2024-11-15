@@ -133,7 +133,7 @@ class StaffController extends Controller
             'status'=>'nullable|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
             'role'=>'nullable|string|max:255',
-            'balance' => 'nullable|numeric',
+            // 'balance' => 'nullable|numeric',
             'add_amount' => 'nullable|numeric',
         ]);
         if ($validator->fails())
