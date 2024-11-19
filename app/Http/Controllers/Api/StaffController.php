@@ -230,15 +230,14 @@ class StaffController extends Controller
                 $staff=Staff::with('user.balance','school')
                 ->where('mifare_id', 'like', '%' . $request->value . '%')
                 ->whereHas('user', function($query) use ($request, $user){
-                    $query->where('id','!=', $user->id)
-                    ->where('status', $request->status);
+                    $query->where('status', $request->status);
                 })->get();
             }else if($request->type=='Name'){
                 $staff = Staff::with(['user' => function ($query) use ($user){
                     $query->with('balance');
                 }, 'school'])
                 ->whereHas('user', function ($subquery) use ($request, $user) {
-                    $subquery->where('id', '!=', $user->id);
+                    // $subquery->where('id', '!=', $user->id);
     
                     $subquery->where(function ($nameQuery) use ($request) {
                         $nameQuery->where('first_name', 'like', '%' . $request->value . '%')
@@ -252,8 +251,8 @@ class StaffController extends Controller
                 }, 'school'])
                 ->where(function ($query) use ($request,$user) {
                     $query->whereHas('user', function ($subquery) use ($request, $user) {
-                        $subquery->where('email', 'like', '%' . $request->value . '%')
-                        ->where('id','!=', $user->id);
+                        $subquery->where('email', 'like', '%' . $request->value . '%');
+                        // ->where('id','!=', $user->id);
                     });
                 })->get();
             }
