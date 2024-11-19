@@ -54,19 +54,26 @@ class OrganizationShopsController extends Controller
         $user=Auth::user();
         if($user->role!=='staff' && $user->role!=='student' && $user->role!=='parent'){
 
-            $permission=Permission::where('name','view_products')->first();
-            $role=Role::where('name',$user->role)->first();
-            return [$permission,$user->role];
-            $role_has_permission=RoleHasPermission::where('permission_id',$permission->id)->where('role_id',$role->id)->first();
-            if($role_has_permission){ 
+            if($user->role=='super_admin'){
                 $shopItems = OrganizationShop::with(['shopItems' => function($query) {
                     $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
                 }, 'shopItems.payment'])->paginate($request->entries_per_page);
             }else{
-                $shopItems = OrganizationShop::with(['shopItems' => function($query)use($user) {
-                    $query->where('status', '!=', 'deleted')
-                    ->where('created_by',$user->id)->orderBy('created_at', 'desc');
-                }, 'shopItems.payment'])->paginate($request->entries_per_page);
+
+                $permission=Permission::where('name','view_products')->first();
+                $role=Role::where('name',$user->role)->first();
+                $role_has_permission=RoleHasPermission::where('permission_id',$permission->id)->where('role_id',$role->id)->first();
+                if($role_has_permission){ 
+                    $shopItems = OrganizationShop::with(['shopItems' => function($query) {
+                        $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
+                    }, 'shopItems.payment'])->paginate($request->entries_per_page);
+                }else{
+                    $shopItems = OrganizationShop::with(['shopItems' => function($query)use($user) {
+                        $query->where('status', '!=', 'deleted')
+                        ->where('created_by',$user->id)->orderBy('created_at', 'desc');
+                    }, 'shopItems.payment'])->paginate($request->entries_per_page);
+                }
+
             }
 
         }else if($user->role=='student'){
