@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('shop_id')->unsigned()->nullable();
             $table->foreign('shop_id')->references('id')->on('organization_shops')->onDelete('cascade');
+            $table->bigInteger('created_by')->unsigned()->nullable();
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
             $table->bigInteger('attribute_id')->unsigned()->nullable();
             $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
             $table->bigInteger('school_id')->unsigned()->nullable();

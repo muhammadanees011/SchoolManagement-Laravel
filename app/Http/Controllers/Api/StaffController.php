@@ -30,8 +30,7 @@ class StaffController extends Controller
         if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
             $staff = Staff::with('user', 'school')
         ->whereHas('user', function($query) use ($user){
-            $query->where('user_id','!=', $user->id)
-            ->where('status', 'active');
+            $query->where('status', 'active');
         })
         ->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
         $staff=StaffResource::collection($staff);

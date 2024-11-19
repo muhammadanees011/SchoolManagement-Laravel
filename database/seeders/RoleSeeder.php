@@ -21,7 +21,7 @@ class RoleSeeder extends Seeder
         ,'delete_site','view_site','edit_site','create_student','delete_student','view_student',
         'edit_student','create_course','view_course','edit_course','delete_course','purchase_history',
         'pending_installments','refunds','create_staff','delete_staff','view_staff','edit_staff',
-        'create_shop','delete_shop','view_shop','edit_shop',
+        'create_shop','delete_shop','view_shop','edit_shop','view_products',
         'transaction_history','topup','wallet', 'roles'];
 
         $associateAdminPermissions = ['create_site'

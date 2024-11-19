@@ -172,7 +172,7 @@ class UserCartController extends Controller
             $product_owners=[];
 
             foreach ($cartItems as $cartItem) {
-                if ($cartItem->ShopItem && $cartItem->ShopItem->quantity) {
+                if ($cartItem->ShopItem && $cartItem->ShopItem->quantity > 0 || $cartItem->ShopItem->quantity==null) {
                     if($cartItem->ShopItem->payment_plan=='installments'){
                       $totalAmount += $cartItem->ShopItem->payment->amount_per_installment;
                       $price = $cartItem->ShopItem->payment->amount_per_installment;
@@ -186,7 +186,7 @@ class UserCartController extends Controller
 
                     // $totalAmount += $cartItem->ShopItem->price;
                     $item=ShopItem::find($cartItem->shop_item_id);
-                    $item->quantity= $item->quantity > 0 ? $item->quantity -1 : 0;
+                    $item->quantity= $item->quantity !== null ? $item->quantity -1 : null;
                     $item->quantity_sold= $item->quantity_sold >= 0 ? $item->quantity_sold +1 : 1;
                     if($item->quantity == 0){
                         $item->status= "not_available";
@@ -207,7 +207,7 @@ class UserCartController extends Controller
 
             //--------ITEMS PAYMENT-----------
             foreach ($cartItems as $cartItem) {
-                if ($cartItem->ShopItem && $cartItem->ShopItem->quantity > 0) {
+                if ($cartItem->ShopItem && $cartItem->ShopItem->quantity > 0 || $cartItem->ShopItem->quantity ==null) {
                     $type='school_shop_funds';
                     if($cartItem->ShopItem->payment_plan=='installments'){
                         $ItemAmount = $cartItem->ShopItem->payment->amount_per_installment;

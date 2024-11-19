@@ -39,6 +39,7 @@ class PermissionsSeeder extends Seeder
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_shop']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_shop']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'edit_shop']);
+        Permission::firstOrCreate(['guard_name' => 'api','name' => 'view_products']);
         //----------------------COURSES---------------------
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'create_course']);
         Permission::firstOrCreate(['guard_name' => 'api','name' => 'delete_course']);

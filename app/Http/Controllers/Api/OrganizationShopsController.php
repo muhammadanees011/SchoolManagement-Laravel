@@ -12,6 +12,9 @@ use App\Models\StudentCourse;
 use App\Models\Staff;
 use App\Models\OrganizationAdmin;
 use App\Models\User;
+use App\Models\Role;
+use App\Models\Permission;
+use App\Models\RoleHasPermission;
 use App\Models\School;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -50,9 +53,22 @@ class OrganizationShopsController extends Controller
     public function getShopItems(Request $request){
         $user=Auth::user();
         if($user->role!=='staff' && $user->role!=='student' && $user->role!=='parent'){
-            $shopItems = OrganizationShop::with(['shopItems' => function($query) {
-                $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
-            }, 'shopItems.payment'])->paginate($request->entries_per_page);
+
+            $permission=Permission::where('name','view_products')->first();
+            $role=Role::where('name',$user->role)->first();
+            $role_has_permission=RoleHasPermission::where('permission_id',$permission->id)->where('role_id',$role->id)->first();
+
+            if($role_has_permission){ 
+                $shopItems = OrganizationShop::with(['shopItems' => function($query) {
+                    $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
+                }, 'shopItems.payment'])->paginate($request->entries_per_page);
+            }else{
+                $shopItems = OrganizationShop::with(['shopItems' => function($query)use($user) {
+                    $query->where('status', '!=', 'deleted')
+                    ->where('created_by',$user->id)->orderBy('created_at', 'desc');
+                }, 'shopItems.payment'])->paginate($request->entries_per_page);
+            }
+
         }else if($user->role=='student'){
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
@@ -128,9 +144,22 @@ class OrganizationShopsController extends Controller
     {
         $user=Auth::user();
         if($user->role!=='staff' && $user->role!=='student' && $user->role!=='parent'){
-            $shopItems = OrganizationShop::with(['shopItems' => function($query) {
-                $query->where('status', 'deleted');
-            }, 'shopItems.attribute'])->paginate($request->entries_per_page);
+
+            $permission=Permission::where('name','view_products')->first();
+            $role=Role::where('name',$user->role)->first();
+            $role_has_permission=RoleHasPermission::where('permission_id',$permission->id)->where('role_id',$role->id)->first();
+
+            if($role_has_permission){ 
+                $shopItems = OrganizationShop::with(['shopItems' => function($query) {
+                    $query->where('status','deleted')->orderBy('created_at', 'desc');
+                }, 'shopItems.payment'])->paginate($request->entries_per_page);
+            }else{
+                $shopItems = OrganizationShop::with(['shopItems' => function($query)use($user) {
+                    $query->where('status','deleted')
+                    ->where('created_by',$user->id)->orderBy('created_at', 'desc');
+                }, 'shopItems.payment'])->paginate($request->entries_per_page);
+            }
+
         }else if($user->role=='staff'){
             $staff=Staff::where('user_id',$user->id)->first();
             $school=School::where('id',$staff->school_id)->first();
@@ -159,7 +188,7 @@ class OrganizationShopsController extends Controller
             'image' => 'nullable',
             'detail' => 'required|string|max:255',
             'price' => 'required|numeric',
-            'quantity'=>'required|numeric',
+            'quantity'=>'nullable|numeric',
             'valid_from' => 'required',
             'valid_to' => 'required',
             'payment_plan' => 'required',
@@ -194,6 +223,7 @@ class OrganizationShopsController extends Controller
             $item->limit_colleges = json_decode($request->input('limitColleges'), true);
             $item->limit_courses = json_decode($request->input('limitCourses'), true);
             $item->visibility_options = json_decode($request->input('visibility_options'), true);
+            $item->created_by = $user->id;
 
                 if($request->file('image')){
                     $path = $request->file('image')->store('uploads', 'public');
@@ -258,7 +288,7 @@ class OrganizationShopsController extends Controller
             'product_type' => 'required',
             'detail' => 'required|string|max:255',
             'price' => 'required|numeric',
-            'quantity'=>'required|numeric',
+            'quantity'=>'nullable|numeric',
             'valid_from' => 'required',
             'valid_to' => 'required',
             'payment_plan' => 'required',
@@ -285,7 +315,9 @@ class OrganizationShopsController extends Controller
             $item->product_owner_email = $request->product_owner_email;
             $item->price=$request->price;
             $item->quantity=$request->quantity;
+            if($request->quantity){
             $item->status = $request->quantity > 0 ? 'available' : 'not_available';
+            }
             $item->valid_from=$request->valid_from;
             $item->valid_to=$request->valid_to;
             $item->payment_plan=$request->payment_plan;
