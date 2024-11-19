@@ -56,8 +56,8 @@ class OrganizationShopsController extends Controller
 
             $permission=Permission::where('name','view_products')->first();
             $role=Role::where('name',$user->role)->first();
+            return [$permission,$role];
             $role_has_permission=RoleHasPermission::where('permission_id',$permission->id)->where('role_id',$role->id)->first();
-
             if($role_has_permission){ 
                 $shopItems = OrganizationShop::with(['shopItems' => function($query) {
                     $query->where('status', '!=', 'deleted')->orderBy('created_at', 'desc');
