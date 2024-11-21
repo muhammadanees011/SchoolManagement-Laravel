@@ -48,14 +48,13 @@
 
 <body>
     <div class="container">
-        <!-- <img src="{{$message->embed(public_path().'/images/background.jpg')}}" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px; width: 600px !important; max-height:200px !important;"> -->
-        <h4 style="color:#235667;">Dear {{$data['owner_name']}}</h4>
+        <h4 style="color:#235667;">Dear {{$owner_name}}</h4>
         <p>
             We would like to inform you that a new product has been successfully created in our system.
             <br>
-            <strong style="color:#235667 !important;">Product Name:</strong>{{$data['product_name']}}<br>
-            <strong style="color:#235667 !important;">Product Price:</strong>£{{$data['product_price']}}<br>
-            <strong style="color:#235667 !important;">Product Quantity:</strong>{{$data['product_quantity']}}
+            <strong style="color:#235667 !important;">Product Name:</strong>{{$product_name}}<br>
+            <strong style="color:#235667 !important;">Product Price:</strong>£{{$product_price}}<br>
+            <strong style="color:#235667 !important;">Product Quantity:</strong>{{$product_quantity}}
         </p>
         <footer>
             <p>

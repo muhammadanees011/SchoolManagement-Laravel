@@ -38,17 +38,6 @@ class UserCartController extends Controller
         $this->graphService = $graphService;
     }
 
-    public function sendEmail()
-    {
-        $to = 'recipient@example.com';
-        $subject = 'Test Email from Microsoft Graph';
-        $body = 'This is a test email.';
-
-        $status = $this->graphService->sendEmail($to, $subject, $body);
-
-        return response()->json(['status' => $status == 202 ? 'Email sent successfully!' : 'Failed to send email.']);
-    }
-    
     //-------------ADD ITEM TO CART------------------
     public function addItemToCart(Request $request)
     {
@@ -71,35 +60,7 @@ class UserCartController extends Controller
             }
         }
     }
-    //--------------ADD TRIP TO CART--------------
-    public function addTripToCart(Request $request){
-        $validator = Validator::make($request->all(), [
-            'trip_id' =>['nullable',Rule::exists('trips', 'id')],
-        ]);
-        if ($validator->fails())
-        {
-            return response()->json(['errors'=>$validator->errors()->all()], 422);
-        }
-        try{
-            DB::beginTransaction();
-            $user=Auth::user();
-            $cartItem=new UserCart();
-            $cartItem->user_id=$user->id;
-            $cartItem->trip_id=$request->trip_id;
-            $cartItem->save();
-            DB::commit();
-        $response = ['Successfully Added Trip To The Cart'];
-        return response()->json($response, 200);
-        } catch (\Exception $exception) {
-            if (('APP_ENV') == 'local') {
-                dd($exception);
-            } else {
-                $response['message'] = ['Something went wrong'];
-                return response()->json($response, 404);
 
-            }
-        }
-    }
     //-------------GET CART ITEMS------------------
     public function getUserCartItems(){
         try {
@@ -115,6 +76,7 @@ class UserCartController extends Controller
             }
         }
     }
+
     //-------------COUNT CART ITEMS------------------
     public function countUserCartItems(){
         try {
@@ -148,6 +110,7 @@ class UserCartController extends Controller
             }
         }
     }
+
     //-----------------CHECKOUT----------------
     public function checkout(Request $request)
     {
@@ -245,22 +208,24 @@ class UserCartController extends Controller
             $customer=Auth::user();
             if($customer->role=='student'){
                 $student=Student::where('user_id',$customer->id)->first();
-                $data['student_id']=$student->student_id;
+                $student_id=$student->student_id;
             }else{
-                $data['student_id']=null;  
-            }
+                $student_id=null;  
+            }  
 
+            $data['student_id']=$student_id;
             $data['customer_email']=$customer->email;
             $data['items']=$items;
             $data['customer_name']=$customer->first_name.' '.$customer->last_name;
             $data['customer_mifare']=null;
             $data['total']= number_format($totalAmount, 2, '.', '');
             $data['invoice_id'] = mt_rand(100000000, 999999999);
-            $this->sendReceiptForProductOwner($data,$product_owners);
+
+            $status=$this->sendReceiptForProductOwner($data,$product_owners);
             $this->sendReceipt($data);
+            $response=['Checkout Successfull'];
             $status=200;
-            $response = ['Checkout Successful'];
-            return response()->json($response, $status);
+              return response()->json($response, $status);
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {
@@ -274,12 +239,12 @@ class UserCartController extends Controller
     public function sendReceipt($data){
         try{
             $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
-            Mail::send('emails.message', $data, function($message) use ($data, $pdf) {
-                $message->from('studentpay@xepos.co.uk');
-                $message->to($data['customer_email']);
-                $message->subject('Your Receipt From Education Training Collective (ETC)');
-                $message->attachData($pdf->output(), 'Receipt.pdf');
-            });
+            $to = [$data['customer_email']];
+            $subject = 'Your Receipt From Education Training Collective (ETC)';
+            $bodyView = 'emails.message';
+            $attachmentContent = $pdf->output();
+            $attachmentName = 'Receipt.pdf';
+            $status = $this->graphService->sendEmail($to, $subject, $bodyView, $attachmentContent, $attachmentName, $data);
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {
@@ -293,12 +258,12 @@ class UserCartController extends Controller
     public function sendReceiptForProductOwner($data, $product_owners){
         try{
             $pdf = PDF::loadView('receipts.PurchaseReceipt', compact('data'));
-            Mail::send('emails.ProductOwnerMessage', $data, function($message) use ($product_owners, $data, $pdf) {
-                $message->from('studentpay@xepos.co.uk');
-                $message->to($product_owners);
-                $message->subject('Receipt for Product Purchase Education Training Collective (ETC)');
-                $message->attachData($pdf->output(), 'Receipt.pdf');
-            });
+            $to = $product_owners;
+            $subject = 'Receipt for Product Purchase Education Training Collective (ETC)';
+            $bodyView = 'emails.ProductOwnerMessage';
+            $attachmentContent = $pdf->output();
+            $attachmentName = 'Receipt.pdf';
+            $status = $this->graphService->sendEmail($to, $subject, $bodyView, $attachmentContent, $attachmentName,$data);
         } catch (\Exception $exception) {
             DB::rollback();
             if (('APP_ENV') == 'local') {

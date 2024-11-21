@@ -49,11 +49,11 @@
 <body>
     <div class="container">
         <img src="{{$message->embed(public_path().'/images/background.jpg')}}" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px; width: 600px !important; max-height:200px !important;">
-        <h4 style="color:#235667;">Welcome to StudentPay, {{ $mailData['user_name'] }}!</h4>
+        <h4 style="color:#235667;">Welcome to StudentPay, {{ $user_name }}!</h4>
         <p>
             Congratulations! You have successfully created your StudentPay account.
             Here is your
-            <br><strong style="color:#235667 !important;">Password:</strong> {{ $mailData['body'] }}
+            <br><strong style="color:#235667 !important;">Password:</strong> {{ $body }}
             <br>
             For your security, we recommend changing your password as soon as you log in for the first time.
             Simply visit your profile settings to update your password <a style="color:#22C55D; font-size:1rem !important;" href="https://student-pay.co.uk/profile">click here</a>.

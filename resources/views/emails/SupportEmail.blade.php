@@ -50,13 +50,13 @@
     <div class="container">
         <h4 style="color:#235667;">StudentPay Support</h4>
         <p>
-            Name: {{$mailData['fullname']}}
+            Name: {{$fullname}}
             <br>
-            Email: {{$mailData['email']}}
+            Email: {{$email}}
             <br>
-            Subject: {{$mailData['subject']}}
+            Subject: {{$subject}}
             <br>
-            {{$mailData['message']}}
+            {{$message}}
             <br>
         </p>
 

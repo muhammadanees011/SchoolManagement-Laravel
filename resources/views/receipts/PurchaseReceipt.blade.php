@@ -56,7 +56,6 @@
     <table class="w-full">
         <tr>
             <td class="w-half">
-                <!-- <img src="{{ asset('laraveldaily.png') }}" alt="laravel daily" width="200" /> -->
             </td>
             <td class="w-half">
                 <h2>Invoice ID: {{$data['invoice_id']}}</h2>

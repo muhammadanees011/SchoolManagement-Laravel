@@ -51,16 +51,16 @@
         <img src="{{$message->embed(public_path().'/images/background.jpg')}}" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px; width: 600px !important; max-height:200px !important;">
         <h4 style="color:#235667;">Your Daily Update From StudentPay</h4>
         <p>
-            we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_students']}}</strong> students today, bringing our total number of students to  <strong style="color:#235667 !important;">{{$mailData['total_students']}}</strong> .
+            we have received a total of <strong style="color:#235667 !important;">{{$today_students}}</strong> students today, bringing our total number of students to  <strong style="color:#235667 !important;">{{$total_students}}</strong> .
             <br>
-            And we have received a total of <strong style="color:#235667 !important;">{{$mailData['today_staff']}}</strong> staff today, bringing our total number of staff to  <strong style="color:#235667 !important;">{{$mailData['total_staff']}}</strong> .
+            And we have received a total of <strong style="color:#235667 !important;">{{$today_staff}}</strong> staff today, bringing our total number of staff to  <strong style="color:#235667 !important;">{{$total_staff}}</strong> .
             <br>
         </p>
 
-        @if (!empty($mailData['new_schools']))
+        @if (!empty($new_schools))
             <p><strong>Users associated with the following schools have been dropped as these schools are not found on the StudentPay portal:</strong></p>
             <ul>
-                @foreach ($mailData['new_schools'] as $new_schools)
+                @foreach ($new_schools as $new_schools)
                     <li>{{ $new_schools }}</li>
                 @endforeach
             </ul>

@@ -205,7 +205,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/getItemsByMenuId/{id}',[MenuItemsController::class,'getItemsByMenuId']);
     //----------Item Cart--------------------
     Route::post('/addItemToCart', [UserCartController::class, 'addItemToCart']);
-    Route::post('/addTripToCart', [UserCartController::class, 'addTripToCart']);
     Route::post('/removeItemFromCart', [UserCartController::class, 'removeItemFromCart']);
     Route::get('/getUserCartItems', [UserCartController::class, 'getUserCartItems']);
     Route::get('/countUserCartItems', [UserCartController::class, 'countUserCartItems']);

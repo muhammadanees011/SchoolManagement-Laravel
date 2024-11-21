@@ -49,10 +49,10 @@
 <body>
     <div class="container">
         <img src="https://via.placeholder.com/100" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px;">
-        <h4 style="color:#235667;">Dear, {{ $mailData['user_name'] }}!</h4>
+        <h4 style="color:#235667;">Dear, {{ $user_name }}!</h4>
         <p>
             We noticed that you recently requested to reset your password for your account with StudentPay. Please use the following OTP to reset your password:
-            <br><strong style="color:#235667 !important;">OTP:</strong> {{ $mailData['body'] }}
+            <br><strong style="color:#235667 !important;">OTP:</strong> {{ $body }}
             <br>
         </p>
     </div>

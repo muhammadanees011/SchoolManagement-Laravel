@@ -19,6 +19,7 @@ use App\Models\Course;
 use App\Models\StudentCourse;
 use App\Models\Staff;
 use Illuminate\Support\Facades\Log;
+use App\Services\MicrosoftGraphService;
 
 class SyncUsers extends Command
 {
@@ -35,6 +36,20 @@ class SyncUsers extends Command
      * @var string
      */
     protected $description = 'Command description';
+
+    protected $graphService;
+
+    /**
+     * Create a new command instance.
+     *
+     * @param MicrosoftGraphService $graphService
+     * @return void
+     */
+    public function __construct(MicrosoftGraphService $graphService)
+    {
+        parent::__construct();
+        $this->graphService = $graphService;
+    }
 
     protected $newSchools = [];
 
@@ -79,28 +94,12 @@ class SyncUsers extends Command
                     $this->newSchools[] = $record->site;
                 }
                 continue;
-                // $organization=Organization::where('name','Education Training Collective')->first();
-                // $newSchool=new School();
-                // $newSchool->organization_id=$organization->id;
-                // $newSchool->title=$record->site;
-                // $newSchool->students_count=1;
-                // $newSchool->save();
-                // $school=$newSchool;
             }
 
             //----------STORE NEW STUDENT------------
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
-                // $userId=DB::table('users')->insertGetId([
-                //     'first_name' => $record->firstName,
-                //     'last_name' => $record->surname,
-                //     'email' => $record->eMail,
-                //     'password' => bcrypt($randomPassword),
-                //     'role' => 'student',
-                //     'created_at' => now(),
-                //     'updated_at' => now(),
-                // ]);
                 $user = new User();
                 $user->first_name = $record->firstName;
                 $user->last_name = $record->surname;
@@ -133,6 +132,19 @@ class SyncUsers extends Command
                 $student->purse_type = $record->purseType ?: null;
                 $student->site = $record->site ?: null;
                 $student->save();
+
+                // //----------GRAPHAPI SEND WELCOME MAIL--------------
+                // $data = [
+                //     'title'=>'Congratulations you have successfully created your StudentPay account!',
+                //     'body'=>$randomPassword,
+                //     'user_name'=>$studentName,
+                // ];
+        
+                // $to = [$record->eMail];
+                // $subject = 'Welcome Email';
+                // $bodyView = 'emails.WelcomeEmail';
+                // $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
+
                 // //----------SEND WELCOME MAIL--------------
                 // // $mailData = [
                 // //     'title' => 'Congratulations you have successfully created your StudentPay account!',
@@ -192,15 +204,6 @@ class SyncUsers extends Command
             $randomPassword = Str::random(10);
             $studentName = $record->firstName . ' ' . $record->surname;
             try{
-                // $userId=DB::table('users')->insertGetId([
-                //     'first_name' => $record->firstName,
-                //     'last_name' => $record->surname,
-                //     'email' => $record->eMail,
-                //     'password' => bcrypt($randomPassword),
-                //     'role' => 'staff',
-                //     'created_at' => now(),
-                //     'updated_at' => now(),
-                // ]);
 
                 $user = new User();
                 $user->first_name = $record->firstName;
@@ -227,6 +230,20 @@ class SyncUsers extends Command
                 $staff->mifare_id = $record->miFareID  ? : null ;
                 $staff->site = $record->site  ? : null ;
                 $staff->save();
+
+                //----------GRAPHAPI SEND WELCOME MAIL--------------
+                // $data = [
+                //     'title'=>'Congratulations you have successfully created your StudentPay account!',
+                //     'body'=>$randomPassword,
+                //     'user_name'=>$studentName,
+                // ];
+        
+                // $to = [$record->eMail];
+                // $subject = 'Welcome Email';
+                // $bodyView = 'emails.WelcomeEmail';
+                // $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
+
+
                 //----------SEND WELCOME MAIL--------------
                 // $mailData = [
                 //     'title' => 'Congratulations you have successfully created your StudentPay account!',
@@ -474,18 +491,30 @@ class SyncUsers extends Command
 
         $total_staff=Staff::count();
         $today_staff=Staff::whereDate('created_at', Carbon::today())->count();
-        $data['total_students']=$total_students;
-        $data['today_students']=$today_students;
-        $data['total_staff']=$total_staff;
-        $data['today_staff']=$today_staff;
-        $data['new_schools']=$this->newSchools;
-        //----------SEND ETC MAIL--------------
-        Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
-        Mail::to('abeer.waseem@xepos.co.uk')->send(new ETCEmail($data));
-        Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
-        Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
-        Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
 
-        Log::info('Sending Email completed successfully');
+        // $data['total_students']=$total_students;
+        // $data['today_students']=$today_students;
+        // $data['total_staff']=$total_staff;
+        // $data['today_staff']=$today_staff;
+        // $data['new_schools']=$this->newSchools;
+        //----------SEND ETC MAIL--------------
+        // Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
+        // Mail::to('abeer.waseem@xepos.co.uk')->send(new ETCEmail($data));
+        // Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
+        // Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
+        // Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
+
+        $data = [
+            'total_students'=>$total_students,
+            'today_students'=>$today_students,
+            'total_staff'=>$total_staff,
+            'today_staff'=>$today_staff,
+            'new_schools'=>$this->newSchools,
+        ];
+
+        $to = ['itsanees011@gmail.com'];
+        $subject = 'StudentPay Data Updated';
+        $bodyView = 'emails.ETCEmail';
+        $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
     }
 }

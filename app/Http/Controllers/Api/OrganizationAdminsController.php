@@ -87,13 +87,13 @@ class OrganizationAdminsController extends Controller
             $userWallet->save();
             DB::commit();
             //------------SEND WELCOME MAIL------------
-            $studentName = $request->first_name . ' ' . $request->last_name;
-            $mailData = [
-            'title' => 'Congratulations you have successfully created your StudentPay account!',
-            'body' => $request['password'],
-            'user_name'=> $studentName,
-            ];
-            Mail::to($request->email)->send(new WelcomeEmail($mailData));
+            // $studentName = $request->first_name . ' ' . $request->last_name;
+            // $mailData = [
+            // 'title' => 'Congratulations you have successfully created your StudentPay account!',
+            // 'body' => $request['password'],
+            // 'user_name'=> $studentName,
+            // ];
+            // Mail::to($request->email)->send(new WelcomeEmail($mailData));
             $response['message'] = ['Successfully created the Organization Admin'];
             $response['user']=$user;
             return response()->json($response, 200);

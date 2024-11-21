@@ -28,6 +28,13 @@ use App\Services\MicrosoftGraphService;
 
 class OrganizationShopsController extends Controller
 {
+    protected $graphService;
+
+    public function __construct(MicrosoftGraphService $graphService)
+    {
+        $this->graphService = $graphService;
+    }
+
     //----------GET SCHOOLS AND COURSES---------
     public function getAllSchoolsCourses()
     {
@@ -209,7 +216,7 @@ class OrganizationShopsController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        // try {
+        try {
         //     DB::beginTransaction();
             $user=Auth::user();               
             $shop=OrganizationShop::first();
@@ -251,27 +258,29 @@ class OrganizationShopsController extends Controller
             }
             // DB::commit();
             if($shop->product_owner_name!=null && $shop->product_owner_email!=null){
-                $data['owner_name']=$shop->product_owner_name;
-                $data['owner_email']=$shop->product_owner_email;
-                $data['product_name']= $item->name;
-                $data['product_price']= number_format($item->price, 2, '.', '');
-                $data['product_quantity']=$item->quantity;
-                Mail::send('emails.ProductCreated', ['data' => $data], function($message) use ($data) {
-                    $message->from('studentpay@xepos.co.uk');
-                    $message->to($data['owner_email']);
-                    $message->subject('New Product Created – Notification');
-                });
+                $data = [
+                    'owner_name' => $item->product_owner_name,
+                    'owner_email' => $item->product_owner_email,
+                    'product_name' => $item->name,
+                    'product_price' => number_format($item->price, 2, '.', ''),
+                    'product_quantity' => $item->quantity ? $item->quantity :'Unlimited',
+                ];
+
+                $to = [$data['owner_email']];
+                $subject = 'New Product Created – Notification';
+                $bodyView = 'emails.ProductCreated';
+                $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
             }
             $response = ['Successfully Created Item'];
             return response()->json($response, 200);
-        // } catch (\Exception $exception) {
-        //     DB::rollback();
-        //     if (('APP_ENV') == 'local') {
-        //         return response()->json($exception, 500);
-        //     } else {
-        //         return response()->json($exception, 500);
-        //     }
-        // }
+        } catch (\Exception $exception) {
+            DB::rollback();
+            if (('APP_ENV') == 'local') {
+                return response()->json($exception, 500);
+            } else {
+                return response()->json($exception, 500);
+            }
+        }
     }
     
     //----------FIND SHOP ITEM---------

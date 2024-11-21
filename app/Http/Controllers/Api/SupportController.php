@@ -12,9 +12,17 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\School;
 use App\Models\Staff;
 use App\Models\Student;
+use App\Services\MicrosoftGraphService;
 
 class SupportController extends Controller
 {
+    protected $graphService;
+
+    public function __construct(MicrosoftGraphService $graphService)
+    {
+        $this->graphService = $graphService;
+    }
+    
     public function sendSupportEmail(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -27,11 +35,6 @@ class SupportController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-
-        $data['fullname']=$request->fullName;
-        $data['email']=$request->email;
-        $data['subject']=$request->subject;
-        $data['message']=$request->message;
 
         $user=Auth::user();
         $recipient_mail;
@@ -51,7 +54,20 @@ class SupportController extends Controller
         if($school && $school->finance_coordinator_email){
             $recipient_mail=$school->finance_coordinator_email;
             //----------SEND SUPPORT MAIL--------------
-            Mail::to($recipient_mail)->send(new SupportEmail($data));
+            // Mail::to($recipient_mail)->send(new SupportEmail($data));
+
+            $data = [
+                'fullname' => $request->fullName,
+                'email' => $request->email,
+                'subject' => $request->subject,
+                'message' => $request->message,
+            ];
+    
+            $to = [$recipient_mail];
+            $subject = $request->subject;
+            $bodyView = 'emails.SupportEmail';
+            $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
+
         }else{
             return response()->json(['errors'=>['Recipient Email Not Found']], 422); 
         }

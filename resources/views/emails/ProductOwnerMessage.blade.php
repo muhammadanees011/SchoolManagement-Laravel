@@ -48,16 +48,9 @@
 
 <body>
     <div class="container">
-        <!-- <img src="{{$message->embed(public_path().'/images/background.jpg')}}" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px; width: 600px !important; max-height:200px !important;"> -->
         <h4 style="color:#235667;">Hello,</h4>
         <p>
         We’re excited to inform you that your product was included in a recent purchase. Please find the attached receipt with the details.
-            <br> for details.  
-            <a style="color:#22C55D !important; font-size:1rem !important;" href="mailto:support@studentpay.com">support@studentpay.com</a>.
-        </p>
-        <p>
-            <strong style="color:#235667 !important;">Our Address:</strong><br>
-            The Exchange, 26 Haslucks Green Road, Shirley, Solihull, B90 2EL
         </p>
         <footer>
             <p>

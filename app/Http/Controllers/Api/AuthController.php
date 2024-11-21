@@ -20,10 +20,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Socialite;
 use GuzzleHttp\Client;
-
+use App\Services\MicrosoftGraphService;
 
 class AuthController extends Controller
 {
+    protected $graphService;
+
+    public function __construct(MicrosoftGraphService $graphService)
+    {
+        $this->graphService = $graphService;
+    }
+    
     //------------REGISTER USER--------------
     public function register(Request $request){
         $validator = Validator::make($request->all(), [
@@ -203,12 +210,23 @@ class AuthController extends Controller
         $user->save();
         //Send OTP to Email
         try {
-            $mailData = [
-            'title' => 'Reset Your Password',
-            'body' => $otp,
-            'user_name'=> $user->first_name,
+            // $mailData = [
+            // 'title' => 'Reset Your Password',
+            // 'body' => $otp,
+            // 'user_name'=> $user->first_name,
+            // ];
+            // Mail::to($request->email)->send(new ForgotPasswordEmail($mailData));
+            $data = [
+                'title'=>'Reset Your Password',
+                'body'=>$otp,
+                'user_name'=>$user->first_name,
             ];
-            Mail::to($request->email)->send(new ForgotPasswordEmail($mailData));
+    
+            $to = [$request->email];
+            $subject = 'Reset Password OTP';
+            $bodyView = 'emails.ForgotPasswordEmail';
+            $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
+
         } catch (\Exception $e) {
             return response()->json($e->getMessage());
         }

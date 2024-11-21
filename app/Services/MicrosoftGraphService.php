@@ -31,34 +31,49 @@ class MicrosoftGraphService
 
 
     // app/Services/MicrosoftGraphService.php
-    public function sendEmail($to, $subject, $body)
+    public function sendEmail($to, $subject, $bodyView, $attachmentContent=null, $attachmentName=null, $data = [])
     {
         $token = $this->getAccessToken();
+        // return $token;
+        $body = view($bodyView, $data)->render();
         $emailData = [
             'message' => [
                 'subject' => $subject,
                 'body' => [
-                    'contentType' => 'Text',
+                    'contentType' => 'HTML',
                     'content' => $body,
-                ],
-                'toRecipients' => [
-                    [
-                        'emailAddress' => [
-                            'address' => $to,
-                        ],
-                    ],
                 ],
             ]
         ];
 
-        $response = $this->client->post('https://graph.microsoft.com/v1.0/users/' . env('MICROSOFT_CLIENT_ID') . '/sendMail', [
+        if (is_array($to)) {
+            $emailData['message']['toRecipients'] = array_map(function($email) {
+                return [
+                    'emailAddress' => [
+                        'address' => $email,
+                    ],
+                ];
+            }, $to);
+        }
+
+        if ($attachmentContent && $attachmentName) {
+            $emailData['message']['attachments'] = [
+                [
+                    '@odata.type' => '#microsoft.graph.fileAttachment',
+                    'name' => $attachmentName,
+                    'contentBytes' => base64_encode($attachmentContent),
+                ],
+            ];
+        }
+        
+        $response = $this->client->post('https://graph.microsoft.com/v1.0/users/studentpay@the-etc.ac.uk/sendMail', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/json',
             ],
             'json' => $emailData,
         ]);
-
+        // return $response;
         return $response->getStatusCode();
     }
 
