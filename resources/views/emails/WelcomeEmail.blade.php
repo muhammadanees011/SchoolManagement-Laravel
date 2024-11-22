@@ -48,7 +48,7 @@
 
 <body>
     <div class="container">
-        <img src="{{$message->embed(public_path().'/images/background.jpg')}}" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px; width: 600px !important; max-height:200px !important;">
+        <!-- <img src="{{$message->embed(public_path().'/images/background.jpg')}}" alt="Icon" class="icon-img" style="display: block; margin: 0 auto 20px; width: 600px !important; max-height:200px !important;"> -->
         <h4 style="color:#235667;">Welcome to StudentPay, {{ $user_name }}!</h4>
         <p>
             Congratulations! You have successfully created your StudentPay account.
