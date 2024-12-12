@@ -246,7 +246,11 @@ class OrganizationShopsController extends Controller
             $item->quantity = $request->quantity;
             $item->product_owner_email = $request->product_owner_email;
             $item->quantity_sold = 0;
-            $item->status = $request->quantity == 0 ? 'not_available' : 'available';
+            if($request->quantity==null || $request->quantity > 0){
+                $item->status = 'available';
+            }else if($request->quantity == 0){
+                $item->status ='not_available';
+            }
             $item->valid_from = $request->valid_from;
             $item->valid_to = $request->valid_to;
             $item->payment_plan = $request->payment_plan;
@@ -347,7 +351,11 @@ class OrganizationShopsController extends Controller
             $item->product_owner_email = $request->product_owner_email;
             $item->price=$request->price;
             $item->quantity=$request->quantity;
-            $item->status = $request->quantity == 0 ? 'not_available' : 'available';
+            if($request->quantity==null || $request->quantity > 0){
+                $item->status = 'available';
+            }else if($request->quantity == 0){
+                $item->status ='not_available';
+            }
             $item->valid_from=$request->valid_from;
             $item->valid_to=$request->valid_to;
             $item->payment_plan=$request->payment_plan;
