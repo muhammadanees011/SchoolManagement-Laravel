@@ -100,9 +100,7 @@ class OrganizationShopsController extends Controller
                 $query->where('status', 'available')
                     ->where(function ($q) {
                         $q->whereJsonContains('visibility_options', [['name' => 'Available to Students']])
-                        ->orWhere('visibility_options', '[]')
-                        ->orWhereNull('visibility_options'); // Handle null explicitly
-                         
+                        ->orWhereJsonLength('visibility_options', 0); // Checks for an empty array
                     })
                     // ->where(function ($q) use ($schoolName) {
                     //     $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
