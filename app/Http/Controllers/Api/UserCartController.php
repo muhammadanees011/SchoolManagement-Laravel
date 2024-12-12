@@ -15,6 +15,7 @@ use App\Models\UserCard;
 use Illuminate\Support\Str;
 use App\Models\TransactionHistory;
 use App\Http\Resources\MyInstallmentsRescource;
+use App\Http\Resources\AdminInstallmentsResource;
 use App\Models\TripParticipant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -44,9 +45,23 @@ class UserCartController extends Controller
         try {
             DB::beginTransaction();
             $user=Auth::user();
-            $cartItem=new UserCart();
-            $cartItem->user_id=$user->id;
-            $cartItem->shop_item_id=$request->shop_item_id;
+
+            if($request->installment_id){
+                $cartItem=UserCart::where('user_id',$user->id)->where('installment_id',$request->installment_id)->first();
+                if($cartItem){
+                    $response = ['Installment Is Already In The Cart'];
+                    return response()->json($response, 409);
+                }else{
+                    $cartItem=new UserCart();
+                    $cartItem->user_id=$user->id;
+                    $cartItem->installment_id=$request->installment_id;
+                }
+
+            }else{
+                $cartItem=new UserCart();
+                $cartItem->user_id=$user->id;
+                $cartItem->shop_item_id=$request->shop_item_id;
+            }
             $cartItem->save();
             DB::commit();
             $response = ['Successfully Added Item To The Cart'];
@@ -65,7 +80,7 @@ class UserCartController extends Controller
     public function getUserCartItems(){
         try {
             $user=Auth::user();
-            $cartItems=UserCart::with('ShopItem.payment','Trip')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
+            $cartItems=UserCart::with('ShopItem.payment','Installment.shopItems')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
             return response()->json($cartItems, 200);
         } catch (\Exception $exception) {
             DB::rollback();
@@ -122,9 +137,9 @@ class UserCartController extends Controller
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
-        try {
+        // try {
             $user=Auth::user();
-            $cartItems=UserCart::with('ShopItem.payment')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
+            $cartItems=UserCart::with('ShopItem.payment','Installment')->where('user_id',$user->id)->orderBy('created_at', 'desc')->get();
             if($cartItems->isEmpty()){
                 $response = ['Cart is empty'];
                 return response()->json($response, 422);
@@ -135,7 +150,7 @@ class UserCartController extends Controller
             $product_owners=[];
 
             foreach ($cartItems as $cartItem) {
-                if ($cartItem->ShopItem && $cartItem->ShopItem->quantity > 0 || $cartItem->ShopItem->quantity==null) {
+                if ($cartItem->ShopItem) {
                     if($cartItem->ShopItem->payment_plan=='installments'){
                       $totalAmount += $cartItem->ShopItem->payment->amount_per_installment;
                       $price = $cartItem->ShopItem->payment->amount_per_installment;
@@ -170,17 +185,27 @@ class UserCartController extends Controller
 
             //--------ITEMS PAYMENT-----------
             foreach ($cartItems as $cartItem) {
-                if ($cartItem->ShopItem && $cartItem->ShopItem->quantity > 0 || $cartItem->ShopItem->quantity ==null) {
+                if ($cartItem->ShopItem || $cartItem->Installment) {
                     $type='school_shop_funds';
-                    if($cartItem->ShopItem->payment_plan=='installments'){
-                        $ItemAmount = $cartItem->ShopItem->payment->amount_per_installment;
-                    }else if($cartItem->ShopItem->payment_plan=='installments_and_deposit'){
-                        $ItemAmount = $cartItem->ShopItem->payment->initial_deposit_installments;
-                    }else if($cartItem->ShopItem->payment_plan=='full_payment'){
-                        $ItemAmount = $cartItem->ShopItem->price;
+
+                    if($cartItem->Installment){ //for installments
+                        $ItemAmount = $cartItem->Installment->installment_amount;
+                    }else //for shop items
+                    {
+                        if($cartItem->ShopItem->payment_plan=='installments'){
+                            $ItemAmount = $cartItem->ShopItem->payment->amount_per_installment;
+                        }else if($cartItem->ShopItem->payment_plan=='installments_and_deposit'){
+                            $ItemAmount = $cartItem->ShopItem->payment->initial_deposit_installments;
+                        }else if($cartItem->ShopItem->payment_plan=='full_payment'){
+                            $ItemAmount = $cartItem->ShopItem->price;
+                        }
                     }
+
                     if($request->type=='card'){
                         $res=$this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
+                        $latest_charge=$res->latest_charge;
+                    }else if($request->type=='google_apple_pay'){
+                        $res=$this->createGoogleApplePaymentIntent($user->id,$ItemAmount,$type);
                         $latest_charge=$res->latest_charge;
                     }else if($request->type=='wallet'){
                         $user_wallet=Wallet::where('user_id',$user->id)->first();
@@ -198,8 +223,25 @@ class UserCartController extends Controller
                             return response()->json($response, 500);
                         }
                     }
-                    $purchase=$this->saveMyPurchases($cartItem->ShopItem,$ItemAmount,$request->payment_method,$latest_charge);
-                    $this->saveMyInstallments($cartItem->ShopItem,$purchase->id);
+                    if($cartItem->ShopItem){
+                        $purchase=$this->saveMyPurchases($cartItem->ShopItem,$ItemAmount,$request->payment_method,$latest_charge);
+                        $this->saveMyInstallments($cartItem->ShopItem,$purchase->id);
+                    }else{
+                        $installment=MyInstallments::find($cartItem->Installment->id);
+                        $installment->payment_status='paid';
+                        $installment->save();
+
+                        $installment->payment_status='paid';
+                        $installment->save();
+                
+                        $purchase=MyPurchase::find($installment->purchases_id);
+                        $netpayment=$purchase->amount_paid + $ItemAmount;
+                        if($netpayment == $purchase->total_price){
+                            $purchase->payment_status = "fully_paid"; 
+                        }
+                        $purchase->amount_paid = $purchase->amount_paid + $ItemAmount;
+                        $purchase->save();
+                    }
                 }
             }
             
@@ -225,15 +267,15 @@ class UserCartController extends Controller
             $this->sendReceipt($data);
             $response=['Checkout Successfull'];
             $status=200;
-              return response()->json($response, $status);
-        } catch (\Exception $exception) {
-            DB::rollback();
-            if (('APP_ENV') == 'local') {
-                dd($exception);
-            } else {
-                return response()->json('Something went wrong', 500);
-            }
-        }
+            return response()->json($response, $status);
+        // } catch (\Exception $exception) {
+        //     DB::rollback();
+        //     if (('APP_ENV') == 'local') {
+        //         dd($exception);
+        //     } else {
+        //         return response()->json('Something went wrong', 500);
+        //     }
+        // }
     }
 
     public function sendReceipt($data){
@@ -357,7 +399,7 @@ class UserCartController extends Controller
                     'destination' => "acct_1NlWiGGYrt7SylQr",
                 ],
                 'return_url' => 'https://your-website.com/thank-you',
-
+                'automatic_payment_methods' => ['enabled' => true],
             ]);
             // ['stripe_account' => 'acct_1Q8m46PPnkrk4pSx']
             $user=Auth::user();
@@ -386,17 +428,78 @@ class UserCartController extends Controller
         // ];
     }
 
+    //--------------Google Apple PAYMENT-------------
+    public function createGoogleApplePaymentIntent($user_id,$amount,$type){
+        StripeGateway::setApiKey(env('STRIPE_SECRET'));
+        // try {
+            $user=User::find($user_id);
+            $paymentIntent = PaymentIntent::create([
+                'amount' => $amount * 100,
+                'currency' => 'gbp',
+                'customer' => $user->stripe_id,  //ID of the customer in Stripe
+                'confirm' => true, // Confirm the payment immediately
+                'transfer_data' => [
+                    'destination' => "acct_1NlWiGGYrt7SylQr",
+                ],
+                'return_url' => 'https://your-website.com/thank-you',
+                'automatic_payment_methods' => ['enabled' => true],
+            ]);
+            // ['stripe_account' => 'acct_1Q8m46PPnkrk4pSx']
+            $user=Auth::user();
+            $user_card=UserCard::where('user_id',$user->id)->first();
+            $history=new TransactionHistory();
+            $history->user_id=$user_id;
+            $history->amount=$amount;
+            $history->type=$type;
+            $history->charge_id=$paymentIntent->latest_charge;
+            $history->save();
+
+            return $paymentIntent;
+            
+        // } catch (\Exception $e) {
+        //     return response()->json(['error' => $e->getMessage()], 500);
+        // }
+    }
+
     //--------------GET MY INSTALLMENTS-------------
     public function getMyInstallments(Request $request)
     {
         $user=Auth::user();
         if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
-            $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate($request->entries_per_page);  
+            $myInstallments=MyPurchase::has('installments')->with('installments')->orderBy('created_at','desc')->paginate($request->entries_per_page);
+            // return $myInstallments;
+            $myInstallments = AdminInstallmentsResource::collection($myInstallments);
+            // $myInstallments=MyInstallments::where('payment_status','pending')->orderBy('created_at','desc')->paginate($request->entries_per_page);  
         }else{
             $myInstallments=MyInstallments::where('payment_status','pending')
             ->where('user_id',$user->id)->orderBy('created_at','desc')->paginate($request->entries_per_page);
+            $myInstallments = MyInstallmentsRescource::collection($myInstallments);
         }
-        $myInstallments = MyInstallmentsRescource::collection($myInstallments);
+
+        $pagination = [
+        'current_page' => $myInstallments->currentPage(),
+        'last_page' => $myInstallments->lastPage(),
+        'per_page' => $myInstallments->perPage(),
+        'total' => $myInstallments->total(),
+        ];
+        $response['data']=$myInstallments;
+        $response['pagination']=$pagination;
+        return response()->json($response, 200);
+    }
+
+    //--------------GET PAID INSTALLMENTS-------------
+    public function getPaidInstallments(Request $request)
+    {
+        $user=Auth::user();
+        if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
+            $myInstallments=MyInstallments::where('payment_status','paid')
+            ->orderBy('created_at','desc')->paginate($request->entries_per_page);
+            $myInstallments = MyInstallmentsRescource::collection($myInstallments);
+        }else{
+            $myInstallments=MyInstallments::where('payment_status','paid')
+            ->where('user_id',$user->id)->orderBy('created_at','desc')->paginate($request->entries_per_page);
+            $myInstallments = MyInstallmentsRescource::collection($myInstallments);
+        }
 
         $pagination = [
         'current_page' => $myInstallments->currentPage(),
@@ -411,23 +514,25 @@ class UserCartController extends Controller
 
     public function filterInstallments(Request $request){
         if($request->type=='Item Name'){
-            $purchases=MyInstallments::with('shopItems')
-            ->whereHas('shopItems', function($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->value . '%');
-            })->get();
+            $purchases=
+                MyInstallmentsRescource::collection(
+                    MyInstallments::with('shopItems')->whereHas('shopItems', function($query) use ($request) {
+                    $query->where('name', 'like', '%' . $request->value . '%');
+                })->where('payment_status',$request->status)->get()
+            );
         }else if($request->type=='Buyer'){
-            $purchases=MyInstallments::with('user')
-            ->whereHas('user', function($query) use ($request) {
+            $purchases = MyInstallmentsRescource::collection(
+                MyInstallments::with('user')->whereHas('user', function($query) use ($request) {
                 $query->where('first_name', 'like', '%' . $request->value . '%')
                 ->orWhere('last_name', 'like', '%' . $request->value . '%')
                 ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $request->value . '%']);
-            })->get();
+            })->where('payment_status',$request->status)->get()
+            );
         }if($request->type=='Date Range'){
             $fromDate = Carbon::createFromFormat('d/m/Y', $request->value['fromDate'])->startOfDay()->format('Y-m-d 00:00:0');
             $toDate = Carbon::createFromFormat('d/m/Y', $request->value['toDate'])->endOfDay()->format('Y-m-d 23:59:59');
-            $purchases = 
-            $myInstallments = MyInstallmentsRescource::collection(
-            MyInstallments::whereBetween('created_at', [$fromDate, $toDate])->get()
+            $purchases = MyInstallmentsRescource::collection(
+            MyInstallments::whereBetween('created_at', [$fromDate, $toDate])->where('payment_status',$request->status)->get()
             );
         }
         return response()->json($purchases, 200);
@@ -475,5 +580,10 @@ class UserCartController extends Controller
         }
         $purchase->amount_paid = $purchase->amount_paid + $ItemAmount;
         $purchase->save();
+
+        $cart=UserCart::where('user_id',$user->id)->where('installment_id',$request->installment_id)->first();
+        if($cart){
+            $cart->delete();
+        }
     }
 }

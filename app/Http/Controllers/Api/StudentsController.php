@@ -586,7 +586,7 @@ class StudentsController extends Controller
             if($request->add_amount){
                 $history=new TransactionHistory();
                 $history->user_id=$student->user_id;
-                $history->type='top_up';
+                $history->type='admin_top_up';
                 $history->amount=$request->add_amount;
                 $history->save();
             }

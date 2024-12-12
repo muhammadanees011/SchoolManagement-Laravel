@@ -13,8 +13,9 @@ class UserCart extends Model
     {
         return $this->hasOne(ShopItem::class,'id','shop_item_id');
     }
-    public function Trip()
+
+    public function Installment()
     {
-        return $this->hasOne(Trip::class,'id','trip_id');
+        return $this->hasOne(MyInstallments::class,'id','installment_id');
     }
 }

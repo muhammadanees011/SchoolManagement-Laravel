@@ -94,29 +94,45 @@ class OrganizationShopsController extends Controller
                 return $course->CourseCode . '-' . $course->CourseDescription.'';
             })->toArray();
             $schoolName=$school->title;
+           
+            
             $shopItems = OrganizationShop::where('organization_id', $school->organization_id)
-            ->with(['shopItems' => function ($query) use ($schoolName, $courseCodes){
-               $query->where('status', '!=', 'deleted')
-               ->whereJsonContains('visibility_options', [['name' => 'Available to Students']])
-               ->whereJsonContains('limit_colleges', [['name' => $schoolName]])
-                ->where(function ($q) use ($courseCodes) {
-                    $q->where(function ($subQuery) use ($courseCodes) {
-                        foreach ($courseCodes as $courseCode) {
-                            $subQuery->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
-                        }
-                    });
-                })
-               ->orderBy('created_at', 'desc');
+            ->with(['shopItems' => function ($query) use ($schoolName, $courseCodes) {
+                $query->where('status', 'available')
+                    ->where(function ($q) {
+                        $q->whereJsonContains('visibility_options', [['name' => 'Available to Students']])
+                        ->orWhere('visibility_options', '[]'); // Include results when visibility_options is null
+                    })
+                    ->where(function ($q) use ($schoolName) {
+                        $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
+                        ->orWhere('limit_colleges','[]'); // Include results when limit_colleges is null
+                    })
+                    ->where(function ($q) use ($courseCodes) {
+                        $q->where(function ($subQuery) use ($courseCodes) {
+                            foreach ($courseCodes as $courseCode) {
+                                $subQuery->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
+                            }
+                        })
+                        ->orWhere('limit_courses','[]'); // Include results when limit_courses is null
+                    })
+                    ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])
             ->paginate($request->entries_per_page);
         }else if($user->role=='staff'){
             $staff=Staff::where('user_id',$user->id)->first();
             $school=School::where('id',$staff->school_id)->first();
             $schoolName=$school->title;
-            $shopItems=OrganizationShop::where('organization_id',$school->organization_id)->with(['shopItems' => function($query) use ($schoolName){
-                $query->where('status', '!=', 'deleted')
-                ->whereJsonContains('visibility_options', [['name' => 'Available to Staff']])
-                ->whereJsonContains('limit_colleges', [['name' => $schoolName]])
+            $shopItems=OrganizationShop::where('organization_id',$school->organization_id)
+            ->with(['shopItems' => function($query) use ($schoolName){
+                $query->where('status', 'available')
+                ->where(function ($q) {
+                    $q->whereJsonContains('visibility_options', [['name' => 'Available to Staff']])
+                    ->orWhere('visibility_options', '[]'); // Include results when visibility_options is null
+                })
+                ->where(function ($q) use ($schoolName) {
+                    $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
+                    ->orWhere('limit_colleges','[]'); // Include results when limit_colleges is null
+                })
                 ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate(20);
         }

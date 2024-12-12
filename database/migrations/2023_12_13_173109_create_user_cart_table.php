@@ -19,8 +19,8 @@ return new class extends Migration
             $table->foreign('menu_item_id')->references('id')->on('menu_items')->onDelete('cascade');
             $table->bigInteger('shop_item_id')->unsigned()->nullable();
             $table->foreign('shop_item_id')->references('id')->on('shop_items')->onDelete('cascade');
-            $table->bigInteger('trip_id')->unsigned()->nullable();
-            $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
+            $table->bigInteger('installment_id')->unsigned()->nullable();
+            $table->foreign('installment_id')->references('id')->on('my_installments')->onDelete('cascade');
             $table->integer('quantity')->nullable();
             $table->timestamps();
         });

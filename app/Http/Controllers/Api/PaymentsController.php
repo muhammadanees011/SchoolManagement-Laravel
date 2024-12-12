@@ -265,7 +265,7 @@ class PaymentsController extends Controller
                     $history=new TransactionHistory();
                     $history->user_id=$student;
                     $history->amount=$request->topup_amount;
-                    $history->type='top_up';
+                    $history->type='admin_top_up';
                     $history->save();
                 }
 

@@ -4,8 +4,9 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\MyInstallmentsRescource;
 
-class MyInstallmentsRescource extends JsonResource
+class AdminInstallmentsResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -25,12 +26,9 @@ class MyInstallmentsRescource extends JsonResource
             'image' => $this->shopItems->image,
             'detail' => $this->shopItems->detail,
             'price' => $this->shopItems->price,
-            'installment_no' => $this->installment_no,
-            'installment_amount' => $this->installment_amount,
-            'payment_status' => $this->payment_status,
-            'installment_deadline' => $this->installment_deadline,
-            'purchase_id' => $this->purchases_id,
-            'created_at' => $this->created_at,
+            'amount_paid' => $this->amount_paid,
+            'purchase_date' => $this->created_at,
+            'installments' => MyInstallmentsRescource::collection($this->whenLoaded('installments')),
         ];
     }
 }

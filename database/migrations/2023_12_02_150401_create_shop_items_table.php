@@ -37,7 +37,7 @@ return new class extends Migration
             $table->json('visibility_options')->nullable();
             $table->string('product_type')->nullable();
             $table->enum('payment_plan',['full_payment','installments','installments_and_deposit'])->default('full_payment');
-            $table->enum('status',['available','not_available','deleted'])->default('available');
+            $table->enum('status',['available','not_available','deleted','expired'])->default('available');
             $table->timestamps();
         });
     }

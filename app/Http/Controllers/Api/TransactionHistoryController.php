@@ -141,10 +141,12 @@ class TransactionHistoryController extends Controller
         ->sum('amount');
 
         $currenctBalance=Wallet::where('user_id',$user->id)->first();
+        $fsmBalance=Student::where('user_id',$user->id)->first();
 
         $response['last_week']=$totalAmountLastWeek;
         $response['last_month']=$totalAmountLastMonth;
         $response['current_balance']=$currenctBalance->ballance;
+        $response['fsm_balance']=$fsmBalance->fsm_amount;
 
         return response()->json($response, 200);
     }

@@ -15,10 +15,10 @@ class MicrosoftGraphService
 
     public function getAccessToken()
     {
-        $response = $this->client->post('https://login.microsoftonline.com/' . env('MICROSOFT_TENANT_ID') . '/oauth2/v2.0/token', [
+        $response = $this->client->post('https://login.microsoftonline.com/' . config('services.microsoft.tenant') . '/oauth2/v2.0/token', [
             'form_params' => [
-                'client_id' => env('MICROSOFT_CLIENT_ID'),
-                'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
+                'client_id' => config('services.microsoft.client_id'),
+                'client_secret' => config('services.microsoft.client_secret'),
                 'scope' => 'https://graph.microsoft.com/.default',
                 'grant_type' => 'client_credentials',
             ],
@@ -66,7 +66,7 @@ class MicrosoftGraphService
             ];
         }
         
-        $response = $this->client->post('https://graph.microsoft.com/v1.0/users/studentpay@the-etc.ac.uk/sendMail', [
+        $response = $this->client->post('https://graph.microsoft.com/v1.0/users/'.config('services.microsoft.ms_email_account').'/sendMail', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/json',

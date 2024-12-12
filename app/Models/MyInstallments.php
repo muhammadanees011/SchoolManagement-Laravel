@@ -18,4 +18,9 @@ class MyInstallments extends Model
     {
         return $this->hasOne(User::class,'id','user_id');
     }
+
+    public function purchase()
+    {
+        return $this->hasOne(MyPurchase::class,'id','purchases_id');
+    }
 }

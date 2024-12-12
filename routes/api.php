@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\LegacyPermissionsController;
 use App\Http\Controllers\Api\RolesController;
 use App\Http\Controllers\Api\PermissionsController;
 use App\Http\Controllers\Api\MicrosoftController;
+use App\Http\Controllers\Api\ConfigurationController;
 use App\Http\Controllers\Api\ProductTypeController;
 
 /*
@@ -210,6 +211,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/countUserCartItems', [UserCartController::class, 'countUserCartItems']);
     Route::post('/checkout', [UserCartController::class, 'checkout']);
     Route::post('/getMyInstallments', [UserCartController::class, 'getMyInstallments']);
+    Route::post('/getPaidInstallments', [UserCartController::class, 'getPaidInstallments']);
     Route::post('/payInstallment', [UserCartController::class, 'payInstallment']);
     Route::post('/filterInstallments', [UserCartController::class, 'filterInstallments']);
     //----------My Purchases------------------
@@ -267,4 +269,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     //----------SEND SUPPORT EMAIL------------------
     Route::post('/sendSupportEmail',[SupportController::class,'sendSupportEmail']);
+
+    //----------CONFIGURATIONS------------------
+    Route::post('/saveConfigurations',[ConfigurationController::class,'save']);
+    Route::get('/getConfigurations',[ConfigurationController::class,'index']);
 });

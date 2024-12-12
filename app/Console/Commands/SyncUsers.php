@@ -18,6 +18,7 @@ use App\Models\Organization;
 use App\Models\Course;
 use App\Models\StudentCourse;
 use App\Models\Staff;
+use App\Models\ShopItem;
 use Illuminate\Support\Facades\Log;
 use App\Services\MicrosoftGraphService;
 
@@ -69,6 +70,7 @@ class SyncUsers extends Command
         $this->sendEmailToETC();
         // $this->archiveCourses();
         // $this->archiveStudentCourse();
+        $this->checkExpiries();
     }
 
     private function syncStudents(){
@@ -516,5 +518,10 @@ class SyncUsers extends Command
         $subject = 'StudentPay Data Updated';
         $bodyView = 'emails.ETCEmail';
         $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
+    }
+
+    public function checkExpiries(){
+        $updatedRows = ShopItem::whereDate('expiration_date', '<=', Carbon::today())
+        ->update(['status' => 'expired']);
     }
 }
