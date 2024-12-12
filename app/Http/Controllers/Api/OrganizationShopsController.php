@@ -87,7 +87,6 @@ class OrganizationShopsController extends Controller
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
             $courses=StudentCourse::where('StudentID',$student->student_id)->get();
-            return $courses;
             // if (!$courses->isEmpty()) {
                 $courseCodes = $courses->map(function ($course) {
                     return $course->CourseCode . '-' . $course->CourseDescription.'';
@@ -107,14 +106,14 @@ class OrganizationShopsController extends Controller
                         $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
                         ->orWhere('limit_colleges','[]'); // Include results when limit_colleges is null
                     })
-                    ->where(function ($q) use ($courseCodes) {
-                        $q->where(function ($subQuery) use ($courseCodes) {
-                            foreach ($courseCodes as $courseCode) {
-                                $subQuery->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
-                            }
-                        })
-                        ->orWhere('limit_courses','[]'); // Include results when limit_courses is null
-                    })
+                    // ->where(function ($q) use ($courseCodes) {
+                    //     $q->where(function ($subQuery) use ($courseCodes) {
+                    //         foreach ($courseCodes as $courseCode) {
+                    //             $subQuery->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
+                    //         }
+                    //     })
+                    //     ->orWhere('limit_courses','[]'); // Include results when limit_courses is null
+                    // })
                     ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])
             ->paginate($request->entries_per_page);
