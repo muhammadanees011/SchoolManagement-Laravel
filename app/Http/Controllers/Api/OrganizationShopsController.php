@@ -102,10 +102,10 @@ class OrganizationShopsController extends Controller
                         $q->whereJsonContains('visibility_options', [['name' => 'Available to Students']])
                         ->orWhere('visibility_options', '[]'); // Include results when visibility_options is null
                     })
-                    ->where(function ($q) use ($schoolName) {
-                        $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
-                        ->orWhere('limit_colleges','[]'); // Include results when limit_colleges is null
-                    })
+                    // ->where(function ($q) use ($schoolName) {
+                    //     $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
+                    //     ->orWhere('limit_colleges','[]'); // Include results when limit_colleges is null
+                    // })
                     // ->where(function ($q) use ($courseCodes) {
                     //     $q->where(function ($subQuery) use ($courseCodes) {
                     //         foreach ($courseCodes as $courseCode) {
