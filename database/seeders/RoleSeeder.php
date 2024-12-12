@@ -15,7 +15,7 @@ class RoleSeeder extends Seeder
     {
         $adminRole = Role::firstOrCreate(['guard_name' => 'api','name' => 'Admin']);
         $associateAdminRole = Role::firstOrCreate(['guard_name' => 'api','name' => 'Associate Admin']);
-        $staffRole = Role::firstOrCreate(['guard_name' => 'api','name' => 'Staff']);
+        $staffRole = Role::firstOrCreate(['guard_name' => 'api','name' => 'staff']);
 
         $adminPermissions = ['create_admin', 'view_admin', 'edit_admin', 'delete_admin','create_site'
         ,'delete_site','view_site','edit_site','create_student','delete_student','view_student',
