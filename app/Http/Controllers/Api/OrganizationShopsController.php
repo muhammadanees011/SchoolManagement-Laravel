@@ -87,11 +87,11 @@ class OrganizationShopsController extends Controller
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
             $courses=StudentCourse::where('StudentID',$student->student_id)->get();
-            if (!$courses->isEmpty()) {
+            // if (!$courses->isEmpty()) {
                 $courseCodes = $courses->map(function ($course) {
                     return $course->CourseCode . '-' . $course->CourseDescription.'';
                 })->toArray();
-            }
+            // }
             $schoolName=$school->title;
            
             
