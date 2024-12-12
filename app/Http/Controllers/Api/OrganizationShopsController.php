@@ -99,21 +99,20 @@ class OrganizationShopsController extends Controller
             ->with(['shopItems' => function ($query) use ($schoolName, $courseCodes) {
                 $query->where('status', 'available')
                     ->where(function ($q) {
-                        $q->whereJsonContains('visibility_options', [['name' => 'Available to Students']])
-                        ->orWhereJsonLength('visibility_options', 0); // Checks for an empty array
+                        $q->whereJsonContains('visibility_options', [['name' => 'Available to Students']]);
                     })
-                    // ->where(function ($q) use ($schoolName) {
-                    //     $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
-                    //     ->orWhere('limit_colleges','[]'); // Include results when limit_colleges is null
-                    // })
-                    // ->where(function ($q) use ($courseCodes) {
-                    //     $q->where(function ($subQuery) use ($courseCodes) {
-                    //         foreach ($courseCodes as $courseCode) {
-                    //             $subQuery->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
-                    //         }
-                    //     })
-                    //     ->orWhere('limit_courses','[]'); // Include results when limit_courses is null
-                    // })
+                    ->where(function ($q) use ($schoolName) {
+                        $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
+                        ->orWhereJsonLength('limit_colleges', 0); // Checks for an empty array
+                    })
+                    ->where(function ($q) use ($courseCodes) {
+                        $q->where(function ($subQuery) use ($courseCodes) {
+                            foreach ($courseCodes as $courseCode) {
+                                $subQuery->orWhereJsonContains('limit_courses', [['name' => $courseCode]]);
+                            }
+                        })
+                        ->orWhereJsonLength('limit_courses', 0); // Checks for an empty array
+                    })
                     ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])
             ->paginate($request->entries_per_page);
@@ -125,12 +124,11 @@ class OrganizationShopsController extends Controller
             ->with(['shopItems' => function($query) use ($schoolName){
                 $query->where('status', 'available')
                 ->where(function ($q) {
-                    $q->whereJsonContains('visibility_options', [['name' => 'Available to Staff']])
-                    ->orWhere('visibility_options', '[]'); // Include results when visibility_options is null
+                    $q->whereJsonContains('visibility_options', [['name' => 'Available to Staff']]);
                 })
                 ->where(function ($q) use ($schoolName) {
                     $q->whereJsonContains('limit_colleges', [['name' => $schoolName]])
-                    ->orWhere('limit_colleges','[]'); // Include results when limit_colleges is null
+                    ->orWhereJsonLength('limit_colleges', 0); // Checks for an empty array
                 })
                 ->orderBy('created_at', 'desc');
             }, 'shopItems.payment'])->paginate(20);
