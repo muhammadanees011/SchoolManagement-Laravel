@@ -167,7 +167,6 @@ class PaymentsController extends Controller
             }else{
                 $user=User::find($request->user_id);
             }
-            return env('STRIPE_SECRET');
             Stripe::setApiKey(env('STRIPE_SECRET'));
             // Replace 'cus_12345678901234567890' with the actual customer ID
             $customerId = $user->stripe_id;
