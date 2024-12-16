@@ -521,7 +521,8 @@ class SyncUsers extends Command
     }
 
     public function checkExpiries(){
-        $updatedRows = ShopItem::whereDate('expiration_date', '<=', Carbon::today())
+        $today = Carbon::today()->toDateString(); // "2024-12-16"
+        $updatedRows = ShopItem::whereDate('valid_to', '<=', $today)
         ->update(['status' => 'expired']);
     }
 }

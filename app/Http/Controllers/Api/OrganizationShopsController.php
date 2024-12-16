@@ -87,11 +87,9 @@ class OrganizationShopsController extends Controller
             $student=Student::where('user_id',$user->id)->first();
             $school=School::where('id',$student->school_id)->first();
             $courses=StudentCourse::where('StudentID',$student->student_id)->get();
-            // if (!$courses->isEmpty()) {
-                $courseCodes = $courses->map(function ($course) {
-                    return $course->CourseCode . '-' . $course->CourseDescription.'';
-                })->toArray();
-            // }
+            $courseCodes = $courses->map(function ($course) {
+                return $course->CourseCode . '-' . $course->CourseDescription.'';
+            })->toArray();
             $schoolName=$school->title;
            
             
@@ -243,7 +241,11 @@ class OrganizationShopsController extends Controller
             $item->quantity = $request->quantity;
             $item->product_owner_email = $request->product_owner_email;
             $item->quantity_sold = 0;
-            if($request->quantity==null || $request->quantity > 0){
+            $today = Carbon::today()->toDateString(); // "2024-12-16"
+            $valid_to = Carbon::parse($request->valid_to)->toDateString();
+            if($valid_to <=  $today){
+                $item->status ='expired';
+            }else if($request->quantity==null || $request->quantity > 0){
                 $item->status = 'available';
             }else if($request->quantity == 0){
                 $item->status ='not_available';
