@@ -461,6 +461,26 @@ class UserCartController extends Controller
         // }
     }
 
+    //--------------Google Apple PAYMENT-------------
+    public function createexpressPaymentIntent(Request $request){
+    StripeGateway::setApiKey(env('STRIPE_SECRET'));
+    // try {
+        $paymentIntent = PaymentIntent::create([
+            'amount' => $request->amount, // Amount in cents
+            'currency' => $request->currency, // e.g., 'usd'
+            'payment_method_types' => ['card'],
+        ]);
+
+        return response()->json([
+            'clientSecret' => $paymentIntent->client_secret,
+        ]);
+        // ['stripe_account' => 'acct_1Q8m46PPnkrk4pSx']
+            
+        // } catch (\Exception $e) {
+        //     return response()->json(['error' => $e->getMessage()], 500);
+        // }
+    }
+
     //--------------GET MY INSTALLMENTS-------------
     public function getMyInstallments(Request $request)
     {
