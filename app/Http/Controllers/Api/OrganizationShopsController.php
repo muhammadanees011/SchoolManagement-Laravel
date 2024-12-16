@@ -169,7 +169,12 @@ class OrganizationShopsController extends Controller
     public function getArchivedItems(Request $request)
     {
         $user=Auth::user();
-        if($user->role!=='staff' && $user->role!=='student' && $user->role!=='parent'){
+        if($user->role=='super_admin'){
+            $shopItems = OrganizationShop::with(['shopItems' => function($query) {
+                $query->where('status','deleted')->orderBy('created_at', 'desc');
+            }, 'shopItems.payment'])->paginate($request->entries_per_page);
+        }
+        if($user->role!=='super_admin' && $user->role!=='staff' && $user->role!=='student' && $user->role!=='parent'){
 
             $permission=Permission::where('name','view_products')->first();
             $role=Role::where('name',$user->role)->first();
