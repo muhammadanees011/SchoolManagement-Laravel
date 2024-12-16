@@ -524,5 +524,6 @@ class SyncUsers extends Command
         $today = Carbon::today()->toDateString(); // "2024-12-16"
         $updatedRows = ShopItem::whereDate('valid_to', '<=', $today)
         ->update(['status' => 'expired']);
+        Log::info('Expiries check completed successfully');
     }
 }
