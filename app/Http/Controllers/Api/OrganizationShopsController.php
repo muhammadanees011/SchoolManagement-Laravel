@@ -351,7 +351,11 @@ class OrganizationShopsController extends Controller
             $item->product_owner_email = $request->product_owner_email;
             $item->price=$request->price;
             $item->quantity=$request->quantity;
-            if($request->quantity==null || $request->quantity > 0){
+            $today = Carbon::today()->toDateString(); // "2024-12-16"
+            $valid_to = Carbon::parse($request->valid_to)->toDateString();
+            if($valid_to <=  $today){
+                $item->status ='expired';
+            }else if($request->quantity==null || $request->quantity > 0){
                 $item->status = 'available';
             }else if($request->quantity == 0){
                 $item->status ='not_available';
