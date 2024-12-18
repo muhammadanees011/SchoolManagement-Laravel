@@ -212,6 +212,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/checkout', [UserCartController::class, 'checkout']);
     Route::post('/createexpressPaymentIntent', [UserCartController::class, 'createexpressPaymentIntent']);
     Route::post('/getMyInstallments', [UserCartController::class, 'getMyInstallments']);
+    Route::post('/getInstallmentDetail', [UserCartController::class, 'getInstallmentDetail']);
     Route::post('/getPaidInstallments', [UserCartController::class, 'getPaidInstallments']);
     Route::post('/payInstallment', [UserCartController::class, 'payInstallment']);
     Route::post('/filterInstallments', [UserCartController::class, 'filterInstallments']);
@@ -235,9 +236,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/getPaymentMethods', [PaymentsController::class, 'getCustomerPaymentMethods']);
     Route::get('/removePaymentMethod', [PaymentsController::class, 'removePaymentMethod']);
     Route::get('/getWallet/{id}', [PaymentsController::class, 'getWallet']);
-    Route::post('payment/initiate', [PaymentsController::class, 'initiatePayment']);
+    Route::post('/user_topup', [PaymentsController::class, 'userTopUp']);
     Route::post('/adminTopUp',[PaymentsController::class,'adminTopUp']);
     Route::post('/bulkTopUp',[PaymentsController::class,'bulkTopUp']);
+    Route::post('/TopupGoogleApplePay', [PaymentsController::class, 'TopupGoogleApplePay']);
     //------------Trips---------------------
     Route::post('/createTrip',[TripsController::class,'createTrip']);
     Route::get('/findTrip/{id?}',[TripsController::class,'findTrip']);

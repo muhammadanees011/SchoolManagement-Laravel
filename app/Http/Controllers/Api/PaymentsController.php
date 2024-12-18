@@ -281,8 +281,9 @@ class PaymentsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    //--------------MAKET A PAYMENT-------------
-    public function initiatePayment(Request $request)
+
+    //--------------User Topup Card PAYMENT-------------
+    public function userTopUp(Request $request)
     {
         StripeGateway::setApiKey(env('STRIPE_SECRET'));
         try {
@@ -324,6 +325,32 @@ class PaymentsController extends Controller
             'client_secret' => $paymentIntent->client_secret,
         ];
     }
+
+    //--------------User Topup Google Apple Pay-------------
+    public function TopupGoogleApplePay(Request $request)
+    {
+        try {
+            $user=User::find($request->user_id);
+            $wallet=Wallet::where('user_id',$request->user_id)->first();
+            $wallet->ballance=$wallet->ballance + $request->amount;
+            $wallet->save();
+
+            $history=new TransactionHistory();
+            $history->user_id=$request->user_id;
+            $history->amount=$request->amount;
+            $history->type=$request->type;
+            $history->charge_id=$request->latest_charge;
+            $history->last_4=$request->last_4;
+            $history->card_brand=$request->brand;
+            $history->card_holder_name=$request->cardholder_name;
+            $history->save();
+
+        } catch (Exception $e) {
+            // Handle other errors
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     //-------------CHECK BALANCE BEFORE MAKING PAYMENT---------
     public function checkBalance(Request $request){
         $validator = Validator::make($request->all(), [

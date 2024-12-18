@@ -132,6 +132,10 @@ class UserCartController extends Controller
         $validator = Validator::make($request->all(), [
             'payment_method' =>'nullable',
             'type' =>'required',
+            'latest_charge' =>'nullable',
+            'last_4' =>'nullable',
+            'brand' =>'nullable',
+            'cardholder_name' =>'nullable',
         ]);
         if ($validator->fails())
         {
@@ -205,8 +209,15 @@ class UserCartController extends Controller
                         $res=$this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
                         $latest_charge=$res->latest_charge;
                     }else if($request->type=='google_apple_pay'){
-                        $res=$this->createGoogleApplePaymentIntent($user->id,$ItemAmount,$type);
-                        $latest_charge=$res->latest_charge;
+                        $history=new TransactionHistory();
+                        $history->user_id=$user->id;
+                        $history->amount=$ItemAmount;
+                        $history->type='card';
+                        $history->charge_id=$request->latest_charge;
+                        $history->last_4=$request->last_4;
+                        $history->card_brand=$request->brand;
+                        $history->card_holder_name=$request->cardholder_name;
+                        $history->save();
                     }else if($request->type=='wallet'){
                         $user_wallet=Wallet::where('user_id',$user->id)->first();
                         if($user_wallet->ballance >  $ItemAmount){
@@ -429,39 +440,6 @@ class UserCartController extends Controller
     }
 
     //--------------Google Apple PAYMENT-------------
-    public function createGoogleApplePaymentIntent($user_id,$amount,$type){
-        StripeGateway::setApiKey(env('STRIPE_SECRET'));
-        // try {
-            $user=User::find($user_id);
-            $paymentIntent = PaymentIntent::create([
-                'amount' => $amount * 100,
-                'currency' => 'gbp',
-                'customer' => $user->stripe_id,  //ID of the customer in Stripe
-                'confirm' => true, // Confirm the payment immediately
-                'transfer_data' => [
-                    'destination' => "acct_1NlWiGGYrt7SylQr",
-                ],
-                'return_url' => 'https://your-website.com/thank-you',
-                'automatic_payment_methods' => ['enabled' => true],
-            ]);
-            // ['stripe_account' => 'acct_1Q8m46PPnkrk4pSx']
-            $user=Auth::user();
-            $user_card=UserCard::where('user_id',$user->id)->first();
-            $history=new TransactionHistory();
-            $history->user_id=$user_id;
-            $history->amount=$amount;
-            $history->type=$type;
-            $history->charge_id=$paymentIntent->latest_charge;
-            $history->save();
-
-            return $paymentIntent;
-            
-        // } catch (\Exception $e) {
-        //     return response()->json(['error' => $e->getMessage()], 500);
-        // }
-    }
-
-    //--------------Google Apple PAYMENT-------------
     public function createexpressPaymentIntent(Request $request){
     StripeGateway::setApiKey(env('STRIPE_SECRET'));
     // try {
@@ -558,6 +536,10 @@ class UserCartController extends Controller
         return response()->json($purchases, 200);
     }
 
+    public function getInstallmentDetail(Request $request){
+        $installment=MyInstallments::find($request->installment_id);
+        return response()->json($installment, 200);
+    }
     //-------------PAY INSTALLMENT--------------
     public function payInstallment(Request $request)
     {
@@ -565,6 +547,12 @@ class UserCartController extends Controller
             'payment_method' =>'required',
             'type' =>'required',
             'installment_id' =>'required',
+            'latest_charge' =>'nullable',
+            'last_4' =>'nullable',
+            'brand' =>'nullable',
+            'cardholder_name' =>'nullable',
+            'amount' =>'nullable',
+
         ]);
         $user=Auth::user();
         $installment=MyInstallments::find($request->installment_id);
@@ -585,9 +573,21 @@ class UserCartController extends Controller
                 $history->amount=$ItemAmount;
                 $history->type=$type;
                 $history->save();
-            }else{
-                $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
             }
+            else{
+                return response()->json(['Not Enough balance'], 500);
+                // $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
+            }
+        }else if($request->type=='google_apple_pay'){
+            $history=new TransactionHistory();
+            $history->user_id=$user->id;
+            $history->amount=$request->amount;
+            $history->type='card';
+            $history->charge_id=$request->latest_charge;
+            $history->last_4=$request->last_4;
+            $history->card_brand=$request->brand;
+            $history->card_holder_name=$request->cardholder_name;
+            $history->save();
         }
 
         $installment->payment_status='paid';
