@@ -344,8 +344,8 @@ class PaymentsController extends Controller
             $history->card_brand=$request->brand;
             $history->card_holder_name=$request->cardholder_name;
             $history->save();
-
-        } catch (Exception $e) {
+            return response()->json('Topup Successfull', 200);
+        } catch (\Exception $e) {
             // Handle other errors
             return response()->json(['error' => $e->getMessage()], 500);
         }

@@ -554,56 +554,62 @@ class UserCartController extends Controller
             'amount' =>'nullable',
 
         ]);
-        $user=Auth::user();
-        $installment=MyInstallments::find($request->installment_id);
+        try {
+            $user=Auth::user();
+            $installment=MyInstallments::find($request->installment_id);
 
-        $type='school_shop_funds';
-        $ItemAmount = $installment->installment_amount;
+            $type='school_shop_funds';
+            $ItemAmount = $installment->installment_amount;
 
-        if($request->type=='card'){
-            $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
-        }else if($request->type=='wallet_and_card'){
-            $user_wallet=Wallet::where('user_id',$user->id)->first();
-            if($user_wallet->ballance >  $ItemAmount){
-                $user_wallet->ballance = $user_wallet->ballance - $ItemAmount;
-                $user_wallet->save();
+            if($request->type=='card'){
+                $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
+            }else if($request->type=='wallet_and_card'){
+                $user_wallet=Wallet::where('user_id',$user->id)->first();
+                if($user_wallet->ballance >  $ItemAmount){
+                    $user_wallet->ballance = $user_wallet->ballance - $ItemAmount;
+                    $user_wallet->save();
 
+                    $history=new TransactionHistory();
+                    $history->user_id=$user->id;
+                    $history->amount=$ItemAmount;
+                    $history->type=$type;
+                    $history->save();
+                }
+                else{
+                    return response()->json(['Not Enough balance'], 500);
+                    // $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
+                }
+            }else if($request->type=='google_apple_pay'){
                 $history=new TransactionHistory();
                 $history->user_id=$user->id;
-                $history->amount=$ItemAmount;
-                $history->type=$type;
+                $history->amount=$request->amount;
+                $history->type='card';
+                $history->charge_id=$request->latest_charge;
+                $history->last_4=$request->last_4;
+                $history->card_brand=$request->brand;
+                $history->card_holder_name=$request->cardholder_name;
                 $history->save();
             }
-            else{
-                return response()->json(['Not Enough balance'], 500);
-                // $this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type); 
+
+            $installment->payment_status='paid';
+            $installment->save();
+
+            $purchase=MyPurchase::find($installment->purchases_id);
+            $netpayment=$purchase->amount_paid + $ItemAmount;
+            if($netpayment == $purchase->total_price){
+                $purchase->payment_status = "fully_paid"; 
             }
-        }else if($request->type=='google_apple_pay'){
-            $history=new TransactionHistory();
-            $history->user_id=$user->id;
-            $history->amount=$request->amount;
-            $history->type='card';
-            $history->charge_id=$request->latest_charge;
-            $history->last_4=$request->last_4;
-            $history->card_brand=$request->brand;
-            $history->card_holder_name=$request->cardholder_name;
-            $history->save();
-        }
+            $purchase->amount_paid = $purchase->amount_paid + $ItemAmount;
+            $purchase->save();
 
-        $installment->payment_status='paid';
-        $installment->save();
-
-        $purchase=MyPurchase::find($installment->purchases_id);
-        $netpayment=$purchase->amount_paid + $ItemAmount;
-        if($netpayment == $purchase->total_price){
-            $purchase->payment_status = "fully_paid"; 
-        }
-        $purchase->amount_paid = $purchase->amount_paid + $ItemAmount;
-        $purchase->save();
-
-        $cart=UserCart::where('user_id',$user->id)->where('installment_id',$request->installment_id)->first();
-        if($cart){
-            $cart->delete();
+            $cart=UserCart::where('user_id',$user->id)->where('installment_id',$request->installment_id)->first();
+            if($cart){
+                $cart->delete();
+            }
+            return response()->json('Installment Paid Successfully', 200);
+        } catch (\Exception $e) {
+            // Handle other errors
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 }
