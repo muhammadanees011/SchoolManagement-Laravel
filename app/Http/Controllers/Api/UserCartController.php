@@ -620,7 +620,25 @@ class UserCartController extends Controller
         StripeGateway::setApiKey(env('STRIPE_SECRET'));
         try {
             $paymentMethod = PaymentMethod::retrieve($paymentMethodId);
-            return response()->json($paymentMethod);
+
+            // Retrieve the latest charge using the payment method ID
+            $charges = \Stripe\Charge::all([
+                'payment_method' => $paymentMethodId,
+                'limit' => 1, // Limit to the most recent charge
+            ]);
+
+            // Check if there are charges and retrieve the latest one
+            if ($charges->data && count($charges->data) > 0) {
+                $latestCharge = $charges->data[0];
+                return response()->json([
+                    'payment_method' => $paymentMethod,
+                    'charge_id' => $latestCharge->id,
+                ]);
+            } else {
+                return response()->json(['error' => 'No charges found for this payment method'], 404);
+            }
+
+            // return response()->json($paymentMethod);
         } catch (\Stripe\Exception\ApiErrorException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
