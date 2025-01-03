@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Stripe\Stripe as StripeGateway;
 use Stripe\PaymentIntent;
+use Stripe\PaymentMethod;
 use Stripe\Exception\CardException;
 use Illuminate\Support\Facades\Validator;
 use PDF;
@@ -610,6 +611,18 @@ class UserCartController extends Controller
         } catch (\Exception $e) {
             // Handle other errors
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
+    public function getPaymentMethod($paymentMethodId)
+    {
+        StripeGateway::setApiKey(env('STRIPE_SECRET'));
+        try {
+            $paymentMethod = PaymentMethod::retrieve($paymentMethodId);
+            return response()->json($paymentMethod);
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
         }
     }
 }

@@ -209,6 +209,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/removeItemFromCart', [UserCartController::class, 'removeItemFromCart']);
     Route::get('/getUserCartItems', [UserCartController::class, 'getUserCartItems']);
     Route::get('/countUserCartItems', [UserCartController::class, 'countUserCartItems']);
+    Route::get('/payment-method/{id}', [UserCartController::class, 'getPaymentMethod']);
     Route::post('/checkout', [UserCartController::class, 'checkout']);
     Route::post('/createexpressPaymentIntent', [UserCartController::class, 'createexpressPaymentIntent']);
     Route::post('/getMyInstallments', [UserCartController::class, 'getMyInstallments']);
