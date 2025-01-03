@@ -621,21 +621,22 @@ class UserCartController extends Controller
         try {
             $paymentMethod = PaymentMethod::retrieve($paymentMethodId);
 
-            // Retrieve the latest charge using the payment method ID
-            $charges = \Stripe\Charge::all([
-                'payment_method' => $paymentMethodId,
-                'limit' => 1, // Limit to the most recent charge
-            ]);
-
-            // Check if there are charges and retrieve the latest one
-            if ($charges->data && count($charges->data) > 0) {
-                $latestCharge = $charges->data[0];
-                return response()->json([
-                    'payment_method' => $paymentMethod,
-                    'charge_id' => $latestCharge->id,
-                ]);
-            } else {
-                return response()->json(['error' => 'No charges found for this payment method'], 404);
+            if ($paymentMethod->card) {
+                $paymentIntentId = $paymentMethod->card->payment_intent;
+                
+                // Retrieve the payment intent
+                $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
+                
+                // Retrieve the latest charge from the PaymentIntent
+                if (isset($paymentIntent->charges->data[0])) {
+                    $latestCharge = $paymentIntent->charges->data[0];
+                    return response()->json([
+                        'payment_method' => $paymentMethod,
+                        'charge_id' => $latestCharge->id,
+                    ]);
+                } else {
+                    return response()->json(['error' => 'No charge found for this payment method'], 404);
+                }
             }
 
             // return response()->json($paymentMethod);
