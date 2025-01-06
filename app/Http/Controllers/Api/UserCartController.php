@@ -627,6 +627,8 @@ class UserCartController extends Controller
                 
                 // Retrieve the payment intent
                 $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
+
+                return $paymentIntent;
                 
                 // Retrieve the latest charge from the PaymentIntent
                 if (isset($paymentIntent->charges->data[0])) {
