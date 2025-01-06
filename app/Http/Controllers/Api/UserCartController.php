@@ -627,15 +627,12 @@ class UserCartController extends Controller
                 
                 // Retrieve the payment intent
                 $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
-
-                return $paymentIntent;
                 
                 // Retrieve the latest charge from the PaymentIntent
-                if (isset($paymentIntent->charges->data[0])) {
-                    $latestCharge = $paymentIntent->charges->data[0];
+                if (isset($paymentIntent)) {
                     return response()->json([
                         'payment_method' => $paymentMethod,
-                        'charge_id' => $latestCharge->id,
+                        'charge_id' => $paymentIntent->latest_charge,
                     ]);
                 } else {
                     return response()->json(['error' => 'No charge found for this payment method'], 404);
