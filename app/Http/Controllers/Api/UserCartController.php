@@ -620,6 +620,7 @@ class UserCartController extends Controller
         StripeGateway::setApiKey(env('STRIPE_SECRET'));
         try {
             $paymentMethod = PaymentMethod::retrieve($paymentMethodId);
+            return $paymentMethod;
 
             if ($paymentMethod->card) {
                 $paymentIntentId = $paymentMethod->card->payment_intent;
