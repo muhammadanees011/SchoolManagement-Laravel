@@ -213,7 +213,7 @@ class UserCartController extends Controller
                         $history=new TransactionHistory();
                         $history->user_id=$user->id;
                         $history->amount=$ItemAmount;
-                        $history->type='card';
+                        $history->type=$type;
                         $history->charge_id=$request->latest_charge;
                         $history->last_4=$request->last_4;
                         $history->card_brand=$request->brand;
