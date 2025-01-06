@@ -615,15 +615,15 @@ class UserCartController extends Controller
     }
 
 
-    public function getPaymentMethod($paymentMethodId)
+    public function getPaymentMethod(Request $request)
     {
         StripeGateway::setApiKey(env('STRIPE_SECRET'));
         try {
-            $paymentMethod = PaymentMethod::retrieve($paymentMethodId);
-            return $paymentMethod;
+            $paymentMethod = PaymentMethod::retrieve($request->paymentMethodId);
+            // return $paymentMethod;
 
             if ($paymentMethod->card) {
-                $paymentIntentId = $paymentMethod->card->payment_intent;
+                $paymentIntentId = $request->paymentIntentId;
                 
                 // Retrieve the payment intent
                 $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
