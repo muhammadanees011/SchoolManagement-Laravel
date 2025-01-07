@@ -160,8 +160,8 @@ class UserCartController extends Controller
                       $totalAmount += $cartItem->ShopItem->payment->amount_per_installment;
                       $price = $cartItem->ShopItem->payment->amount_per_installment;
                     }else if($cartItem->ShopItem->payment_plan=='installments_and_deposit'){
-                        $totalAmount += $cartItem->ShopItem->payment->initial_deposit_installments;
-                        $price = $cartItem->ShopItem->payment->initial_deposit_installments;
+                        $totalAmount += $cartItem->ShopItem->payment->initial_deposit;
+                        $price = $cartItem->ShopItem->payment->initial_deposit;
                     }else if($cartItem->ShopItem->payment_plan=='full_payment'){
                         $totalAmount += $cartItem->ShopItem->price;
                         $price = $cartItem->ShopItem->price;
@@ -171,7 +171,7 @@ class UserCartController extends Controller
                     $item=ShopItem::find($cartItem->shop_item_id);
                     $item->quantity= $item->quantity !== null ? $item->quantity -1 : null;
                     $item->quantity_sold= $item->quantity_sold >= 0 ? $item->quantity_sold +1 : 1;
-                    if($item->quantity == 0){
+                    if($item->quantity !==null && $item->quantity == 0){
                         $item->status= "not_available";
                     }
                     $item->save();
@@ -200,7 +200,7 @@ class UserCartController extends Controller
                         if($cartItem->ShopItem->payment_plan=='installments'){
                             $ItemAmount = $cartItem->ShopItem->payment->amount_per_installment;
                         }else if($cartItem->ShopItem->payment_plan=='installments_and_deposit'){
-                            $ItemAmount = $cartItem->ShopItem->payment->initial_deposit_installments;
+                            $ItemAmount = $cartItem->ShopItem->payment->initial_deposit;
                         }else if($cartItem->ShopItem->payment_plan=='full_payment'){
                             $ItemAmount = $cartItem->ShopItem->price;
                         }
@@ -210,6 +210,7 @@ class UserCartController extends Controller
                         $res=$this->initiatePayment($user->id,$ItemAmount,$request->payment_method,$type);
                         $latest_charge=$res->latest_charge;
                     }else if($request->type=='google_apple_pay'){
+                        $latest_charge=$request->latest_charge;
                         $history=new TransactionHistory();
                         $history->user_id=$user->id;
                         $history->amount=$ItemAmount;
