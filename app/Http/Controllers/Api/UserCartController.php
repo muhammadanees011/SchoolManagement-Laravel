@@ -408,12 +408,14 @@ class UserCartController extends Controller
                 'customer' => $user->stripe_id,  //ID of the customer in Stripe
                 'payment_method' =>$payment_method, //ID of the specific card
                 'confirm' => true, // Confirm the payment immediately
+                "on_behalf_of"=> "acct_1Q8m46PPnkrk4pSx",
                 'transfer_data' => [
-                    'destination' => "acct_1NlWiGGYrt7SylQr",
+                    'destination' => "acct_1Q8m46PPnkrk4pSx",
                 ],
                 'return_url' => 'https://your-website.com/thank-you',
                 'automatic_payment_methods' => ['enabled' => true],
             ]);
+            // acct_1NlWiGGYrt7SylQr
             // ['stripe_account' => 'acct_1Q8m46PPnkrk4pSx']
             $user=Auth::user();
             $user_card=UserCard::where('user_id',$user->id)->first();
@@ -621,14 +623,11 @@ class UserCartController extends Controller
         StripeGateway::setApiKey(env('STRIPE_SECRET'));
         try {
             $paymentMethod = PaymentMethod::retrieve($request->paymentMethodId);
-            // return $paymentMethod;
 
             if ($paymentMethod->card) {
                 $paymentIntentId = $request->paymentIntentId;
-                
                 // Retrieve the payment intent
                 $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
-                
                 // Retrieve the latest charge from the PaymentIntent
                 if (isset($paymentIntent)) {
                     return response()->json([

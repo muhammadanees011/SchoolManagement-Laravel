@@ -294,22 +294,30 @@ class PaymentsController extends Controller
                 'customer' => $user->stripe_id,  //ID of the customer in Stripe
                 'payment_method' =>$request->payment_method, //ID of the specific card
                 'confirm' => true, // Confirm the payment immediately
+                "on_behalf_of"=> "acct_1Q8m46PPnkrk4pSx",
                 'transfer_data' => [
                     // 'destination' => $request->recipientStripeAccountId,
-                    'destination' => "acct_1NlWiGGYrt7SylQr",
+                    'destination' => "acct_1Q8m46PPnkrk4pSx",
                 ],
                 'return_url' => 'https://your-website.com/thank-you',
 
             ]);
+
             $wallet=Wallet::where('user_id',$request->user_id)->first();
             $wallet->ballance=$wallet->ballance + $request->amount;
             $wallet->save();
+
+            $user_card=UserCard::where('user_id',$user->id)->first();
 
             $history=new TransactionHistory();
             $history->user_id=$request->user_id;
             $history->amount=$request->amount;
             $history->acct_id='acct_1NlWiGGYrt7SylQr';
             $history->type=$request->type;
+            $history->charge_id=$paymentIntent->latest_charge;
+            $history->last_4=$user_card->last_4;
+            $history->card_brand=$user_card->brand;
+            $history->card_holder_name=$user_card->cardholder_name;
             $history->save();
 
         } catch (CardException $e) {

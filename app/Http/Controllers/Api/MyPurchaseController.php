@@ -199,6 +199,55 @@ class MyPurchaseController extends Controller
         }
     }
 
+    public function refundTopup(Request $request){
+        $transaction=TransactionHistory::where('id',$request->transaction_id)->first();
+        $wallet=Wallet::where('user_id',$transaction->user_id)->first();
+        if($wallet->ballance >= $transaction->amount){
+
+        }else{
+            return response()->json([
+                'message' => 'Not Sufficient Balance In Wallet',
+                'refund' => null,
+            ],200);
+        }
+        StripeGateway::setApiKey(env('STRIPE_SECRET'));
+        try {
+            // Create a refund for a specific charge
+            $refund = StripeRefund::create([
+                'charge' => $transaction->charge_id, // ID of the charge to refund
+                'amount' => $transaction->amount * 100, // Optional: refund specific amount in cents
+            ]);
+
+            $transaction->status='refunded';
+            $transaction->save();
+            if($wallet->ballance >= $transaction->amount){
+                $wallet->ballance= $wallet->ballance - $transaction->amount;
+                $wallet->save();
+            }
+            $user_card=UserCard::where('user_id',$transaction->user_id)->first();
+            //-----------Refund Transaction History-----------
+            $history=new TransactionHistory();
+            $history->user_id=$transaction->user_id;
+            $history->amount=$transaction->amount;
+            $history->type='topup_refund';
+            $history->charge_id=$refund->id;
+            $history->last_4=$user_card->last_4;
+            $history->card_brand=$user_card->brand;
+            $history->card_holder_name=$user_card->cardholder_name;
+            $history->save();
+            return response()->json([
+                'message' => 'Refund successful',
+                'refund' => $refund,
+            ],200);
+        } catch (\Exception $e) {
+            return false;
+            return response()->json([
+                'message' => 'Refund failed',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
     //--------------MAKET A PAYMENT-------------
     public function initiatePayment($user_id,$amount,$recipientStripeAccountId)
     {
@@ -221,9 +270,10 @@ class MyPurchaseController extends Controller
                 'customer' => $payment_method->customer_id,  //ID of the customer in Stripe
                 'payment_method' =>$payment_method->card_id, //ID of the specific card
                 'confirm' => true, // Confirm the payment immediately
+                "on_behalf_of"=> "acct_1Q8m46PPnkrk4pSx",
                 'transfer_data' => [
                     // 'destination' => 'acct_1NlWiGGYrt7SylQr',
-                    'destination' => "acct_1NlWiGGYrt7SylQr",
+                    'destination' => "acct_1Q8m46PPnkrk4pSx",
                 ],
                 'return_url' => 'https://your-website.com/thank-you',
             ]);

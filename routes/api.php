@@ -221,6 +221,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/getMyPurchases', [MyPurchaseController::class, 'getMyPurchases']);
     Route::post('/refundRequest', [MyPurchaseController::class, 'refundRequest']);
     Route::post('/refundStatus', [MyPurchaseController::class, 'refundStatus']);
+    Route::post('/refundTopup', [MyPurchaseController::class, 'refundTopup']);
     Route::post('/getRefundRequest', [MyPurchaseController::class, 'getRefundRequest']);
     Route::post('/filterRefunds', [MyPurchaseController::class, 'filterRefunds']);
     Route::post('/filterPurchaseHistory', [MyPurchaseController::class, 'filterPurchaseHistory']);
