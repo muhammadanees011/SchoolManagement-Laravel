@@ -351,25 +351,25 @@ class StudentsController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => ['required',Rule::exists('users', 'id')],
             'role' =>'required',
-            'entries_per_page'=>'required',
         ]);
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()->all()], 422);
         }
         $user=Auth::user();
+        $entriesPerPage = $request->entries_per_page ?? 50;
 
         if($user->role!=='student' && $user->role!=='staff' && $user->role!=='parent'){
             $students=Student::with('user.balance','school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
-            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
+            })->orderBy('created_at', 'desc')->paginate($entriesPerPage);
         }else if($user->role=='staff'){
             $user=Staff::where('user_id',$user->id)->first();
             $students = Student::where('school_id', $user->school_id)->with('user.balance', 'school')
             ->whereHas('user', function($query) {
                 $query->where('status', 'active');
-            })->orderBy('created_at', 'desc')->paginate($request->entries_per_page);
+            })->orderBy('created_at', 'desc')->paginate($entriesPerPage);
         }else if($user->role=='parent'){
             $studentIds=Parents::where('parent_id',$user->id)->pluck('student_id')->toArray();
             $students = Student::where('id', $studentIds)->with('user.balance', 'school')
