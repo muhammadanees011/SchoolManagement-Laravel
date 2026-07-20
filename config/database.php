@@ -65,11 +65,11 @@ return [
 
         'remote_mysql' => [
             'driver' => 'mysql',
-            'host' => env('REMOTE_DB_HOST', 'studentpay.cdusdvfv9enf.eu-west-2.rds.amazonaws.com'),
-            'port' => env('REMOTE_DB_PORT', '3306'),
-            'database' => env('REMOTE_DB_DATABASE', 'student_pay'),
-            'username' => env('REMOTE_DB_USERNAME', 'sp_admin'),
-            'password' => env('REMOTE_DB_PASSWORD', 'ZUps7h6ZQImo25cALsPA'),
+            'host' => env('REMOTE_DB_HOST'),
+            'port' => env('REMOTE_DB_PORT'),
+            'database' => env('REMOTE_DB_DATABASE'),
+            'username' => env('REMOTE_DB_USERNAME'),
+            'password' => env('REMOTE_DB_PASSWORD'),
         ],
         
         'pgsql' => [
