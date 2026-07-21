@@ -59,7 +59,7 @@ class SyncUsers extends Command
      */
     public function handle()
     {
-        info("Cron Job running at ". now());
+        Log::info('Users sync started at ' . now());
         $this->syncStudents();
         $this->syncStaff();
         $this->updateStudents();
@@ -71,6 +71,7 @@ class SyncUsers extends Command
         // $this->archiveCourses();
         // $this->archiveStudentCourse();
         // $this->checkExpiries();
+        Log::info('Users sync completed at ' . now());
     }
 
     private function syncStudents(){
