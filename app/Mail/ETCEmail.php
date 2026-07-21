@@ -29,7 +29,7 @@ class ETCEmail extends Mailable
     {
         return $this->view('emails.ETCEmail')
             ->subject('StudentPay Data Updated')
-            ->with('mailData', $this->data);
+            ->with($this->data);
     }
 
     /**

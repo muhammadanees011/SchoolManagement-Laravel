@@ -59,8 +59,8 @@
         @if (!empty($new_schools))
             <p><strong>Users associated with the following schools have been dropped as these schools are not found on the StudentPay portal:</strong></p>
             <ul>
-                @foreach ($new_schools as $new_schools)
-                    <li>{{ $new_schools }}</li>
+                @foreach ($new_schools as $school)
+                    <li>{{ $school }}</li>
                 @endforeach
             </ul>
         @endif
