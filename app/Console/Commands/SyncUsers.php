@@ -20,7 +20,7 @@ use App\Models\StudentCourse;
 use App\Models\Staff;
 use App\Models\ShopItem;
 use Illuminate\Support\Facades\Log;
-use App\Services\MicrosoftGraphService;
+// use App\Services\MicrosoftGraphService;
 
 class SyncUsers extends Command
 {
@@ -40,17 +40,17 @@ class SyncUsers extends Command
 
     protected $graphService;
 
-    /**
-     * Create a new command instance.
-     *
-     * @param MicrosoftGraphService $graphService
-     * @return void
-     */
-    public function __construct(MicrosoftGraphService $graphService)
-    {
-        parent::__construct();
-        $this->graphService = $graphService;
-    }
+    // /**
+    //  * Create a new command instance.
+    //  *
+    //  * @param MicrosoftGraphService $graphService
+    //  * @return void
+    //  */
+    // public function __construct(MicrosoftGraphService $graphService)
+    // {
+    //     parent::__construct();
+    //     $this->graphService = $graphService;
+    // }
 
     protected $newSchools = [];
 
