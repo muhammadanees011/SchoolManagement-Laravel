@@ -494,30 +494,30 @@ class SyncUsers extends Command
         $total_staff=Staff::count();
         $today_staff=Staff::whereDate('created_at', Carbon::today())->count();
 
-        // $data['total_students']=$total_students;
-        // $data['today_students']=$today_students;
-        // $data['total_staff']=$total_staff;
-        // $data['today_staff']=$today_staff;
-        // $data['new_schools']=$this->newSchools;
+        $data['total_students']=$total_students;
+        $data['today_students']=$today_students;
+        $data['total_staff']=$total_staff;
+        $data['today_staff']=$today_staff;
+        $data['new_schools']=$this->newSchools;
         //----------SEND ETC MAIL--------------
-        // Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
+        Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
         // Mail::to('abeer.waseem@xepos.co.uk')->send(new ETCEmail($data));
         // Mail::to('amir@xepos.co.uk')->send(new ETCEmail($data));
         // Mail::to('Phillip.Iverson@the-etc.ac.uk')->send(new ETCEmail($data));
         // Mail::to('Nick.Coules@the-etc.ac.uk')->send(new ETCEmail($data));
 
-        $data = [
-            'total_students'=>$total_students,
-            'today_students'=>$today_students,
-            'total_staff'=>$total_staff,
-            'today_staff'=>$today_staff,
-            'new_schools'=>$this->newSchools,
-        ];
+        // $data = [
+        //     'total_students'=>$total_students,
+        //     'today_students'=>$today_students,
+        //     'total_staff'=>$total_staff,
+        //     'today_staff'=>$today_staff,
+        //     'new_schools'=>$this->newSchools,
+        // ];
 
-        $to = ['itsanees011@gmail.com'];
-        $subject = 'StudentPay Data Updated';
-        $bodyView = 'emails.ETCEmail';
-        $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
+        // $to = ['itsanees011@gmail.com'];
+        // $subject = 'StudentPay Data Updated';
+        // $bodyView = 'emails.ETCEmail';
+        // $status = $this->graphService->sendEmail($to, $subject, $bodyView,null,null, $data);
     }
 
     public function checkExpiries(){
