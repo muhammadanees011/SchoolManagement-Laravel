@@ -70,7 +70,7 @@ class SyncUsers extends Command
         $this->sendEmailToETC();
         // $this->archiveCourses();
         // $this->archiveStudentCourse();
-        $this->checkExpiries();
+        // $this->checkExpiries();
     }
 
     private function syncStudents(){
