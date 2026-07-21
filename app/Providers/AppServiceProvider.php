@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Config;
 use App\Models\Configuration;
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $settings = Configuration::first();
+        if (Schema::hasTable('configurations')) {
+
+            $settings = Configuration::first();
+        
+        }
 
         if ($settings) {
             // Dynamically set Microsoft configuration
