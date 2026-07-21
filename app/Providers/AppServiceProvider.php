@@ -22,13 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (Schema::hasTable('configurations')) {
-
-            $settings = Configuration::first();
-        
-        }
-
-        if ($settings) {
+        if (Schema::hasTable('configurations') && ($settings = Configuration::first())) {
             // Dynamically set Microsoft configuration
             Config::set('services.microsoft', [
                 'client_id' => $settings->ms_client_id,
