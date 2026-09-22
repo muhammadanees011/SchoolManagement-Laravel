@@ -67,7 +67,7 @@ class SyncUsers extends Command
         // $this->archiveUsers();
         $this->SyncCourses();
         $this->sync_student_course();
-        $this->sendEmailToETC();
+        // $this->sendEmailToETC();
         // $this->archiveCourses();
         // $this->archiveStudentCourse();
         // $this->checkExpiries();
