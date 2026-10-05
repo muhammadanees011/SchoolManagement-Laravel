@@ -417,6 +417,7 @@ class SyncUsers extends Command
                         $school->save();
                     }
                 $student->upn = $record->UPN ?: null;
+                $student->student_id  = $record->loginID ?: null;
                 $student->mifare_id  = $record->miFareID ?: null;
                 $student->fsm_amount = $record->fsmAmount;
                 $student->purse_type = $record->purseType ?: null;
