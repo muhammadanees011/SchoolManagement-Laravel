@@ -403,6 +403,9 @@ class SyncUsers extends Command
                 $school = School::where('title', 'like', '%' . $record->site . '%')->first();
                 //-----------UPDATE STUDENT----------------
                 $user=User::where('email',$record->eMail)->first();
+                if(!$user){
+                    continue;
+                }
                 $student=Student::where('user_id',$user->id)->first();
                 if($student){
                     if($student->site==$school->title){
@@ -424,6 +427,22 @@ class SyncUsers extends Command
                 $student->purse_type = $record->purseType ?: null;
                 $student->site = $record->site ?: null;
                 $student->save();
+                }else{
+                    // user exists but student record missing — create it
+                    $student=new Student();
+                    $student->user_id = $user->id;
+                    if($school){
+                        $student->school_id = $school->id;
+                        $school->students_count=$school->students_count + 1;
+                        $school->save();
+                    }
+                    $student->upn = $record->UPN ?: null;
+                    $student->student_id  = $record->loginID ?: null;
+                    $student->mifare_id  = $record->miFareID ?: null;
+                    $student->fsm_amount = $record->fsmAmount;
+                    $student->purse_type = $record->purseType ?: null;
+                    $student->site = $record->site ?: null;
+                    $student->save();
                 }
                 } catch (\Exception $e) {
             }
