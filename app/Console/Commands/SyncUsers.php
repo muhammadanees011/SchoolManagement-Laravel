@@ -459,6 +459,9 @@ class SyncUsers extends Command
                 $school = School::where('title', 'like', '%' . $record->site . '%')->first();
                 //-----------UPDATE STUDENT----------------
                 $user=User::where('email',$record->eMail)->first();
+                if(!$user){
+                    continue;
+                }
                 $staff=Staff::where('user_id',$user->id)->first();
                 if($staff){
                     if($staff->site==$school->title){
@@ -478,6 +481,20 @@ class SyncUsers extends Command
                 $staff->mifare_id  = $record->miFareID ?: null;
                 $staff->site = $record->site ?: null;
                 $staff->save();
+                }else{
+                    // user exists but staff record missing — create it
+                    $staff=new Staff();
+                    $staff->user_id = $user->id;
+                    if($school){
+                        $staff->school_id = $school->id;
+                        $school->teachers_count=$school->teachers_count + 1;
+                        $school->save();
+                    }
+                    $staff->staff_id = $record->loginID ?: null;
+                    $staff->upn = $record->UPN ?: null;
+                    $staff->mifare_id  = $record->miFareID ?: null;
+                    $staff->site = $record->site ?: null;
+                    $staff->save();
                 }
                 } catch (\Exception $e) {
             }
