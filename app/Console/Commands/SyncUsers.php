@@ -60,15 +60,17 @@ class SyncUsers extends Command
     public function handle()
     {
         Log::info('Users sync started at ' . now());
-        $this->syncStudents();
-        $this->syncStaff();
-        $this->updateStudents();
-        $this->updateStaff();
-        // $this->archiveUsers();
-        $this->SyncCourses();
-        $this->sync_student_course();
-        $this->sendEmailToETC();
+        // $this->syncStudents();
+        // $this->syncStaff();
+        $this->createMissingWallets();
+        // $this->updateStudents();
+        // $this->updateStaff();
+        // $this->SyncCourses();
+        // $this->sync_student_course();
+        // $this->sendEmailToETC();
 
+
+        // $this->archiveUsers();
         // $this->archiveCourses();
         // $this->archiveStudentCourse();
         // $this->checkExpiries();
@@ -564,5 +566,19 @@ class SyncUsers extends Command
         $updatedRows = ShopItem::whereDate('valid_to', '<=', $today)
         ->update(['status' => 'expired']);
         Log::info('Expiries check completed successfully');
+    }
+
+    public function createMissingWallets(){
+        $users = User::all();
+        foreach ($users as $user) {
+            $wallet = Wallet::where('user_id', $user->id)->first();
+            if(!$wallet){
+                $wallet = new Wallet();
+                $wallet->user_id = $user->id;
+                $wallet->ballance = 0;
+                $wallet->save();
+            }
+        }
+        Log::info('Missing Wallets created successfully');
     }
 }
