@@ -60,14 +60,14 @@ class SyncUsers extends Command
     public function handle()
     {
         Log::info('Users sync started at ' . now());
-        // $this->syncStudents();
-        // $this->syncStaff();
+        $this->syncStudents();
+        $this->syncStaff();
         $this->createMissingWallets();
-        // $this->updateStudents();
-        // $this->updateStaff();
-        // $this->SyncCourses();
-        // $this->sync_student_course();
-        // $this->sendEmailToETC();
+        $this->updateStudents();
+        $this->updateStaff();
+        $this->SyncCourses();
+        $this->sync_student_course();
+        $this->sendEmailToETC();
 
 
         // $this->archiveUsers();
