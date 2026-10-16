@@ -535,11 +535,43 @@ class SyncUsers extends Command
         $total_staff=Staff::count();
         $today_staff=Staff::whereDate('created_at', Carbon::today())->count();
 
+        $new_students_list = Student::with('User')
+            ->whereDate('created_at', Carbon::today())
+            ->get()
+            ->map(function ($student) {
+                $user = $student->User;
+                return [
+                    'name' => $user ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) : 'N/A',
+                    'email' => $user->email ?? 'N/A',
+                    'student_id' => $student->student_id ?: 'N/A',
+                    'site' => $student->site ?: 'N/A',
+                ];
+            })
+            ->values()
+            ->all();
+
+        $new_staff_list = Staff::with('User')
+            ->whereDate('created_at', Carbon::today())
+            ->get()
+            ->map(function ($staff) {
+                $user = $staff->User;
+                return [
+                    'name' => $user ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) : 'N/A',
+                    'email' => $user->email ?? 'N/A',
+                    'staff_id' => $staff->staff_id ?: 'N/A',
+                    'site' => $staff->site ?: 'N/A',
+                ];
+            })
+            ->values()
+            ->all();
+
         $data['total_students']=$total_students;
         $data['today_students']=$today_students;
         $data['total_staff']=$total_staff;
         $data['today_staff']=$today_staff;
         $data['new_schools']=$this->newSchools;
+        $data['new_students_list']=$new_students_list;
+        $data['new_staff_list']=$new_staff_list;
         //----------SEND ETC MAIL--------------
         Mail::to('itsanees011@gmail.com')->send(new ETCEmail($data));
         // Mail::to('abeer.waseem@xepos.co.uk')->send(new ETCEmail($data));
